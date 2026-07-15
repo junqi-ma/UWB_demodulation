@@ -32,7 +32,7 @@ if status ~= 0
     error('Failed to seek to sample offset %d.', sample_offset);
 end
 
-raw = fread(fid, [2, sample_num], 'int16=>double');
+raw = fread(fid, [2, sample_num], 'int16=>single');
 sample_count = size(raw, 2);
 if sample_count < 2
     error('Not enough IQ samples were read.');

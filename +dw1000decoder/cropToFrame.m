@@ -31,8 +31,8 @@ if isfield(preamble, 'matched_is_roi') && preamble.matched_is_roi
     roi_start = preamble.roi_start;
     matched_idx = (crop_start:crop_end)-roi_start+1;
     valid = matched_idx >= 1 & matched_idx <= numel(preamble.matched);
-    matched_crop = complex(zeros(crop_end-crop_start+1, 1));
-    score_crop = zeros(size(matched_crop));
+    matched_crop = zeros(crop_end-crop_start+1, 1, 'like', preamble.matched);
+    score_crop = zeros(size(matched_crop), 'like', real(preamble.score(1)));
     matched_crop(valid) = preamble.matched(matched_idx(valid));
     score_crop(valid) = preamble.score(matched_idx(valid));
     preamble.matched = matched_crop;

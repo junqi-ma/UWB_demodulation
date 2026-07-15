@@ -1,14 +1,22 @@
-function basis = synchronousTone(n, tone_bin, period_samples)
+function basis = synchronousTone(n, tone_bin, period_samples, numeric_type)
 %SYNCHRONOUSTONE Generate a sample-clock-synchronous complex tone.
 %   Builds one period and tiles it, which is much cheaper than exp() on
 %   every absolute sample index for long captures.
+%
+%   NUMERIC_TYPE is optional ('single' or 'double', default 'single').
+
+if nargin < 4 || isempty(numeric_type)
+    numeric_type = 'single';
+end
 
 n = n(:);
 period_samples = round(period_samples);
-one_period = exp(1j*2*pi*tone_bin*(0:period_samples-1).'/period_samples);
+t = dw1000decoder.asNumeric((0:period_samples-1).', numeric_type);
+omega = dw1000decoder.asNumeric(2*pi*tone_bin/period_samples, numeric_type);
+one_period = exp(1j*omega.*t);
 
 if isempty(n)
-    basis = complex(zeros(0, 1));
+    basis = dw1000decoder.complexZeros(0, 1, numeric_type);
     return;
 end
 

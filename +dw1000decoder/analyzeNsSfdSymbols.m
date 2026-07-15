@@ -17,9 +17,9 @@ roi_end = min(numel(rx), ceil(last_end+half_width+reference.samples_per_symbol))
 roi = rx(roi_start:roi_end);
 matched_roi = fftfilt(flipud(conj(reference.preamble_waveform)), roi);
 
-correlations = zeros(size(shifts));
+correlations = zeros(size(shifts), 'like', real(matched_roi(1)));
 for shift_index = 1:length(shifts)
-    values = complex(zeros(length(sfd_sequence), 1));
+    values = zeros(length(sfd_sequence), 1, 'like', matched_roi(1));
     for symbol_index = 1:length(sfd_sequence)
         expected_end = round(preamble.start_sample+(params.preamble_repetitions+ ...
             shifts(shift_index)+symbol_index)*period-1);

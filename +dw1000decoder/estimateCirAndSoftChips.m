@@ -28,15 +28,18 @@ filter_end = last_nominal_end+offsets(end);
 [code_axis, code_filtered] = localMatchedFilterSegment(rx, code_mf, ...
     filter_start, filter_end);
 
-individual = complex(zeros(length(offsets), repetition_count));
-accumulator = complex(zeros(length(offsets), 1));
+proto = complex(cast(0, 'like', real(rx(1))));
+individual = zeros(length(offsets), repetition_count, 'like', proto);
+accumulator = zeros(length(offsets), 1, 'like', proto);
 valid_count = 0;
 for repetition = first_repetition:last_repetition
     repetition_start = preamble.start_sample+repetition*preamble.measured_period;
     nominal_end = repetition_start+code_length-1;
     positions = nominal_end+offsets;
-    values = interp1(code_axis, code_filtered, positions, 'linear', NaN);
-    if any(isnan(values))
+    values = interp1(double(code_axis), double(code_filtered), ...
+        double(positions), 'linear', NaN);
+    values = cast(values, 'like', proto);
+    if any(isnan(double(values)))
         continue;
     end
     valid_count = valid_count+1;
@@ -73,12 +76,12 @@ end
 
 [chip_axis, chip_filtered] = localMatchedFilterSegment(rx, cir_mf, ...
     min(chip_positions), max(chip_positions));
-complex_chips = interp1(chip_axis, chip_filtered, chip_positions, ...
-    'linear', NaN);
+complex_chips = interp1(double(chip_axis), double(chip_filtered), ...
+    double(chip_positions), 'linear', NaN);
 if any(isnan(complex_chips))
     error('Local CIR matched filter failed over the soft-chip region.');
 end
-complex_chips = complex_chips(:);
+complex_chips = cast(complex_chips(:), 'like', proto);
 
 phase_repetitions = min(32, params.preamble_repetitions);
 phase_first = (params.preamble_repetitions-phase_repetitions)* ...
@@ -151,13 +154,15 @@ if abs_end > numel(rx)
 end
 if abs_end < abs_start
     sample_axis = zeros(0, 1);
-    filtered = complex(zeros(0, 1));
+    filtered = zeros(0, 1, 'like', complex(cast(0, 'like', real(filter_taps(1)))));
     return;
 end
 
 segment = rx(abs_start:abs_end);
 if pad_left > 0 || pad_right > 0
-    segment = [zeros(pad_left, 1); segment; zeros(pad_right, 1)];
+    zero_pad = zeros(pad_left, 1, 'like', real(segment(1)));
+    zero_pad_r = zeros(pad_right, 1, 'like', real(segment(1)));
+    segment = [zero_pad; segment; zero_pad_r];
 end
 axis_start = abs_start-pad_left;
 % Short FIR (CIR template ~ tens of taps): time-domain filter is faster

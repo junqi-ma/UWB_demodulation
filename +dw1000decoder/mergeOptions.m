@@ -76,6 +76,14 @@ params.enable_interference_cancellation = ...
     logical(params.enable_interference_cancellation);
 params.enable_frame_crop = logical(params.enable_frame_crop);
 params.verbose = logical(params.verbose);
+if ~(ischar(params.numeric_type) || ...
+        (isstring(params.numeric_type) && isscalar(params.numeric_type)))
+    error('numeric_type must be ''single'' or ''double''.');
+end
+params.numeric_type = lower(char(params.numeric_type));
+if ~ismember(params.numeric_type, {'single', 'double'})
+    error('numeric_type must be ''single'' or ''double''.');
+end
 if ~isempty(params.max_psdu_bytes)
     if ~isscalar(params.max_psdu_bytes) || params.max_psdu_bytes < 0 || ...
             params.max_psdu_bytes > 127 || ...
@@ -88,6 +96,8 @@ if ~isempty(params.interference_coefficient)
             ~isnumeric(params.interference_coefficient)
         error('interference_coefficient must be empty or a scalar complex value.');
     end
-    params.interference_coefficient = complex(params.interference_coefficient);
+    params.interference_coefficient = complex( ...
+        dw1000decoder.asNumeric(params.interference_coefficient, ...
+        params.numeric_type));
 end
 end

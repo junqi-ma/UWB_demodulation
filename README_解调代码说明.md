@@ -38,7 +38,13 @@ options.code_index = 9;
 options.data_rate = 6.81;
 
 options.sfd_mode = 'auto';
+
+% Working precision for IQ / matched-filter arrays (default: single).
+% Use 'double' only if you need maximum numeric accuracy for debugging.
+options.numeric_type = 'single';
 ```
+
+当前分支默认使用 **single（单精度）** 存储与运算 IQ、参考波形和相关中间缓冲，以降低内存并加快大量数组运算。需要时可用 `options.numeric_type = 'double'` 切回双精度对比。
 
 `sfd_mode` 可设置为：
 

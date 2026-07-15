@@ -16,7 +16,7 @@ if fid < 0
 end
 
 fseek(fid, sample_offset * ant_num * 4, 'bof');
-raw = fread(fid, [2 * ant_num, sample_num], 'int16=>double');
+raw = fread(fid, [2 * ant_num, sample_num], 'int16=>single');
 fclose(fid);
 
 % Remove an incomplete sample frame at the end, if present.

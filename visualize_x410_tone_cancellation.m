@@ -45,7 +45,7 @@ if status ~= 0
     error('Failed to seek to the no-UWB interval.');
 end
 
-raw_quiet = fread(fid, [2, quiet_sample_num], 'int16=>double');
+raw_quiet = fread(fid, [2, quiet_sample_num], 'int16=>single');
 quiet_count = size(raw_quiet, 2);
 if quiet_count ~= quiet_sample_num
     error('Could not read the complete no-UWB interval.');
@@ -76,7 +76,7 @@ if status ~= 0
     error('Failed to seek to the display interval.');
 end
 
-raw_display = fread(fid, [2, display_sample_num], 'int16=>double');
+raw_display = fread(fid, [2, display_sample_num], 'int16=>single');
 display_count = size(raw_display, 2);
 if display_count < 2
     error('Not enough samples were read for visualization.');
@@ -185,6 +185,6 @@ sgtitle('X410 interference cancellation using a no-UWB training interval');
 %% Local function
 function basis = synchronousTone(n, tone_bin, period_samples)
 %SYNCHRONOUSTONE Avoid accumulated phase error over long recordings.
-    phase_index = mod(n, period_samples);
-    basis = exp(1j*2*pi*tone_bin*phase_index/period_samples);
+    phase_index = single(mod(n, period_samples));
+    basis = exp(1j*single(2*pi*tone_bin)*phase_index/single(period_samples));
 end

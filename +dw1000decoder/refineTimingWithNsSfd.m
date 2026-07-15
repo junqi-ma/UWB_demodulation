@@ -40,7 +40,7 @@ end
 
 expected = preamble.start_sample+round( ...
     params.preamble_repetitions*preamble.measured_period);
-correlations = zeros(numel(candidate_sequences), 1);
+correlations = zeros(numel(candidate_sequences), 1, 'like', real(rx(1)));
 start_samples = zeros(numel(candidate_sequences), 1);
 for k = 1:numel(candidate_sequences)
     sfd_reference = kron(candidate_sequences{k}, ...

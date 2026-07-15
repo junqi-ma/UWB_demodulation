@@ -178,7 +178,8 @@ results.cir_values = [];
 if packet_count > 0
     results.cir_delay_ns = frames(1).cir.delay_ns(:);
     cir_len = numel(results.cir_delay_ns);
-    results.cir_values = complex(zeros(cir_len, packet_count));
+    results.cir_values = zeros(cir_len, packet_count, ...
+        'like', complex(cast(0, 'like', real(frames(1).cir.values(1)))));
     for k = 1:packet_count
         values = frames(k).cir.values(:);
         n = min(cir_len, numel(values));
@@ -289,14 +290,16 @@ status = fseek(fid, quiet_offset*params.ant_num*4, 'bof');
 if status ~= 0
     error('Failed to seek to the interference-estimation interval.');
 end
-raw_quiet = fread(fid, [2*params.ant_num, quiet_num], 'int16=>double');
+raw_quiet = fread(fid, [2*params.ant_num, quiet_num], ...
+    sprintf('int16=>%s', params.numeric_type));
 if size(raw_quiet, 2) < quiet_num
     error('Could not read the interference-estimation interval.');
 end
 rx_quiet = dw1000decoder.selectIqChannel(raw_quiet, params.channel_index);
 quiet_n = quiet_offset+(0:length(rx_quiet)-1).';
 quiet_basis = dw1000decoder.synchronousTone(quiet_n, ...
-    params.interference_tone_bin, params.interference_period_samples);
+    params.interference_tone_bin, params.interference_period_samples, ...
+    params.numeric_type);
 coefficient = mean(rx_quiet.*conj(quiet_basis));
 clear file_guard;
 
@@ -313,6 +316,7 @@ pref_rx = pref_rx(:);
 D = batch.coarse_decimation;
 pref_ds = pref_rx(1:D:end);
 pref_ds = pref_ds/(norm(pref_ds)+eps);
+pref_ds = dw1000decoder.asNumeric(pref_ds, params.numeric_type);
 template = struct( ...
     'decimation', D, ...
     'preamble_ds', pref_ds, ...
@@ -476,7 +480,8 @@ status = fseek(fid, sample_offset*params.ant_num*4, 'bof');
 if status ~= 0
     error('Failed to seek to sample offset %d.', sample_offset);
 end
-raw = fread(fid, [2*params.ant_num, sample_num], 'int16=>double');
+raw = fread(fid, [2*params.ant_num, sample_num], ...
+    sprintf('int16=>%s', params.numeric_type));
 if size(raw, 2) ~= sample_num
     error('Could not read %d samples at offset %d.', sample_num, sample_offset);
 end
@@ -490,13 +495,17 @@ if params.enable_interference_cancellation
     coefficient = params.interference_coefficient(1);
     n = sample_offset+(0:length(rx)-1).';
     basis = dw1000decoder.synchronousTone(n, ...
-        params.interference_tone_bin, params.interference_period_samples);
+        params.interference_tone_bin, params.interference_period_samples, ...
+        params.numeric_type);
     rx = rx-coefficient.*basis;
 end
 
 frequency_shift = params.x410_center_frequency-params.dw1000_center_frequency;
 n = sample_offset+(0:length(rx)-1).';
-rx = rx.*exp(1j*2*pi*frequency_shift*n/params.fs_rx);
+omega = dw1000decoder.asNumeric(2*pi*frequency_shift/params.fs_rx, ...
+    params.numeric_type);
+n = dw1000decoder.asNumeric(n, params.numeric_type);
+rx = rx.*exp(1j*omega.*n);
 rx = rx-mean(rx);
 end
 

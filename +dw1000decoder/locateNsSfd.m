@@ -15,7 +15,7 @@ search_end = min(length(soft_chips)-length(spread)+1, expected_start+half_width)
 if search_end < search_start
     error('Capture is too short to contain the expected SFD.');
 end
-metric = zeros(search_end-search_start+1, 1);
+metric = zeros(search_end-search_start+1, 1, 'like', real(soft_chips(1)));
 for k = search_start:search_end
     segment = soft_chips(k:k+length(spread)-1);
     metric(k-search_start+1) = real(spread'*segment)/ ...

@@ -13,6 +13,12 @@ spread_code = zeros(length(code)*cfg.PreambleSpreadingFactor, 1);
 spread_code(1:cfg.PreambleSpreadingFactor:end) = code(:);
 sampled_code = zeros(length(spread_code)*cfg.SamplesPerPulse, 1);
 sampled_code(1:cfg.SamplesPerPulse:end) = spread_code;
+
+% Keep the heavy matched-filter templates in the working precision.
+preamble_waveform = dw1000decoder.asNumeric(preamble_waveform, params.numeric_type);
+spread_code = dw1000decoder.asNumeric(spread_code, params.numeric_type);
+sampled_code = dw1000decoder.asNumeric(sampled_code, params.numeric_type);
+
 reference = struct('cfg', cfg, 'fs', cfg.SampleRate, ...
     'samples_per_symbol', samples_per_symbol, ...
     'preamble_waveform', preamble_waveform, ...

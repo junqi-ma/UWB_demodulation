@@ -7,7 +7,8 @@ end
 file_guard = onCleanup(@() fclose(fid));
 
 fseek(fid, params.sample_offset*params.ant_num*4, 'bof');
-raw = fread(fid, [2*params.ant_num, params.sample_num], 'int16=>double');
+raw = fread(fid, [2*params.ant_num, params.sample_num], ...
+    sprintf('int16=>%s', params.numeric_type));
 if size(raw, 2) ~= params.sample_num
     error('Could not read the requested capture interval.');
 end
@@ -16,7 +17,8 @@ rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
 tone_frequency = params.interference_tone_bin / ...
     params.interference_period_samples * params.fs_rx;
 info = struct('enabled', params.enable_interference_cancellation, ...
-    'frequency_hz', tone_frequency, 'coefficient', complex(0), ...
+    'frequency_hz', tone_frequency, 'coefficient', ...
+    complex(dw1000decoder.asNumeric(0, params.numeric_type)), ...
     'suppression_db', NaN);
 
 if params.enable_interference_cancellation
@@ -30,7 +32,8 @@ if params.enable_interference_cancellation
             error('Failed to seek to the interference-estimation interval.');
         end
         quiet_num = params.interference_quiet_num;
-        raw_quiet = fread(fid, [2*params.ant_num, quiet_num], 'int16=>double');
+        raw_quiet = fread(fid, [2*params.ant_num, quiet_num], ...
+            sprintf('int16=>%s', params.numeric_type));
         if size(raw_quiet, 2) ~= quiet_num
             error(['Could not read the complete ', ...
                 'interference-estimation interval.']);
@@ -39,14 +42,16 @@ if params.enable_interference_cancellation
             raw_quiet, params.channel_index);
         quiet_n = params.interference_quiet_offset+(0:length(rx_quiet)-1).';
         quiet_basis = dw1000decoder.synchronousTone(quiet_n, ...
-            params.interference_tone_bin, params.interference_period_samples);
+            params.interference_tone_bin, params.interference_period_samples, ...
+            params.numeric_type);
         coefficient = mean(rx_quiet.*conj(quiet_basis));
         estimated_from_quiet = true;
     end
 
     rx_n = params.sample_offset+(0:length(rx)-1).';
     rx_basis = dw1000decoder.synchronousTone(rx_n, ...
-        params.interference_tone_bin, params.interference_period_samples);
+        params.interference_tone_bin, params.interference_period_samples, ...
+        params.numeric_type);
 
     % Optional suppression diagnostic (disabled by default for speed).
     report_suppression = isfield(params, 'verbose') && params.verbose;

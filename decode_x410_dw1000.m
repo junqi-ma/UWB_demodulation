@@ -12,6 +12,9 @@ end
 params = dw1000decoder.mergeOptions( ...
     dw1000decoder.defaultOptions(), options);
 addpath(params.helper_path);
+if params.verbose
+    fprintf('Working numeric type: %s\n', params.numeric_type);
+end
 
 [rx, interference] = dw1000decoder.readAndCancelInterference(params);
 rx = dw1000decoder.compensateCenterFrequency(rx, params);

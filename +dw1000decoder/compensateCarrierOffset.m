@@ -5,12 +5,15 @@ usable_peaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
 peak_values = readMatchedAt(preamble, usable_peaks);
 fit_count = min(240, length(peak_values));
 fit_time = (double(usable_peaks(1:fit_count))-double(usable_peaks(1)))/reference.fs;
-fit_phase = unwrap(angle(peak_values(1:fit_count)));
+fit_phase = unwrap(double(angle(peak_values(1:fit_count))));
 phase_fit = polyfit(fit_time, fit_phase, 1);
 frequency_offset = phase_fit(1)/(2*pi);
 
 nn = (0:numel(rx)-1).';
-rx = rx(:).*exp(-1j*2*pi*frequency_offset*nn/reference.fs);
+omega = dw1000decoder.asNumeric(2*pi*frequency_offset/reference.fs, ...
+    params.numeric_type);
+nn = dw1000decoder.asNumeric(nn, params.numeric_type);
+rx = rx(:).*exp(-1j*omega.*nn);
 
 phase_repetitions = min(32, preamble.detected_repetitions);
 known = repmat(reference.preamble_waveform, phase_repetitions, 1);

@@ -67,7 +67,7 @@ if metric_length < 1
     preamble = emptyPreambleResult(search_half_width, roi_start, roi_end);
     return;
 end
-metric = zeros(metric_length, 1);
+metric = zeros(metric_length, 1, 'like', real(score_roi(1)));
 for k = 0:accumulation_count-1
     first = 1+k*symbol_length;
     metric = metric+score_roi(first:first+metric_length-1);
@@ -171,7 +171,7 @@ metric_length = length(score)-(accumulation_count-1)*symbol_ds;
 if metric_length < 1
     error('Capture is too short for coarse preamble detection.');
 end
-metric = zeros(metric_length, 1);
+metric = zeros(metric_length, 1, 'like', real(score(1)));
 for k = 0:accumulation_count-1
     first = 1+k*symbol_ds;
     metric = metric+score(first:first+metric_length-1);
