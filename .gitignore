@@ -1,0 +1,27 @@
+# Generated decode outputs / MATLAB data
+decoded_results/
+*.mat
+*.fig
+
+# Raw / large capture files (keep local only)
+*.bin
+*.dat
+*.iq
+*.raw
+*.fc32
+*.sc16
+*.wav
+
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# Local agent / tool state
+.agents/
+.claude/
+.cursor/
