@@ -170,7 +170,7 @@ axis_start = abs_start-pad_left;
 if tap_count <= 128
     filtered = filter(filter_taps, 1, segment);
 else
-    filtered = fftfilt(filter_taps, segment);
+    filtered = dw1000decoder.fftfiltCompat(filter_taps, segment);
 end
 sample_axis = axis_start+(0:numel(filtered)-1).';
 filtered = filtered(:);

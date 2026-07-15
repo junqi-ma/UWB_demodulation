@@ -15,7 +15,8 @@ last_end = preamble.start_sample+(params.preamble_repetitions+shifts(end)+ ...
 roi_start = max(1, floor(first_end-half_width-reference.samples_per_symbol));
 roi_end = min(numel(rx), ceil(last_end+half_width+reference.samples_per_symbol));
 roi = rx(roi_start:roi_end);
-matched_roi = fftfilt(flipud(conj(reference.preamble_waveform)), roi);
+matched_roi = dw1000decoder.fftfiltCompat( ...
+    flipud(conj(reference.preamble_waveform)), roi);
 
 correlations = zeros(size(shifts), 'like', real(matched_roi(1)));
 for shift_index = 1:length(shifts)

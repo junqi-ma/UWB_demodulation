@@ -58,7 +58,7 @@ end
 function preamble = trackPreambleInRoi(rx, template, symbol_length, ...
         accumulation_count, search_half_width, params, roi_start, roi_end)
 roi = rx(roi_start:roi_end);
-matched_roi = fftfilt(flipud(conj(template)), roi);
+matched_roi = dw1000decoder.fftfiltCompat(flipud(conj(template)), roi);
 energy = sqrt(movsum(abs(roi).^2, [symbol_length-1, 0]));
 score_roi = abs(matched_roi)./(energy+eps);
 
@@ -164,7 +164,7 @@ template_ds = template(1:decimation:end);
 template_ds = template_ds/(norm(template_ds)+eps);
 rx_ds = rx(1:decimation:end);
 symbol_ds = max(1, round(symbol_length/decimation));
-matched = fftfilt(flipud(conj(template_ds)), rx_ds);
+matched = dw1000decoder.fftfiltCompat(flipud(conj(template_ds)), rx_ds);
 energy = sqrt(movsum(abs(rx_ds).^2, [symbol_ds-1, 0]));
 score = abs(matched)./(energy+eps);
 metric_length = length(score)-(accumulation_count-1)*symbol_ds;

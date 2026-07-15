@@ -390,7 +390,8 @@ end
 metric = energy;
 if batch.use_coarse_correlation && numel(template.preamble_ds) >= 4 && ...
         numel(rx_ds) > numel(template.preamble_ds)
-    matched = fftfilt(flipud(conj(template.preamble_ds)), rx_ds);
+    matched = dw1000decoder.fftfiltCompat( ...
+        flipud(conj(template.preamble_ds)), rx_ds);
     energy_norm = sqrt(movsum(abs(rx_ds).^2, ...
         [numel(template.preamble_ds)-1, 0]))+eps;
     corr_score = abs(matched)./energy_norm;

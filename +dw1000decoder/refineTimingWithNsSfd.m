@@ -50,7 +50,8 @@ for k = 1:numel(candidate_sequences)
     search_end = min(length(rx), expected+reference.samples_per_symbol+ ...
         length(sfd_reference)-1);
     search_signal = rx(search_start:search_end);
-    matched = fftfilt(flipud(conj(sfd_reference)), search_signal);
+    matched = dw1000decoder.fftfiltCompat( ...
+        flipud(conj(sfd_reference)), search_signal);
     energy = sqrt(movsum(abs(search_signal).^2, ...
         [length(sfd_reference)-1, 0]));
     score = abs(matched)./(energy+eps);
