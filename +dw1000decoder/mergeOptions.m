@@ -90,4 +90,18 @@ if ~isempty(params.interference_coefficient)
     end
     params.interference_coefficient = complex(params.interference_coefficient);
 end
+if ~isempty(params.blank_intervals)
+    if ~isnumeric(params.blank_intervals) || size(params.blank_intervals, 2) ~= 2
+        error('blank_intervals must be empty or an N-by-2 numeric array [start end].');
+    end
+    params.blank_intervals = double(params.blank_intervals);
+end
+if ~isscalar(params.blank_taper_samples) || params.blank_taper_samples < 0 || ...
+        params.blank_taper_samples ~= fix(params.blank_taper_samples)
+    error('blank_taper_samples must be a non-negative integer.');
+end
+if ~isscalar(params.blank_weight) || params.blank_weight < 0 || ...
+        params.blank_weight > 1
+    error('blank_weight must be a scalar in [0, 1] (0=full blank, 1=no blank).');
+end
 end

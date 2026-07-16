@@ -78,6 +78,20 @@ if params.enable_interference_cancellation
         fprintf('  Loaded-segment suppression: %.3f dB\n', suppression_db);
     end
 end
+
+% Optional time-domain blanking of known interferer intervals (e.g. DW1000
+% bursts before QM35 decoding in a mixed capture).
+if ~isempty(params.blank_intervals)
+    [rx, blank_info] = dw1000decoder.applyBlankIntervals(rx, ...
+        params.sample_offset, params.blank_intervals, ...
+        params.blank_taper_samples, params.blank_weight);
+    info.blank = blank_info;
+    if isfield(params, 'verbose') && params.verbose && blank_info.applied_count > 0
+        fprintf('Blanked %d interferer interval(s), %d samples touched (weight=%.2f).\n', ...
+            blank_info.applied_count, blank_info.samples_touched, params.blank_weight);
+    end
+end
+
 rx = rx-mean(rx);
 clear file_guard;
 end
