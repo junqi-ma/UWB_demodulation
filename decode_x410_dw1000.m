@@ -1,7 +1,11 @@
-function result = decode_x410_dw1000(options)
+function result = decode_x410_dw1000(options, preprocessed_rx, interference)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
+%   RESULT = DECODE_X410_DW1000(OPTIONS, RX, INTERFERENCE) skips file I/O
+%   and tone cancellation, using the already tone-cancelled RX vector and
+%   its INTERFERENCE diagnostic structure. This ensures downstream decode
+%   and comparison operate on exactly the same preprocessed samples.
 %
 %   Processing stages are implemented as separate files in the
 %   +dw1000decoder package folder.
@@ -13,7 +17,20 @@ params = dw1000decoder.mergeOptions( ...
     dw1000decoder.defaultOptions(), options);
 addpath(params.helper_path);
 
-[rx, interference] = dw1000decoder.readAndCancelInterference(params);
+if nargin < 2 || isempty(preprocessed_rx)
+    [rx, interference] = dw1000decoder.readAndCancelInterference(params);
+else
+    if ~isnumeric(preprocessed_rx) || ~isvector(preprocessed_rx)
+        error('decode_x410_dw1000:InvalidPreprocessedRx', ...
+            'Preprocessed RX must be a numeric vector.');
+    end
+    rx = preprocessed_rx(:);
+    if nargin < 3 || isempty(interference)
+        interference = struct('enabled', true, 'frequency_hz', NaN, ...
+            'coefficient', complex(NaN), 'suppression_db', NaN, ...
+            'source', 'preprocessed input');
+    end
+end
 rx = dw1000decoder.compensateCenterFrequency(rx, params);
 reference = dw1000decoder.buildDw1000Reference(params);
 rx_work = dw1000decoder.resampleCapture(rx, params.fs_rx, reference.fs);

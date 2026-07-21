@@ -1,5 +1,6 @@
 # Generated decode outputs / MATLAB data
 decoded_results/
+regenerated_qm35/
 *.mat
 *.fig
 
