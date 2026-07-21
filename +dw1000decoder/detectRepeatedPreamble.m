@@ -19,11 +19,11 @@ end
 [coarse_end, ~] = coarsePreamblePeak(rx, template, symbol_length, ...
     accumulation_count, decimation);
 
-% The coarse peak is typically near the *middle/end* of the repeated SYNC,
-% not the first symbol. The ROI must therefore look far enough *backward*
-% to include the whole configured preamble, plus a small forward margin.
+% The coarse peak may fall anywhere on the repeated-SYNC metric plateau.
+% Keep a full configured preamble plus margin on both sides so the ROI still
+% covers the entire SYNC field when the coarse maximum occurs near its start.
 roi_pre = (params.preamble_repetitions+32)*symbol_length;
-roi_post = 48*symbol_length;
+roi_post = (params.preamble_repetitions+32)*symbol_length;
 roi_start = max(1, round(coarse_end)-roi_pre);
 roi_end = min(n_rx, round(coarse_end)+roi_post);
 

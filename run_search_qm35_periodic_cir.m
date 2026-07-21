@@ -4,6 +4,7 @@
 % 1) Find the first QM35 packet in qm35_dw1000_1.dat (QM35 PHY profile).
 % 2) Using the known ~5 ms inter-packet interval, search subsequent slots.
 % 3) Estimate CIR for every successful lock and visualize results.
+% 4) Use pre-first-path CIR bins as DW1000 interference proxy and report SIR.
 clear;
 close all;
 clc;
@@ -14,7 +15,7 @@ addpath(project_dir);
 
 %% -------------------- Capture --------------------
 options = struct();
-options.file_name = 'F:\qm35_dw1000_1.dat';
+options.file_name = 'E:\qm35_dw1000_1.dat';
 options.ant_num = 1;
 options.channel_index = 1;
 options.fs_rx = 737.28e6;
@@ -38,13 +39,25 @@ options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
     -1; -1; 1; -1; -1; 1; -1; 1; -1; 1; -1; -1; ...
     -1; 1; 1; -1; -1; -1; 1; -1; 1; 1; -1; -1];
 
-options.cir_pre_samples = 8;
+% CIR window: pre bins are range samples strictly before the nominal first path
+% (delay=0). Previously ~8 (~5 usable after guard); expand to 15 for pre-path
+% DW1000 interference / SIR analysis.
+options.cir_pre_samples = 15;
 options.cir_post_samples = 30;
 options.cir_max_path_m = [];
 options.max_psdu_bytes = 32;
 options.enable_frame_crop = true;
 options.verbose = false;
 options.show_plots = false;
+
+%% -------------------- Pre-path SIR analysis --------------------
+% Model: bins before first path contain little/no QM35 multipath energy, so
+% residual power there proxies DW1000 interference + thermal noise after
+% code-despread. Signal = first-path peak power of the QM35 CIR.
+sir = struct();
+sir.pre_path_guard_bins = 2;   % exclude leading edge of first path
+sir.signal_half_width = 1;     % peak search window around delay=0 (bins)
+sir.min_pre_bins = 4;          % require enough pre-path bins after guard
 
 %% -------------------- Tone cancel --------------------
 options.enable_interference_cancellation = true;
@@ -183,6 +196,8 @@ end
 
 fprintf('\n========== Summary ==========\n');
 fprintf('QM35 packets found            : %d\n', n_found);
+fprintf('CIR pre / post samples        : %d / %d\n', ...
+    options.cir_pre_samples, options.cir_post_samples);
 for k = 1:n_found
     r = records(k);
     fprintf(['#%02d  t=%.3f ms  start=%d  SFD=%s  corr=%.3f  ', ...
@@ -192,6 +207,14 @@ for k = 1:n_found
         r.result.phr.psdu_length_bytes, r.result.payload.fcs_pass);
 end
 fprintf('=============================\n');
+
+%% -------------------- Pre-path SIR (DW1000 on QM35) --------------------
+sir_table = emptySirTable(n_found);
+if n_found > 0 && ~isempty(cir_delay_ns)
+    sir_table = analyzePrePathSir(cir_values, cir_delay_ns, starts_ms, ...
+        records, sir);
+    printSirSummary(sir_table, sir, options.cir_pre_samples);
+end
 
 %% -------------------- Plots --------------------
 % 1) Arrival timeline
@@ -226,11 +249,13 @@ if n_found > 0
         mag = abs(h) / (max(abs(h)) + eps);
         plot(cir_delay_ns, mag, 'LineWidth', 1.0);
     end
-    xline(0, 'k--');
+    xline(0, 'k--', 'first path (nominal)');
     grid on;
     xlabel('Relative delay (ns)');
     ylabel('Normalized |CIR|');
-    title('Per-packet CIR magnitude (peak-normalized)');
+    title(sprintf( ...
+        'Per-packet CIR magnitude (peak-normalized, pre=%d post=%d)', ...
+        options.cir_pre_samples, options.cir_post_samples));
     if n_found <= 12
         legend(arrayfun(@(k) sprintf('#%d t=%.2fms', k, starts_ms(k)), ...
             1:n_found, 'UniformOutput', false), 'Location', 'eastoutside');
@@ -260,6 +285,12 @@ if n_found >= 2
     title('Measured QM35 packet spacing');
 end
 
+% 4) Pre-path interference / SIR
+if n_found > 0 && any([sir_table.ok])
+    plotPrePathSir(cir_values, cir_delay_ns, sir_table, sir, ...
+        options.cir_pre_samples, starts_ms);
+end
+
 %% -------------------- Save --------------------
 out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_periodic_cir');
 if ~isfolder(out_dir)
@@ -267,9 +298,10 @@ if ~isfolder(out_dir)
 end
 save(fullfile(out_dir, 'qm35_periodic_cir.mat'), ...
     'records', 'cir_values', 'cir_delay_ns', 'starts_ms', ...
-    'options', 'search', 'first', '-v7.3');
+    'sir_table', 'sir', 'options', 'search', 'first', '-v7.3');
 writePeriodicCsv(fullfile(out_dir, 'qm35_periodic_summary.csv'), ...
     records, options.fs_rx);
+writeSirCsv(fullfile(out_dir, 'qm35_prepath_sir.csv'), sir_table);
 figs = findall(0, 'Type', 'figure');
 for k = 1:numel(figs)
     try
@@ -284,6 +316,7 @@ assignin('base', 'qm35_periodic_records', records);
 assignin('base', 'qm35_periodic_cir_values', cir_values);
 assignin('base', 'qm35_periodic_cir_delay_ns', cir_delay_ns);
 assignin('base', 'qm35_periodic_starts_ms', starts_ms);
+assignin('base', 'qm35_prepath_sir_table', sir_table);
 
 %% ========================================================================
 function options = estimateToneCoefficientOnce(options, total_samples)
@@ -503,6 +536,252 @@ for k = 1:numel(records)
         exp_ms, d_ms, r.result.sfd.name, ...
         r.result.sfd.correlation, r.result.preamble.detected_repetitions, ...
         r.result.phr.psdu_length_bytes, r.result.payload.fcs_pass);
+end
+clear c;
+end
+
+function t = emptySirTable(n)
+t = repmat(struct( ...
+    'index', NaN, ...
+    'time_ms', NaN, ...
+    'ok', false, ...
+    'n_pre_bins', NaN, ...
+    'fp_delay_ns', NaN, ...
+    'fp_idx', NaN, ...
+    'P_signal', NaN, ...
+    'P_interf_mean', NaN, ...
+    'P_interf_rms', NaN, ...
+    'P_interf_max', NaN, ...
+    'sir_db', NaN, ...
+    'sir_peak_db', NaN, ...
+    'prepath_floor_db', NaN, ...
+    'fcs_pass', false), n, 1);
+end
+
+function sir_table = analyzePrePathSir(cir_values, cir_delay_ns, starts_ms, ...
+        records, sir)
+%ANALYZEPREPATHSIR Estimate DW1000-on-QM35 SIR from pre-first-path CIR bins.
+%
+%   Pre-path region (delay < 0, minus a small guard near the first path)
+%   should contain little QM35 multipath; residual power is treated as
+%   DW1000 interference + noise after code despreading.
+%
+%   Definitions (per packet, on L2-normalized CIR taps):
+%     P_signal      = |h_fp|^2 at nominal first path (peak near delay=0)
+%     P_interf_mean = mean(|h_pre|^2) over pre-path bins
+%     SIR_dB        = 10*log10(P_signal / P_interf_mean)
+%     SIR_peak_dB   = 10*log10(P_signal / max(|h_pre|^2))  (worst bin)
+
+n_pkt = size(cir_values, 2);
+sir_table = emptySirTable(n_pkt);
+delay = cir_delay_ns(:);
+L = numel(delay);
+
+% Nominal first-path index: delay closest to 0.
+[~, fp0] = min(abs(delay));
+guard = max(0, round(sir.pre_path_guard_bins));
+half_w = max(0, round(sir.signal_half_width));
+
+for k = 1:n_pkt
+    sir_table(k).index = k;
+    sir_table(k).time_ms = starts_ms(k);
+    if k <= numel(records) && isstruct(records(k).result) && ...
+            isfield(records(k).result, 'payload')
+        sir_table(k).fcs_pass = logical(records(k).result.payload.fcs_pass);
+    end
+
+    h = cir_values(:, k);
+    if all(isnan(h)) || numel(h) < L
+        continue;
+    end
+    h = h(1:L);
+    pwr = abs(h).^2;
+
+    % Signal: strongest tap in a small window around delay=0.
+    i0 = max(1, fp0 - half_w);
+    i1 = min(L, fp0 + half_w);
+    [P_s, loc] = max(pwr(i0:i1));
+    fp_idx = i0 + loc - 1;
+
+    % Pre-path: all bins strictly before (fp_idx - guard).
+    pre_end = fp_idx - 1 - guard;
+    if pre_end < sir.min_pre_bins
+        continue;
+    end
+    pre_idx = 1:pre_end;
+    p_pre = pwr(pre_idx);
+    p_pre = p_pre(~isnan(p_pre));
+    if numel(p_pre) < sir.min_pre_bins || P_s <= 0 || ~isfinite(P_s)
+        continue;
+    end
+
+    P_i_mean = mean(p_pre);
+    P_i_rms = sqrt(mean(p_pre.^2));
+    P_i_max = max(p_pre);
+
+    sir_table(k).ok = true;
+    sir_table(k).n_pre_bins = numel(p_pre);
+    sir_table(k).fp_delay_ns = delay(fp_idx);
+    sir_table(k).fp_idx = fp_idx;
+    sir_table(k).P_signal = P_s;
+    sir_table(k).P_interf_mean = P_i_mean;
+    sir_table(k).P_interf_rms = P_i_rms;
+    sir_table(k).P_interf_max = P_i_max;
+    sir_table(k).sir_db = 10*log10(P_s / max(P_i_mean, eps));
+    sir_table(k).sir_peak_db = 10*log10(P_s / max(P_i_max, eps));
+    sir_table(k).prepath_floor_db = 10*log10(P_i_mean / max(P_s, eps));
+end
+end
+
+function printSirSummary(sir_table, sir, cir_pre_samples)
+ok = [sir_table.ok];
+fprintf('\n========== Pre-path SIR (DW1000 → QM35) ==========\n');
+fprintf('CIR pre-path bins configured  : %d\n', cir_pre_samples);
+fprintf('Guard bins before first path  : %d\n', sir.pre_path_guard_bins);
+fprintf('Packets with valid SIR        : %d / %d\n', nnz(ok), numel(sir_table));
+if ~any(ok)
+    fprintf('No valid pre-path SIR estimates.\n');
+    fprintf('=================================================\n');
+    return;
+end
+
+sir_db = [sir_table(ok).sir_db];
+sir_pk = [sir_table(ok).sir_peak_db];
+floor_db = [sir_table(ok).prepath_floor_db];
+n_pre = [sir_table(ok).n_pre_bins];
+
+fprintf('Pre-path bins used (mean)     : %.1f\n', mean(n_pre));
+fprintf('SIR = P_fp / mean(P_pre)      : mean=%.2f  std=%.2f  min=%.2f  max=%.2f dB\n', ...
+    mean(sir_db), std(sir_db), min(sir_db), max(sir_db));
+fprintf('SIR_peak = P_fp / max(P_pre)  : mean=%.2f  std=%.2f  min=%.2f  max=%.2f dB\n', ...
+    mean(sir_pk), std(sir_pk), min(sir_pk), max(sir_pk));
+fprintf('Pre-path floor vs FP          : mean=%.2f  std=%.2f dB\n', ...
+    mean(floor_db), std(floor_db));
+fprintf('\nPer-packet SIR (dB):\n');
+for k = 1:numel(sir_table)
+    if ~sir_table(k).ok
+        fprintf('  #%02d  t=%.3f ms  SIR=n/a\n', k, sir_table(k).time_ms);
+        continue;
+    end
+    fprintf(['  #%02d  t=%.3f ms  SIR=%.2f dB  SIR_peak=%.2f dB  ', ...
+        'floor=%.1f dB  pre_bins=%d  FCS=%d\n'], ...
+        k, sir_table(k).time_ms, sir_table(k).sir_db, ...
+        sir_table(k).sir_peak_db, sir_table(k).prepath_floor_db, ...
+        sir_table(k).n_pre_bins, sir_table(k).fcs_pass);
+end
+fprintf('=================================================\n');
+fprintf(['Note: CIR taps are L2-normalized per packet, so SIR here is a ', ...
+    'relative first-path / pre-path energy ratio (despread interference ', ...
+    'floor), not absolute RF SIR.\n']);
+end
+
+function plotPrePathSir(cir_values, cir_delay_ns, sir_table, sir, ...
+        cir_pre_samples, starts_ms)
+ok = [sir_table.ok];
+idx_ok = find(ok);
+if isempty(idx_ok)
+    return;
+end
+
+delay = cir_delay_ns(:);
+[~, fp0] = min(abs(delay));
+guard = max(0, round(sir.pre_path_guard_bins));
+
+figure('Name', 'QM35 pre-path SIR (DW1000 interference)', ...
+    'Color', 'w', 'Position', [100 40 1100 720]);
+
+% (a) Zoomed CIR around pre-path + first path
+subplot(2, 2, 1); hold on;
+n_show = min(numel(idx_ok), 20);
+for ii = 1:n_show
+    k = idx_ok(ii);
+    h = cir_values(:, k);
+    if all(isnan(h))
+        continue;
+    end
+    mag = abs(h) / (max(abs(h)) + eps);
+    plot(delay, mag, 'LineWidth', 0.9);
+end
+xline(0, 'k--', 'first path');
+if fp0 > guard + 1
+    pre_end_delay = delay(max(1, fp0 - 1 - guard));
+    xline(pre_end_delay, 'r:', 'pre-path end');
+end
+grid on;
+xlabel('Relative delay (ns)');
+ylabel('Normalized |CIR|');
+title(sprintf('CIR zoom (pre=%d bins, guard=%d)', ...
+    cir_pre_samples, guard));
+xlim([min(delay), max(5, min(max(delay), 20))]);
+
+% (b) Pre-path floor (dB relative to first path) per packet
+subplot(2, 2, 2); hold on;
+floor_db = nan(numel(sir_table), 1);
+sir_db = nan(numel(sir_table), 1);
+for k = 1:numel(sir_table)
+    if sir_table(k).ok
+        floor_db(k) = sir_table(k).prepath_floor_db;
+        sir_db(k) = sir_table(k).sir_db;
+    end
+end
+stem(1:numel(sir_table), floor_db, 'filled', 'Color', [0.85 0.35 0.15]);
+floor_mu = mean(floor_db(isfinite(floor_db)));
+if isfinite(floor_mu)
+    yline(floor_mu, 'k--', sprintf('mean %.1f dB', floor_mu));
+end
+grid on;
+xlabel('Packet index');
+ylabel('Pre-path floor / P_{fp} (dB)');
+title('Pre-first-path interference floor');
+
+% (c) SIR over packet index / time
+subplot(2, 2, 3); hold on;
+stem(1:numel(sir_table), sir_db, 'filled', 'Color', [0.2 0.45 0.85]);
+sir_mu = mean(sir_db(isfinite(sir_db)));
+if isfinite(sir_mu)
+    yline(sir_mu, 'r--', sprintf('mean %.1f dB', sir_mu));
+end
+grid on;
+xlabel('Packet index');
+ylabel('SIR (dB)');
+title('SIR = P_{first path} / mean(P_{pre-path})');
+
+% (d) SIR vs arrival time
+subplot(2, 2, 4); hold on;
+t_ok = starts_ms(idx_ok);
+sir_ok = [sir_table(idx_ok).sir_db];
+plot(t_ok, sir_ok, 'o-', 'LineWidth', 1.2, 'MarkerFaceColor', [0.2 0.55 0.9]);
+if numel(sir_ok) >= 2
+    yline(mean(sir_ok), 'r--');
+end
+grid on;
+xlabel('Arrival time (ms)');
+ylabel('SIR (dB)');
+title('DW1000→QM35 pre-path SIR over time');
+
+sgtitle(sprintf([ ...
+    'Pre-first-path SIR analysis  |  CIR pre=%d  guard=%d  |  ', ...
+    'valid %d/%d packets'], ...
+    cir_pre_samples, guard, nnz(ok), numel(sir_table)), ...
+    'Interpreter', 'none');
+end
+
+function writeSirCsv(csv_file, sir_table)
+fid = fopen(csv_file, 'w');
+if fid < 0
+    return;
+end
+c = onCleanup(@() fclose(fid));
+fprintf(fid, ['index,time_ms,ok,n_pre_bins,fp_delay_ns,fp_idx,', ...
+    'P_signal,P_interf_mean,P_interf_max,sir_db,sir_peak_db,', ...
+    'prepath_floor_db,fcs_pass\n']);
+for k = 1:numel(sir_table)
+    s = sir_table(k);
+    fprintf(fid, ['%d,%.6f,%d,%g,%.6f,%g,%.6e,%.6e,%.6e,', ...
+        '%.4f,%.4f,%.4f,%d\n'], ...
+        s.index, s.time_ms, s.ok, s.n_pre_bins, s.fp_delay_ns, s.fp_idx, ...
+        s.P_signal, s.P_interf_mean, s.P_interf_max, ...
+        s.sir_db, s.sir_peak_db, s.prepath_floor_db, s.fcs_pass);
 end
 clear c;
 end

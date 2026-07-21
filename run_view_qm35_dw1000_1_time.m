@@ -12,7 +12,7 @@ cd(project_dir);
 addpath(project_dir);
 
 %% -------------------- File / load window --------------------
-file_name = 'F:\qm35_dw1000_1.dat';
+file_name = 'E:\qm35_dw1000_1.dat';
 fs = 737.28e6;          % X410 sample rate (Hz)
 ant_num = 1;
 channel_index = 1;
@@ -168,16 +168,16 @@ t_ms = t(idx) * 1e3;
 figure('Name', 'Conflict window — tone cancel time domain', 'Color', 'w', ...
     'Position', [60 40 1100 820]);
 
-subplot(4, 1, 1);
-plot(t_us, real(rx_raw(idx)), 'Color', [0.6 0.6 0.9]); hold on;
-plot(t_us, imag(rx_raw(idx)), 'Color', [0.9 0.6 0.6]);
-grid on;
-xlabel('Time (\mus)');
-ylabel('ADC');
-title(sprintf('Raw I/Q  |  offset=%d  N=%d', sample_offset, n_plot));
-legend('I raw', 'Q raw', 'Location', 'best');
+% subplot(4, 1, 1);
+% plot(t_us, real(rx_raw(idx)), 'Color', [0.6 0.6 0.9]); hold on;
+% plot(t_us, imag(rx_raw(idx)), 'Color', [0.9 0.6 0.6]);
+% grid on;
+% xlabel('Time (\mus)');
+% ylabel('ADC');
+% title(sprintf('Raw I/Q  |  offset=%d  N=%d', sample_offset, n_plot));
+% legend('I raw', 'Q raw', 'Location', 'best');
 
-subplot(4, 1, 2);
+subplot(2, 1, 1);
 plot(t_us, real(rx(idx)), 'b'); hold on;
 plot(t_us, imag(rx(idx)), 'r');
 grid on;
@@ -191,7 +191,7 @@ else
 end
 legend('I', 'Q', 'Location', 'best');
 
-subplot(4, 1, 3);
+subplot(2, 1, 2);
 plot(t_us, amp_raw(idx), 'Color', [0.65 0.65 0.65]); hold on;
 plot(t_us, amp(idx), 'k');
 grid on;
@@ -200,14 +200,14 @@ ylabel('|IQ|');
 title('Envelope |IQ| before / after tone cancel');
 legend('|raw|', '|cleaned|', 'Location', 'best');
 
-subplot(4, 1, 4);
-plot(t_ms, power_db_raw(idx), 'Color', [0.7 0.7 0.7]); hold on;
-plot(t_ms, power_db(idx), 'Color', [0.1 0.4 0.8]);
-grid on;
-xlabel('Time (ms)');
-ylabel('Magnitude (dB)');
-title('Envelope dB before / after tone cancel');
-legend('raw', 'cleaned', 'Location', 'best');
+% subplot(3, 1, 3);
+% plot(t_ms, power_db_raw(idx), 'Color', [0.7 0.7 0.7]); hold on;
+% plot(t_ms, power_db(idx), 'Color', [0.1 0.4 0.8]);
+% grid on;
+% xlabel('Time (ms)');
+% ylabel('Magnitude (dB)');
+% title('Envelope dB before / after tone cancel');
+% legend('raw', 'cleaned', 'Location', 'best');
 
 sgtitle(sprintf('%s — conflict window + tone cancel', file_name), ...
     'Interpreter', 'none');
