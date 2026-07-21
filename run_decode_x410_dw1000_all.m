@@ -9,7 +9,7 @@ clc;
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\QM35_1.dat';
+options.file_name = 'F:\UWB基带数据\QM35_1.dat';
 options.ant_num = 1;
 options.channel_index = 1;
 

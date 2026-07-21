@@ -13,7 +13,7 @@ close all;
 %   4. Compare time waveforms and spectra before/after cancellation.
 
 %% Parameters
-file_name = 'F:\qm35_1.dat';
+file_name = 'F:\UWB基带数据\qm35_1.dat';
 fs = 737.28e6;                 % Sample rate (Hz)
 center_frequency = 6489.6e6;  % RF center frequency (Hz), modify if needed
 

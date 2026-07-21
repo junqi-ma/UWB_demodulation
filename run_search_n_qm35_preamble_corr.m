@@ -22,7 +22,7 @@ N = 50;
 
 %% -------------------- Capture --------------------
 options = struct();
-options.file_name = 'F:\qm35_dw1000_1.dat';
+options.file_name = 'F:\UWB基带数据\qm35_dw1000_1.dat';
 options.ant_num = 1;
 options.channel_index = 1;
 options.fs_rx = 737.28e6;
@@ -106,6 +106,14 @@ fig_dir = fullfile(out_dir, 'preamble_corr_figs');
 if ~isfolder(fig_dir)
     mkdir(fig_dir);
 end
+
+% Export the packets with the weakest preamble correlation for standalone
+% analysis.  Each .dat file preserves the original interleaved int16 IQ
+% bytes, so it can be used as a normal capture with sample_offset = 0.
+worst = struct();
+worst.enable = true;
+worst.count = 10;
+worst.output_dir = 'F:\qm35_worst10_segments';
 
 %% -------------------- File + tone once --------------------
 info = dir(options.file_name);
@@ -240,8 +248,16 @@ if n_found >= 2
     end
 end
 
+%% -------------------- Worst-interference segments --------------------
+worst_segments = struct([]);
+if worst.enable
+    fprintf('Exporting up to %d worst-interference segments...\n', worst.count);
+    worst_segments = exportWorstSegments(records, options, worst);
+end
+
 save(fullfile(out_dir, 'qm35_n_preamble_corr.mat'), ...
-    'records', 'options', 'search', 'N', 'n_found', 'anchor', '-v7.3');
+    'records', 'options', 'search', 'worst', 'worst_segments', ...
+    'N', 'n_found', 'anchor', '-v7.3');
 writeCsv(fullfile(out_dir, 'qm35_n_summary.csv'), records, options.fs_rx);
 assignin('base', 'qm35_n_records', records);
 assignin('base', 'qm35_n_found', n_found);
@@ -249,6 +265,9 @@ assignin('base', 'qm35_n_found', n_found);
 fprintf('\n========== Done ==========\n');
 fprintf('Packets found : %d / %d\n', n_found, N);
 fprintf('Figures       : %s\n', fig_dir);
+if worst.enable
+    fprintf('Worst segments: %s\n', worst.output_dir);
+end
 for k = 1:n_found
     r = records(k);
     fprintf('#%02d t=%.3f ms start=%d win=[%d + %d) corr=%.3f FCS=%d\n', ...
@@ -604,6 +623,118 @@ for k = 1:numel(records)
         (r.abs_start_sample-r.expected_start_sample)/fs_rx*1e3, ...
         r.window_offset, r.window_samples, r.sfd_name, r.sfd_corr, ...
         r.sync_reps, r.psdu_len, r.fcs_pass);
+end
+clear c;
+end
+
+function exported = exportWorstSegments(records, options, worst)
+% Lower preamble metric_peak means weaker correlation and is treated as
+% more severe interference.  Non-finite metrics are ignored.
+n = numel(records);
+metric = nan(n, 1);
+for k = 1:n
+    if ~isempty(records(k).corr_diag) && ...
+            isfield(records(k).corr_diag, 'metric_peak')
+        metric(k) = records(k).corr_diag.metric_peak;
+    end
+end
+
+valid = find(isfinite(metric));
+[~, order] = sort(metric(valid), 'ascend');
+selected = valid(order(1:min(worst.count, numel(order))));
+
+if ~isfolder(worst.output_dir)
+    mkdir(worst.output_dir);
+end
+
+fid_in = fopen(options.file_name, 'rb');
+if fid_in < 0
+    error('Cannot open source capture for segment export: %s', options.file_name);
+end
+cleanup_in = onCleanup(@() fclose(fid_in));
+
+bytes_per_sample = 2 * 2 * options.ant_num; % I/Q * int16 * antennas
+template = struct('rank',NaN, 'record_index',NaN, 'slot_index',NaN, ...
+    'correlation_metric_peak',NaN, 'sfd_corr',NaN, 'fcs_pass',false, ...
+    'source_file','', 'source_sample_offset',NaN, 'sample_count',NaN, ...
+    'fs_rx',NaN, 'time_start_s',NaN, 'segment_file','');
+exported = repmat(template, numel(selected), 1);
+
+for rank = 1:numel(selected)
+    r = records(selected(rank));
+    segment_name = sprintf('rank_%02d_packet_%03d_sample_%d.dat', ...
+        rank, r.index, r.window_offset);
+    segment_file = fullfile(worst.output_dir, segment_name);
+
+    byte_offset = r.window_offset * bytes_per_sample;
+    byte_count = r.window_samples * bytes_per_sample;
+    if fseek(fid_in, byte_offset, 'bof') ~= 0
+        error('Cannot seek to sample %d in %s.', r.window_offset, options.file_name);
+    end
+    raw_bytes = fread(fid_in, byte_count, '*uint8');
+    if numel(raw_bytes) ~= byte_count
+        error('Short read while exporting %s: expected %d, got %d bytes.', ...
+            segment_name, byte_count, numel(raw_bytes));
+    end
+
+    fid_out = fopen(segment_file, 'wb');
+    if fid_out < 0
+        error('Cannot create segment file: %s', segment_file);
+    end
+    cleanup_out = onCleanup(@() fclose(fid_out));
+    written = fwrite(fid_out, raw_bytes, 'uint8');
+    clear cleanup_out;
+    if written ~= byte_count
+        error('Short write while exporting segment: %s', segment_file);
+    end
+
+    e = template;
+    e.rank = rank;
+    e.record_index = r.index;
+    e.slot_index = r.slot_index;
+    e.correlation_metric_peak = metric(selected(rank));
+    e.sfd_corr = r.sfd_corr;
+    e.fcs_pass = r.fcs_pass;
+    e.source_file = options.file_name;
+    e.source_sample_offset = r.window_offset;
+    e.sample_count = r.window_samples;
+    e.fs_rx = options.fs_rx;
+    e.time_start_s = r.time_start_s;
+    e.segment_file = segment_file;
+    exported(rank) = e;
+
+    segment_record = r; %#ok<NASGU>
+    segment_info = e; %#ok<NASGU>
+    save(fullfile(worst.output_dir, ...
+        sprintf('rank_%02d_packet_%03d_metadata.mat', rank, r.index)), ...
+        'segment_record', 'segment_info', '-v7.3');
+    fprintf('  rank %02d metric=%.4f packet=%d -> %s\n', ...
+        rank, e.correlation_metric_peak, r.index, segment_file);
+end
+
+save(fullfile(worst.output_dir, 'worst10_metadata.mat'), ...
+    'exported', 'worst', 'options', '-v7.3');
+writeWorstCsv(fullfile(worst.output_dir, 'worst10_summary.csv'), exported);
+clear cleanup_in;
+end
+
+function writeWorstCsv(csv_file, exported)
+fid = fopen(csv_file, 'w');
+if fid < 0
+    warning('Cannot create worst-segment summary: %s', csv_file);
+    return;
+end
+c = onCleanup(@() fclose(fid));
+fprintf(fid, ['rank,record_index,slot_index,metric_peak,sfd_corr,fcs_pass,', ...
+    'source_sample_offset,sample_count,time_ms,fs_rx,segment_file\n']);
+for k = 1:numel(exported)
+    e = exported(k);
+    safe_file = strrep(e.segment_file, '"', '""');
+    fprintf(fid, '%d,%d,%d,%.9g,%.9g,%d,%d,%d,%.6f,%.9g,"%s"\n', ...
+        e.rank, e.record_index, e.slot_index, ...
+        e.correlation_metric_peak, e.sfd_corr, e.fcs_pass, ...
+        e.source_sample_offset, e.sample_count, e.time_start_s*1e3, ...
+        e.fs_rx, safe_file);
 end
 clear c;
 end

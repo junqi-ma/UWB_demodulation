@@ -7,7 +7,7 @@ clc;
 % 并分析与采样时钟相关的复制谱线、镜像、直流和功率占比。
 
 %% Parameters
-file_name = 'F:\qm35_1.dat';
+file_name = 'F:\UWB基带数据\qm35_1.dat';
 fs = 737.28e6;                 % Sample rate (Hz)
 center_frequency = 6489.6e6;  % X410 RF center frequency (Hz), modify if needed
 

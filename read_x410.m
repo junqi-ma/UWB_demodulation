@@ -2,7 +2,7 @@ clear;
 clc;
 
 %% Parameters
-file_name = 'F:\qm35_1.dat';
+file_name = 'F:\UWB基带数据\qm35_1.dat';
 ant_num = 1;           % Number of channels
 fs = 737.28e6;         % Sample rate (Hz)
 sample_num = 0.12e6;   % Samples to read from each channel

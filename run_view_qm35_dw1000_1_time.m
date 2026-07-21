@@ -12,7 +12,7 @@ cd(project_dir);
 addpath(project_dir);
 
 %% -------------------- File / load window --------------------
-file_name = 'E:\qm35_dw1000_1.dat';
+file_name = 'F:\UWB基带数据\qm35_dw1000_1.dat';
 fs = 737.28e6;          % X410 sample rate (Hz)
 ant_num = 1;
 channel_index = 1;

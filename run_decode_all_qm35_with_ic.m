@@ -22,7 +22,7 @@ cd(project_dir);
 addpath(project_dir);
 
 %% -------------------- Shared capture / RF --------------------
-file_name = 'F:\qm35_dw1000_1.dat';
+file_name = 'F:\UWB基带数据\qm35_dw1000_1.dat';
 fs_rx = 737.28e6;
 x410_center_frequency = 6500e6;
 uwb_center_frequency = 6489.6e6;

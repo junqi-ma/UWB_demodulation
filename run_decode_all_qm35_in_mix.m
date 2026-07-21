@@ -19,7 +19,7 @@ addpath(project_dir);
 
 %% -------------------- Input capture (mixed DW1000 + QM35) --------------------
 options = struct();
-options.file_name = 'F:\qm35_dw1000_1.dat';
+options.file_name = 'F:\UWB基带数据\qm35_dw1000_1.dat';
 options.ant_num = 1;
 options.channel_index = 1;
 
