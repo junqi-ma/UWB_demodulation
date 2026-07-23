@@ -25,7 +25,7 @@
 ## 关键配置
 
 ```matlab
-options.file_name = 'F:\QM35_1.dat';
+options.file_name = 'F:\UWB基带数据\QM35_1.dat';
 options.sample_num = 0.5e6;
 
 options.fs_rx = 737.28e6;
@@ -72,7 +72,7 @@ run_decode_x410_dw1000
 
 ```matlab
 options = struct();
-options.file_name = 'F:\QM35_1.dat';
+options.file_name = 'F:\UWB基带数据\QM35_1.dat';
 options.preamble_repetitions = 128;
 options.cir_repetitions = 128;
 options.sfd_mode = 'auto';

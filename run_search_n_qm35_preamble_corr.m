@@ -113,7 +113,7 @@ end
 worst = struct();
 worst.enable = true;
 worst.count = 10;
-worst.output_dir = 'F:\qm35_worst10_segments';
+worst.output_dir = 'F:\UWB基带数据\qm35_worst10_segments';
 
 %% -------------------- File + tone once --------------------
 info = dir(options.file_name);

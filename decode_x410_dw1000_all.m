@@ -147,7 +147,6 @@ fine_seconds = toc(tic_fine);
 
 if packet_count == 0
     frames = emptyFrameRecord();
-    frames(1) = [];
 else
     frames = frames(1:packet_count);
 end
@@ -204,6 +203,8 @@ defaults = struct( ...
     'energy_smooth_rx_samples', 8192, ...
     'energy_threshold_sigma', 6, ...
     'use_coarse_correlation', true, ...
+    'require_energy_gate_for_correlation', false, ...
+    'coarse_correlation_repetitions', 8, ...
     'corr_threshold_sigma', 5, ...
     'candidate_merge_samples', 2e5, ...
     'pre_packet_guard_samples', 5e4, ...
@@ -239,7 +240,8 @@ end
 
 integer_fields = { ...
     'coarse_chunk_samples', 'coarse_step_samples', 'coarse_decimation', ...
-    'energy_smooth_rx_samples', 'candidate_merge_samples', ...
+    'energy_smooth_rx_samples', 'coarse_correlation_repetitions', ...
+    'candidate_merge_samples', ...
     'pre_packet_guard_samples', 'window_samples', 'search_step_samples', ...
     'post_packet_guard_samples', 'start_tolerance_samples', ...
     'min_window_samples'};
@@ -250,6 +252,8 @@ end
 batch.energy_threshold_sigma = max(0, double(batch.energy_threshold_sigma));
 batch.corr_threshold_sigma = max(0, double(batch.corr_threshold_sigma));
 batch.use_coarse_correlation = logical(batch.use_coarse_correlation);
+batch.require_energy_gate_for_correlation = ...
+    logical(batch.require_energy_gate_for_correlation);
 batch.require_fcs_pass = logical(batch.require_fcs_pass);
 batch.save_individual_cir = logical(batch.save_individual_cir);
 
@@ -378,11 +382,6 @@ energy_sigma = 1.4826*median(abs(energy-energy_median));
 energy_thr = energy_median+batch.energy_threshold_sigma*max(energy_sigma, eps);
 energy_mask = energy > energy_thr;
 
-if ~any(energy_mask)
-    peaks = zeros(0, 1);
-    return;
-end
-
 metric = energy;
 if batch.use_coarse_correlation && numel(template.preamble_ds) >= 4 && ...
         numel(rx_ds) > numel(template.preamble_ds)
@@ -390,14 +389,40 @@ if batch.use_coarse_correlation && numel(template.preamble_ds) >= 4 && ...
     energy_norm = sqrt(movsum(abs(rx_ds).^2, ...
         [numel(template.preamble_ds)-1, 0]))+eps;
     corr_score = abs(matched)./energy_norm;
-    corr_median = median(corr_score);
-    corr_sigma = 1.4826*median(abs(corr_score-corr_median));
+    % Accumulate several noncoherent, symbol-spaced correlations. Using
+    % rounded cumulative shifts (rather than one rounded period) preserves
+    % the fractional decimated-grid period over multiple repetitions.
+    repetition_count = min(batch.coarse_correlation_repetitions, ...
+        max(1, floor((numel(corr_score)-1)*D/ ...
+        max(template.preamble_rx_length, 1))+1));
+    shifts = round((0:repetition_count-1)* ...
+        template.preamble_rx_length/D);
+    valid_length = numel(corr_score)-shifts(end);
+    repeated_score = zeros(size(corr_score));
+    for r = 1:repetition_count
+        repeated_score(1:valid_length) = ...
+            repeated_score(1:valid_length)+ ...
+            corr_score(1+shifts(r):valid_length+shifts(r));
+    end
+    repeated_score(1:valid_length) = ...
+        repeated_score(1:valid_length)/repetition_count;
+    corr_valid = repeated_score(1:valid_length);
+    corr_median = median(corr_valid);
+    corr_sigma = 1.4826*median(abs(corr_valid-corr_median));
     corr_thr = corr_median+batch.corr_threshold_sigma*max(corr_sigma, eps);
-    % Keep only correlation peaks that also sit in energetic regions.
-    metric = corr_score;
-    metric(~energy_mask) = 0;
+    metric = repeated_score;
+    % A UWB preamble can be well below a long-window energy threshold.
+    % Correlation is therefore independent by default; callers may restore
+    % the stricter AND gate for captures with many false correlations.
+    if batch.require_energy_gate_for_correlation
+        metric(~energy_mask) = 0;
+    end
     peak_thr = corr_thr;
 else
+    if ~any(energy_mask)
+        peaks = zeros(0, 1);
+        return;
+    end
     peak_thr = energy_thr;
 end
 
