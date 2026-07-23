@@ -3,9 +3,17 @@ function [rx, preamble] = compensateCarrierOffset(rx, preamble, reference, param
 usable_peaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
     params.preamble_repetitions));
 peak_values = readMatchedAt(preamble, usable_peaks);
-fit_count = min(240, length(peak_values));
-fit_time = (double(usable_peaks(1:fit_count))-double(usable_peaks(1)))/reference.fs;
-fit_phase = unwrap(angle(peak_values(1:fit_count)));
+% The beginning of a file segment contains the receiver/resampler filter
+% startup transient. Its curved phase previously looked like a false CFO
+% (about -2.2 kHz in QM35_1.dat). Exclude up to the first 24 repetitions,
+% while always retaining at least 32 repetitions for the linear fit.
+skip_count = min(24, max(0, length(peak_values)-32));
+stable_peaks = usable_peaks(skip_count+1:end);
+stable_values = peak_values(skip_count+1:end);
+fit_count = min(240, length(stable_values));
+fit_time = (double(stable_peaks(1:fit_count))- ...
+    double(stable_peaks(1)))/reference.fs;
+fit_phase = unwrap(angle(stable_values(1:fit_count)));
 phase_fit = polyfit(fit_time, fit_phase, 1);
 frequency_offset = phase_fit(1)/(2*pi);
 
@@ -23,6 +31,7 @@ end
 gain = known'*rx(phase_indices);
 rx = rx*exp(-1j*angle(gain));
 preamble.frequency_offset_hz = frequency_offset;
+preamble.frequency_offset_skipped_repetitions = skip_count;
 if isfield(params, 'verbose') && params.verbose
     fprintf('Estimated frequency offset: %.3f kHz.\n', frequency_offset/1e3);
 end

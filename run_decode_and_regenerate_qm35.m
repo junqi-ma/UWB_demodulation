@@ -19,7 +19,10 @@ options.fs_rx = 737.28e6;
 options.x410_center_frequency = 6500e6;
 options.dw1000_center_frequency = 6489.6e6;
 options.preamble_repetitions = 128;
-options.cir_repetitions = 64;
+% QM35825 has a visible phase transient at packet start. Exclude the first
+% 24 SYNC repetitions and estimate CIR from the stable 25..128 region.
+options.cir_skip_initial_repetitions = 24;
+options.cir_repetitions = 104;
 options.cir_pre_samples = 8;
 options.cir_post_samples = 30;
 options.cir_max_path_m = [];

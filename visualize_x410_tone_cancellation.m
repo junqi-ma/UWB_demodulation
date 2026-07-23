@@ -126,10 +126,13 @@ tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 % Envelope shows the UWB packet while making the quiet-region baseline clear.
 nexttile;
-plot(time_relative_us, abs(x_before), 'LineWidth', 0.8);
+%plot(time_relative_us, abs(x_before), 'LineWidth', 0.8);
+plot((x_before(1000:1e5)), 'LineWidth', 0.8);
 hold on;
-plot(time_relative_us, abs(x_after), 'LineWidth', 0.8);
+%plot(time_relative_us, abs(x_after), 'LineWidth', 0.8);
+plot((x_after(1000:1e5)), 'LineWidth', 0.8);
 grid on;
+axis equal
 xlabel(sprintf('Time from %.6f ms (us)', time_us(1)/1e3));
 ylabel('|IQ| (ADC counts)');
 title('Time-domain envelope');

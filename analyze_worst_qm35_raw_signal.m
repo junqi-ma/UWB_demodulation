@@ -322,6 +322,8 @@ if run_dual_decode
 
     qm_options = common;
     qm_options.preamble_repetitions = 128;
+    qm_options.cir_skip_initial_repetitions = 24;
+    qm_options.cir_repetitions = 104;
     qm_options.code_index = 9;
     qm_options.sfd_mode = '4z2';
 
