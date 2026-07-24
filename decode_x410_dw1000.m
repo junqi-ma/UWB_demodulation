@@ -1,4 +1,4 @@
-function result = decode_x410_dw1000(options, preprocessed_rx, interference)
+function result = decode_x410_dw1000(options, preprocessedRx, interference)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -9,6 +9,8 @@ function result = decode_x410_dw1000(options, preprocessed_rx, interference)
 %
 %   Processing stages are implemented as separate files in the
 %   +dw1000decoder package folder.
+%
+%   See also DW1000DECODER, DECODE_X410_DW1000_ALL.
 
 if nargin < 1
     options = struct();
@@ -17,43 +19,44 @@ params = dw1000decoder.mergeOptions( ...
     dw1000decoder.defaultOptions(), options);
 addpath(params.helper_path);
 
-if nargin < 2 || isempty(preprocessed_rx)
+if nargin < 2 || isempty(preprocessedRx)
     [rx, interference] = dw1000decoder.readAndCancelInterference(params);
 else
-    if ~isnumeric(preprocessed_rx) || ~isvector(preprocessed_rx)
+    if ~isnumeric(preprocessedRx) || ~isvector(preprocessedRx)
         error('decode_x410_dw1000:InvalidPreprocessedRx', ...
             'Preprocessed RX must be a numeric vector.');
     end
-    rx = preprocessed_rx(:);
+    rx = preprocessedRx(:);
     if nargin < 3 || isempty(interference)
         interference = struct('enabled', true, 'frequency_hz', NaN, ...
             'coefficient', complex(NaN), 'suppression_db', NaN, ...
             'source', 'preprocessed input');
     end
 end
+
 rx = dw1000decoder.compensateCenterFrequency(rx, params);
 reference = dw1000decoder.buildDw1000Reference(params);
-rx_work = dw1000decoder.resampleCapture(rx, params.fs_rx, reference.fs);
+rxWork = dw1000decoder.resampleCapture(rx, params.fs_rx, reference.fs);
 
 preamble = dw1000decoder.detectRepeatedPreamble( ...
-    rx_work, reference, params);
+    rxWork, reference, params);
 dw1000decoder.validateCaptureLength( ...
-    rx_work, preamble, reference, params);
+    rxWork, preamble, reference, params);
 
 % Shrink the work buffer to the active frame before the heavy stages.
 if params.enable_frame_crop
-    [rx_work, preamble] = dw1000decoder.cropToFrame( ...
-        rx_work, preamble, reference, params);
+    [rxWork, preamble] = dw1000decoder.cropToFrame( ...
+        rxWork, preamble, reference, params);
 end
 
-[rx_work, preamble] = dw1000decoder.compensateCarrierOffset( ...
-    rx_work, preamble, reference, params);
+[rxWork, preamble] = dw1000decoder.compensateCarrierOffset( ...
+    rxWork, preamble, reference, params);
 preamble = dw1000decoder.refineTimingWithNsSfd( ...
-    rx_work, preamble, reference, params);
-sfd_symbols = dw1000decoder.analyzeNsSfdSymbols( ...
-    rx_work, preamble, reference, params);
+    rxWork, preamble, reference, params);
+sfdSymbols = dw1000decoder.analyzeNsSfdSymbols( ...
+    rxWork, preamble, reference, params);
 [cir, chips] = dw1000decoder.estimateCirAndSoftChips( ...
-    rx_work, preamble, reference, params);
+    rxWork, preamble, reference, params);
 sfd = dw1000decoder.locateNsSfd(chips.soft, reference, params, preamble);
 frame = dw1000decoder.decodePhrAndPayload( ...
     chips.soft, sfd, reference.cfg);
@@ -65,5 +68,5 @@ if params.show_plots
 end
 
 result = dw1000decoder.packageResult(params, reference, interference, ...
-    preamble, sfd_symbols, cir, chips, sfd, frame);
+    preamble, sfdSymbols, cir, chips, sfd, frame);
 end

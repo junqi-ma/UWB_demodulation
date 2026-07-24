@@ -1,56 +1,62 @@
-function [rx_cropped, preamble, info] = cropToFrame(rx, preamble, reference, params)
+function [rxCropped, preamble, info] = cropToFrame(rx, preamble, reference, params)
 %CROPTOFRAME Keep only the active frame region of the work buffer.
-%   Drops pre-frame samples and trims the tail to the soft-chip budget so
-%   estimateCirAndSoftChips does not matched-filter a multi-ms capture.
+%   [RXCROPPED, PREAMBLE, INFO] = CROPTOFRAME(RX, PREAMBLE, REFERENCE,
+%   PARAMS) drops pre-frame samples and trims the tail to the soft-chip
+%   budget so ESTIMATECIRANDSOFTCHIPS does not matched-filter a multi-ms
+%   capture. PREAMBLE peak/start fields are shifted to the cropped frame.
+%
+%   See also ESTIMATEFRAMESAMPLESPAN, ESTIMATECIRANDSOFTCHIPS.
 
 rx = rx(:);
 period = preamble.measured_period;
-start_sample = preamble.start_sample;
+startSample = preamble.start_sample;
 
-frame_span = dw1000decoder.estimateFrameSampleSpan(preamble, reference, params);
-pre_margin = ceil(3*period);
-post_span = frame_span.post_samples;
+frameSpan = dw1000decoder.estimateFrameSampleSpan(preamble, reference, params);
+preMargin = ceil(3*period);
+postSpan = frameSpan.post_samples;
 
-crop_start = max(1, floor(start_sample-pre_margin));
-crop_end = min(numel(rx), ceil(start_sample+post_span));
-if crop_end <= crop_start
-    error('Failed to form a valid frame crop region.');
+cropStart = max(1, floor(startSample - preMargin));
+cropEnd = min(numel(rx), ceil(startSample + postSpan));
+if cropEnd <= cropStart
+    error('cropToFrame:InvalidCropRegion', ...
+        'Failed to form a valid frame crop region.');
 end
-if crop_end-start_sample+1 < round(0.5*post_span)
+if cropEnd - startSample + 1 < round(0.5*postSpan)
     % Tail is still short: keep everything remaining after start-margin.
-    crop_end = numel(rx);
+    cropEnd = numel(rx);
 end
 
-rx_cropped = rx(crop_start:crop_end);
-shift = crop_start-1;
-preamble.start_sample = preamble.start_sample-shift;
-preamble.peaks = preamble.peaks-shift;
-preamble.strongest_end = preamble.strongest_end-shift;
+rxCropped = rx(cropStart:cropEnd);
+shift = cropStart - 1;
+preamble.start_sample = preamble.start_sample - shift;
+preamble.peaks = preamble.peaks - shift;
+preamble.strongest_end = preamble.strongest_end - shift;
 
 if isfield(preamble, 'matched_is_roi') && preamble.matched_is_roi
-    roi_start = preamble.roi_start;
-    matched_idx = (crop_start:crop_end)-roi_start+1;
-    valid = matched_idx >= 1 & matched_idx <= numel(preamble.matched);
-    matched_crop = complex(zeros(crop_end-crop_start+1, 1));
-    score_crop = zeros(size(matched_crop));
-    matched_crop(valid) = preamble.matched(matched_idx(valid));
-    score_crop(valid) = preamble.score(matched_idx(valid));
-    preamble.matched = matched_crop;
-    preamble.score = score_crop;
+    roiStart = preamble.roi_start;
+    matchedIdx = (cropStart:cropEnd) - roiStart + 1;
+    valid = matchedIdx >= 1 & matchedIdx <= numel(preamble.matched);
+    matchedCrop = complex(zeros(cropEnd - cropStart + 1, 1));
+    scoreCrop = zeros(size(matchedCrop));
+    matchedCrop(valid) = preamble.matched(matchedIdx(valid));
+    scoreCrop(valid) = preamble.score(matchedIdx(valid));
+    preamble.matched = matchedCrop;
+    preamble.score = scoreCrop;
     preamble.matched_is_roi = false;
 elseif isfield(preamble, 'matched') && numel(preamble.matched) == numel(rx)
-    preamble.matched = preamble.matched(crop_start:crop_end);
+    preamble.matched = preamble.matched(cropStart:cropEnd);
     if isfield(preamble, 'score') && numel(preamble.score) == numel(rx)
-        preamble.score = preamble.score(crop_start:crop_end);
+        preamble.score = preamble.score(cropStart:cropEnd);
     end
 end
 
-info = struct('crop_start', crop_start, 'crop_end', crop_end, ...
-    'original_length', numel(rx), 'cropped_length', numel(rx_cropped), ...
-    'post_samples', post_span, 'n_chips_budget', frame_span.n_chips);
+info = struct('crop_start', cropStart, 'crop_end', cropEnd, ...
+    'original_length', numel(rx), 'cropped_length', numel(rxCropped), ...
+    'post_samples', postSpan, 'n_chips_budget', frameSpan.n_chips);
+
 if isfield(params, 'verbose') && params.verbose
     fprintf(['Cropped work buffer %d:%d (%d -> %d samples, ', ...
         'soft-chip budget %d).\n'], ...
-        crop_start, crop_end, numel(rx), numel(rx_cropped), frame_span.n_chips);
+        cropStart, cropEnd, numel(rx), numel(rxCropped), frameSpan.n_chips);
 end
 end

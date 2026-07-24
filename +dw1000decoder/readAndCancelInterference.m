@@ -1,97 +1,88 @@
 function [rx, info] = readAndCancelInterference(params)
 %READANDCANCELINTERFERENCE Read capture samples and cancel the known tone.
-fid = fopen(params.file_name, 'rb');
-if fid < 0
-    error('Cannot open capture: %s', params.file_name);
-end
-file_guard = onCleanup(@() fclose(fid));
+%   [RX, INFO] = READANDCANCELINTERFERENCE(PARAMS) reads the requested
+%   interval from the capture file, extracts the selected I/Q channel,
+%   and subtracts the clock-synchronous interference tone when enabled.
+%   INFO reports the tone frequency, coefficient, and suppression.
+%
+%   See also DECODE_X410_DW1000, APPLYBLANKINTERVALS.
 
-fseek(fid, params.sample_offset*params.ant_num*4, 'bof');
-raw = fread(fid, [2*params.ant_num, params.sample_num], 'int16=>double');
-if size(raw, 2) ~= params.sample_num
-    error('Could not read the requested capture interval.');
-end
+c = dw1000decoder.constants();
+
+raw = dw1000decoder.readIqRaw(params.file_name, params.sample_offset, ...
+    params.sample_num, params.ant_num);
 rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
 
-tone_frequency = params.interference_tone_bin / ...
+toneFrequency = params.interference_tone_bin / ...
     params.interference_period_samples * params.fs_rx;
 info = struct('enabled', params.enable_interference_cancellation, ...
-    'frequency_hz', tone_frequency, 'coefficient', complex(0), ...
+    'frequency_hz', toneFrequency, 'coefficient', complex(0), ...
     'suppression_db', NaN);
 
 if params.enable_interference_cancellation
     if ~isempty(params.interference_coefficient)
         coefficient = params.interference_coefficient(1);
-        estimated_from_quiet = false;
+        estimatedFromQuiet = false;
     else
-        status = fseek(fid, ...
-            params.interference_quiet_offset*params.ant_num*4, 'bof');
-        if status ~= 0
-            error('Failed to seek to the interference-estimation interval.');
-        end
-        quiet_num = params.interference_quiet_num;
-        raw_quiet = fread(fid, [2*params.ant_num, quiet_num], 'int16=>double');
-        if size(raw_quiet, 2) ~= quiet_num
-            error(['Could not read the complete ', ...
-                'interference-estimation interval.']);
-        end
-        rx_quiet = dw1000decoder.selectIqChannel( ...
-            raw_quiet, params.channel_index);
-        quiet_n = params.interference_quiet_offset+(0:length(rx_quiet)-1).';
-        quiet_basis = dw1000decoder.synchronousTone(quiet_n, ...
+        quietRaw = dw1000decoder.readIqRaw(params.file_name, ...
+            params.interference_quiet_offset, params.interference_quiet_num, ...
+            params.ant_num);
+        rxQuiet = dw1000decoder.selectIqChannel(quietRaw, params.channel_index);
+        quietN = params.interference_quiet_offset + (0:length(rxQuiet)-1).';
+        quietBasis = dw1000decoder.synchronousTone(quietN, ...
             params.interference_tone_bin, params.interference_period_samples);
-        coefficient = mean(rx_quiet.*conj(quiet_basis));
-        estimated_from_quiet = true;
+        coefficient = mean(rxQuiet .* conj(quietBasis));
+        estimatedFromQuiet = true;
     end
 
-    rx_n = params.sample_offset+(0:length(rx)-1).';
-    rx_basis = dw1000decoder.synchronousTone(rx_n, ...
+    rxN = params.sample_offset + (0:length(rx)-1).';
+    rxBasis = dw1000decoder.synchronousTone(rxN, ...
         params.interference_tone_bin, params.interference_period_samples);
 
     % Optional suppression diagnostic (disabled by default for speed).
-    report_suppression = isfield(params, 'verbose') && params.verbose;
-    if report_suppression
-        amplitude_before = abs(mean(rx.*conj(rx_basis)));
+    reportSuppression = isfield(params, 'verbose') && params.verbose;
+    if reportSuppression
+        amplitudeBefore = abs(mean(rx .* conj(rxBasis)));
     end
-    rx = rx-coefficient.*rx_basis;
-    if report_suppression
-        amplitude_after = abs(mean(rx.*conj(rx_basis)));
-        suppression_db = 20*log10(amplitude_before/max(amplitude_after, eps));
+    rx = rx - coefficient .* rxBasis;
+    if reportSuppression
+        amplitudeAfter = abs(mean(rx .* conj(rxBasis)));
+        suppressionDb = 20*log10(amplitudeBefore / max(amplitudeAfter, eps));
     else
-        suppression_db = NaN;
+        suppressionDb = NaN;
     end
     info.coefficient = coefficient;
-    info.suppression_db = suppression_db;
+    info.suppression_db = suppressionDb;
 
-    if report_suppression
+    if reportSuppression
         fprintf('Clock-synchronous interference cancellation enabled.\n');
-        fprintf('  Relative tone frequency: %+.6f MHz\n', tone_frequency/1e6);
+        fprintf('  Relative tone frequency: %+.6f MHz\n', toneFrequency/1e6);
         fprintf('  Absolute tone frequency: %.6f MHz\n', ...
-            (params.x410_center_frequency+tone_frequency)/1e6);
+            (params.x410_center_frequency + toneFrequency)/1e6);
         fprintf('  Estimated amplitude     : %.3f ADC counts\n', abs(coefficient));
-        fprintf('  Estimated phase         : %.3f degrees\n', angle(coefficient)*180/pi);
-        if estimated_from_quiet
+        fprintf('  Estimated phase         : %.3f degrees\n', ...
+            angle(coefficient)*180/pi);
+        if estimatedFromQuiet
             fprintf('  Coefficient source      : quiet-interval estimate\n');
         else
             fprintf('  Coefficient source      : reused precomputed value\n');
         end
-        fprintf('  Loaded-segment suppression: %.3f dB\n', suppression_db);
+        fprintf('  Loaded-segment suppression: %.3f dB\n', suppressionDb);
     end
 end
 
 % Optional time-domain blanking of known interferer intervals (e.g. DW1000
 % bursts before QM35 decoding in a mixed capture).
 if ~isempty(params.blank_intervals)
-    [rx, blank_info] = dw1000decoder.applyBlankIntervals(rx, ...
+    [rx, blankInfo] = dw1000decoder.applyBlankIntervals(rx, ...
         params.sample_offset, params.blank_intervals, ...
         params.blank_taper_samples, params.blank_weight);
-    info.blank = blank_info;
-    if isfield(params, 'verbose') && params.verbose && blank_info.applied_count > 0
+    info.blank = blankInfo;
+    if isfield(params, 'verbose') && params.verbose && blankInfo.applied_count > 0
         fprintf('Blanked %d interferer interval(s), %d samples touched (weight=%.2f).\n', ...
-            blank_info.applied_count, blank_info.samples_touched, params.blank_weight);
+            blankInfo.applied_count, blankInfo.samples_touched, params.blank_weight);
     end
 end
 
-rx = rx-mean(rx);
-clear file_guard;
+rx = rx - mean(rx);
 end

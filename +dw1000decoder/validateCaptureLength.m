@@ -1,40 +1,50 @@
 function validateCaptureLength(rx, preamble, reference, params)
 %VALIDATECAPTURELENGTH Ensure the capture includes the complete SHR.
-sfd_length = configuredSfdLength(params);
-required_end = preamble.start_sample+round( ...
-    (params.preamble_repetitions+sfd_length)*preamble.measured_period)-1;
-if required_end > length(rx)
-    required_rx_samples = ceil(required_end*params.fs_rx/reference.fs);
-    have_rx_samples = params.sample_num;
-    missing_work = required_end-length(rx);
-    error(['Capture ends before SFD.\n', ...
-        '  preamble start (work) : %d\n', ...
-        '  required end (work)   : %d (buffer length %d, short by %d)\n', ...
-        '  preamble_repetitions  : %d, SFD symbols: %d\n', ...
-        '  current sample_num    : %d\n', ...
-        '  increase sample_num to at least %d (recommended %d).'], ...
-        preamble.start_sample, required_end, length(rx), missing_work, ...
-        params.preamble_repetitions, sfd_length, have_rx_samples, ...
-        required_rx_samples, max(required_rx_samples, ...
-        required_rx_samples+round(0.05e6)));
+%   VALIDATECAPTURELENGTH(RX, PREAMBLE, REFERENCE, PARAMS) errors if the
+%   resampled work buffer RX is too short to contain the configured
+%   preamble repetitions plus the SFD. On error it reports how many
+%   additional samples are needed.
+%
+%   See also DETECTREPEATEDPREAMBLE.
+
+sfdLength = configuredSfdLength(params);
+requiredEnd = preamble.start_sample + round( ...
+    (params.preamble_repetitions + sfdLength)*preamble.measured_period) - 1;
+
+if requiredEnd > length(rx)
+    requiredRxSamples = ceil(requiredEnd*params.fs_rx/reference.fs);
+    haveRxSamples = params.sample_num;
+    missingWork = requiredEnd - length(rx);
+    error('validateCaptureLength:CaptureTooShort', ...
+        ['Capture ends before SFD.\n', ...
+         '  preamble start (work) : %d\n', ...
+         '  required end (work)   : %d (buffer length %d, short by %d)\n', ...
+         '  preamble_repetitions  : %d, SFD symbols: %d\n', ...
+         '  current sample_num    : %d\n', ...
+         '  increase sample_num to at least %d (recommended %d).'], ...
+        preamble.start_sample, requiredEnd, length(rx), missingWork, ...
+        params.preamble_repetitions, sfdLength, haveRxSamples, ...
+        requiredRxSamples, max(requiredRxSamples, ...
+        requiredRxSamples + round(0.05e6)));
 end
 end
 
-function sfd_length = configuredSfdLength(params)
+% -------------------------------------------------------------------------
+function sfdLength = configuredSfdLength(params)
 switch params.sfd_mode
     case {'decawave', 'ieee', '4z2'}
-        sfd_length = 8;
+        sfdLength = 8;
     case '4z1'
-        sfd_length = 4;
+        sfdLength = 4;
     case '4z3'
-        sfd_length = 16;
+        sfdLength = 16;
     case '4z4'
-        sfd_length = 32;
+        sfdLength = 32;
     case 'auto'
         if params.code_index >= 25 && params.code_index <= 32
-            sfd_length = 32;
+            sfdLength = 32;
         else
-            sfd_length = 8;
+            sfdLength = 8;
         end
 end
 end

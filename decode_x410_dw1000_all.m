@@ -6,6 +6,8 @@ function results = decode_x410_dw1000_all(options, batch)
 %
 %   OPTIONS uses the same fields as decode_x410_dw1000 / run_decode_*.
 %   BATCH controls coarse scan, fine decode, and output paths.
+%
+%   See also DECODE_X410_DW1000, DW1000DECODER.
 
 if nargin < 1 || isempty(options)
     options = struct();
@@ -14,37 +16,40 @@ if nargin < 2 || isempty(batch)
     batch = struct();
 end
 
-base_params = dw1000decoder.mergeOptions( ...
+c = dw1000decoder.constants();
+
+baseParams = dw1000decoder.mergeOptions( ...
     dw1000decoder.defaultOptions(), options);
-batch = mergeBatchOptions(batch, base_params);
+batch = mergeBatchOptions(batch, baseParams);
 
 if ~isfolder(batch.output_directory)
     mkdir(batch.output_directory);
 end
 
-total_samples = countCaptureSamples(base_params);
-if total_samples < batch.min_window_samples
-    error('Capture has only %d complex samples; need at least %d.', ...
-        total_samples, batch.min_window_samples);
+totalSamples = countCaptureSamples(baseParams);
+if totalSamples < batch.min_window_samples
+    error('decode_x410_dw1000_all:CaptureTooShort', ...
+        'Capture has only %d complex samples; need at least %d.', ...
+        totalSamples, batch.min_window_samples);
 end
 
 % Estimate the interference coefficient once and reuse it everywhere.
-if base_params.enable_interference_cancellation && ...
-        isempty(base_params.interference_coefficient)
-    base_params.interference_coefficient = estimateInterferenceCoefficient( ...
-        base_params, total_samples);
+if baseParams.enable_interference_cancellation && ...
+        isempty(baseParams.interference_coefficient)
+    baseParams.interference_coefficient = estimateInterferenceCoefficient( ...
+        baseParams, totalSamples, c);
 end
 
 % Build the reference once for coarse correlation and packet-end estimates.
-reference = dw1000decoder.buildDw1000Reference(base_params);
-addpath(base_params.helper_path);
-coarse_template = buildCoarseTemplate(base_params, reference, batch);
+reference = dw1000decoder.buildDw1000Reference(baseParams);
+addpath(baseParams.helper_path);
+coarseTemplate = buildCoarseTemplate(baseParams, reference, batch);
 
 fprintf('\n========== Full-file DW1000 decode (P0 coarse+fine) ==========\n');
-fprintf('Capture file                 : %s\n', base_params.file_name);
+fprintf('Capture file                 : %s\n', baseParams.file_name);
 fprintf('Total complex samples        : %d (%.3f ms @ %.2f MHz)\n', ...
-    total_samples, total_samples/base_params.fs_rx*1e3, ...
-    base_params.fs_rx/1e6);
+    totalSamples, totalSamples/baseParams.fs_rx*1e3, ...
+    baseParams.fs_rx/1e6);
 fprintf('Coarse chunk/step            : %d / %d\n', ...
     batch.coarse_chunk_samples, batch.coarse_step_samples);
 fprintf('Coarse decimation            : %d\n', batch.coarse_decimation);
@@ -52,135 +57,135 @@ fprintf('Fine decode window           : %d\n', batch.window_samples);
 fprintf('==============================================================\n\n');
 
 %% -------------------- Stage 1: coarse candidate pre-screen --------------------
-tic_coarse = tic;
-[candidates, coarse_stats] = findCoarseCandidates( ...
-    base_params, coarse_template, batch, total_samples);
-coarse_seconds = toc(tic_coarse);
+ticCoarse = tic;
+[candidates, coarseStats] = findCoarseCandidates( ...
+    baseParams, coarseTemplate, batch, totalSamples);
+coarseSeconds = toc(ticCoarse);
 
 fprintf(['Coarse scan done in %.1f s | chunks=%d | raw peaks=%d | ', ...
     'merged candidates=%d\n\n'], ...
-    coarse_seconds, coarse_stats.chunk_count, ...
-    coarse_stats.raw_peak_count, numel(candidates));
+    coarseSeconds, coarseStats.chunk_count, ...
+    coarseStats.raw_peak_count, numel(candidates));
 
 %% -------------------- Stage 2: fine decode only at candidates --------------------
 frames = emptyFrameRecord();
-packet_count = 0;
-attempt_count = 0;
-next_allowed_sample = 0;
-tic_fine = tic;
+packetCount = 0;
+attemptCount = 0;
+nextAllowedSample = 0;
+ticFine = tic;
 
-for cand_index = 1:numel(candidates)
-    candidate = candidates(cand_index);
-    if candidate < next_allowed_sample
+for candIdx = 1:numel(candidates)
+    candidate = candidates(candIdx);
+    if candidate < nextAllowedSample
         continue;
     end
 
-    offset = max(0, candidate-batch.pre_packet_guard_samples);
-    if offset + batch.min_window_samples > total_samples
+    offset = max(0, candidate - batch.pre_packet_guard_samples);
+    if offset + batch.min_window_samples > totalSamples
         continue;
     end
-    window_samples = min(batch.window_samples, total_samples-offset);
-    attempt_count = attempt_count+1;
+    windowSamples = min(batch.window_samples, totalSamples - offset);
+    attemptCount = attemptCount + 1;
 
-    window_options = options;
-    window_options.sample_offset = offset;
-    window_options.sample_num = window_samples;
-    window_options.show_plots = false;
-    window_options.interference_coefficient = ...
-        base_params.interference_coefficient;
+    windowOptions = options;
+    windowOptions.sample_offset = offset;
+    windowOptions.sample_num = windowSamples;
+    windowOptions.show_plots = false;
+    windowOptions.interference_coefficient = ...
+        baseParams.interference_coefficient;
 
     fprintf(['---- Fine decode %d/%d | candidate=%d | ', ...
         'offset=%d | samples=%d ----\n'], ...
-        attempt_count, numel(candidates), candidate, offset, window_samples);
+        attemptCount, numel(candidates), candidate, offset, windowSamples);
 
     try
-        result = decode_x410_dw1000(window_options);
-    catch decode_error
-        fprintf('  Decode failed: %s\n', decode_error.message);
+        result = decode_x410_dw1000(windowOptions);
+    catch decodeError
+        fprintf('  Decode failed: %s\n', decodeError.message);
         % Keep searching nearby candidates; do not jump over a long gap.
         continue;
     end
 
-    abs_start = absoluteRxSample( ...
+    absStart = absoluteRxSample( ...
         offset, result.preamble.start_sample, ...
-        base_params.fs_rx, reference.fs);
-    abs_end = estimatePacketEndSample( ...
-        offset, result, base_params, reference, batch);
+        baseParams.fs_rx, reference.fs);
+    absEnd = estimatePacketEndSample( ...
+        offset, result, baseParams, reference, batch);
 
-    if isDuplicatePacket(frames, packet_count, abs_start, ...
+    if isDuplicatePacket(frames, packetCount, absStart, ...
             batch.start_tolerance_samples)
         fprintf('  Duplicate packet near abs_start=%d; skipping.\n', ...
-            abs_start);
-        next_allowed_sample = max(next_allowed_sample, abs_end);
+            absStart);
+        nextAllowedSample = max(nextAllowedSample, absEnd);
         continue;
     end
 
     if batch.require_fcs_pass && ~result.payload.fcs_pass
         fprintf('  Packet rejected: FCS failed at abs_start=%d.\n', ...
-            abs_start);
-        next_allowed_sample = max(next_allowed_sample, abs_end);
+            absStart);
+        nextAllowedSample = max(nextAllowedSample, absEnd);
         continue;
     end
 
-    packet_count = packet_count+1;
-    frames(packet_count) = packageFrameRecord( ...
-        packet_count, offset, abs_start, abs_end, result, base_params);
+    packetCount = packetCount + 1;
+    frames(packetCount) = packageFrameRecord( ...
+        packetCount, offset, absStart, absEnd, result, baseParams);
 
     fprintf(['  Saved packet #%d | abs_start=%d | t=%.3f ms | ', ...
         'SFD=%s | corr=%.3f | FCS=%d\n'], ...
-        packet_count, abs_start, frames(packet_count).time_start_s*1e3, ...
-        frames(packet_count).sfd_name, ...
-        frames(packet_count).sfd_correlation, ...
-        frames(packet_count).fcs_pass);
+        packetCount, absStart, frames(packetCount).time_start_s*1e3, ...
+        frames(packetCount).sfd_name, ...
+        frames(packetCount).sfd_correlation, ...
+        frames(packetCount).fcs_pass);
 
     if batch.save_individual_cir
-        cir_file = fullfile(batch.output_directory, ...
-            sprintf('cir_%03d.mat', packet_count));
-        cir = frames(packet_count).cir; %#ok<NASGU>
-        meta = frames(packet_count); %#ok<NASGU>
-        save(cir_file, 'cir', 'meta', '-v7.3');
+        cirFile = fullfile(batch.output_directory, ...
+            sprintf('cir_%03d.mat', packetCount));
+        cir = frames(packetCount).cir; %#ok<NASGU>
+        meta = frames(packetCount); %#ok<NASGU>
+        save(cirFile, 'cir', 'meta', '-v7.3');
     end
 
-    next_allowed_sample = max(next_allowed_sample, abs_end);
+    nextAllowedSample = max(nextAllowedSample, absEnd);
 end
-fine_seconds = toc(tic_fine);
+fineSeconds = toc(ticFine);
 
-if packet_count == 0
+if packetCount == 0
     frames = emptyFrameRecord();
 else
-    frames = frames(1:packet_count);
+    frames = frames(1:packetCount);
 end
 
 results = struct();
-results.file_name = base_params.file_name;
-results.total_samples = total_samples;
-results.duration_s = total_samples/base_params.fs_rx;
-results.coarse_seconds = coarse_seconds;
-results.fine_seconds = fine_seconds;
-results.coarse_chunk_count = coarse_stats.chunk_count;
-results.coarse_raw_peak_count = coarse_stats.raw_peak_count;
+results.file_name = baseParams.file_name;
+results.total_samples = totalSamples;
+results.duration_s = totalSamples / baseParams.fs_rx;
+results.coarse_seconds = coarseSeconds;
+results.fine_seconds = fineSeconds;
+results.coarse_chunk_count = coarseStats.chunk_count;
+results.coarse_raw_peak_count = coarseStats.raw_peak_count;
 results.candidate_count = numel(candidates);
 results.candidates = candidates(:);
-results.attempt_count = attempt_count;
-results.packet_count = packet_count;
-if packet_count == 0
+results.attempt_count = attemptCount;
+results.packet_count = packetCount;
+if packetCount == 0
     results.fcs_pass_count = 0;
 else
     results.fcs_pass_count = sum([frames.fcs_pass]);
 end
-results.params = base_params;
+results.params = baseParams;
 results.batch = batch;
 results.frames = frames;
 results.cir_delay_ns = [];
 results.cir_values = [];
 
-if packet_count > 0
+if packetCount > 0
     results.cir_delay_ns = frames(1).cir.delay_ns(:);
-    cir_len = numel(results.cir_delay_ns);
-    results.cir_values = complex(zeros(cir_len, packet_count));
-    for k = 1:packet_count
+    cirLen = numel(results.cir_delay_ns);
+    results.cir_values = complex(zeros(cirLen, packetCount));
+    for k = 1:packetCount
         values = frames(k).cir.values(:);
-        n = min(cir_len, numel(values));
+        n = min(cirLen, numel(values));
         results.cir_values(1:n, k) = values(1:n);
     end
 end
@@ -189,12 +194,12 @@ save(batch.mat_file, 'results', '-v7.3');
 writeSummaryCsv(batch.summary_csv, frames);
 
 fprintf('\nSaved %d packet(s) to:\n  %s\n  %s\n', ...
-    packet_count, batch.mat_file, batch.summary_csv);
+    packetCount, batch.mat_file, batch.summary_csv);
 fprintf('Timing: coarse %.1f s | fine %.1f s | fine attempts %d\n', ...
-    coarse_seconds, fine_seconds, attempt_count);
+    coarseSeconds, fineSeconds, attemptCount);
 end
 
-%% ------------------------------------------------------------------------
+% -------------------------------------------------------------------------
 function batch = mergeBatchOptions(batch, params)
 defaults = struct( ...
     'coarse_chunk_samples', 4e6, ...
@@ -227,9 +232,9 @@ for k = 1:numel(names)
     end
 end
 
-[~, capture_stem] = fileparts(params.file_name);
+[~, captureStem] = fileparts(params.file_name);
 if strlength(string(batch.output_directory)) == 0
-    batch.output_directory = fullfile(pwd, 'decoded_results', capture_stem);
+    batch.output_directory = fullfile(pwd, 'decoded_results', captureStem);
 end
 if strlength(string(batch.mat_file)) == 0
     batch.mat_file = fullfile(batch.output_directory, 'all_frames_cir.mat');
@@ -238,15 +243,15 @@ if strlength(string(batch.summary_csv)) == 0
     batch.summary_csv = fullfile(batch.output_directory, 'frame_summary.csv');
 end
 
-integer_fields = { ...
+integerFields = { ...
     'coarse_chunk_samples', 'coarse_step_samples', 'coarse_decimation', ...
     'energy_smooth_rx_samples', 'coarse_correlation_repetitions', ...
     'candidate_merge_samples', ...
     'pre_packet_guard_samples', 'window_samples', 'search_step_samples', ...
     'post_packet_guard_samples', 'start_tolerance_samples', ...
     'min_window_samples'};
-for k = 1:numel(integer_fields)
-    name = integer_fields{k};
+for k = 1:numel(integerFields)
+    name = integerFields{k};
     batch.(name) = max(1, round(batch.(name)));
 end
 batch.energy_threshold_sigma = max(0, double(batch.energy_threshold_sigma));
@@ -258,51 +263,42 @@ batch.require_fcs_pass = logical(batch.require_fcs_pass);
 batch.save_individual_cir = logical(batch.save_individual_cir);
 
 if batch.coarse_step_samples > batch.coarse_chunk_samples
-    warning(['coarse_step_samples > coarse_chunk_samples; ', ...
-        'clamping step to chunk size.']);
+    warning('decode_x410_dw1000_all:StepExceedsChunk', ...
+        ['coarse_step_samples > coarse_chunk_samples; ', ...
+         'clamping step to chunk size.']);
     batch.coarse_step_samples = batch.coarse_chunk_samples;
 end
 end
 
-function total_samples = countCaptureSamples(params)
+function totalSamples = countCaptureSamples(params)
 info = dir(params.file_name);
 if isempty(info)
-    error('Cannot find capture file: %s', params.file_name);
+    error('decode_x410_dw1000_all:FileNotFound', ...
+        'Cannot find capture file: %s', params.file_name);
 end
-bytes_per_complex_sample = params.ant_num*4; % interleaved int16 I/Q
-total_samples = floor(info.bytes/bytes_per_complex_sample);
-end
-
-function coefficient = estimateInterferenceCoefficient(params, total_samples)
-quiet_offset = params.interference_quiet_offset;
-quiet_num = params.interference_quiet_num;
-if quiet_offset < 0 || quiet_offset >= total_samples
-    error('interference_quiet_offset is outside the capture.');
-end
-quiet_num = min(quiet_num, total_samples-quiet_offset);
-if quiet_num < params.interference_period_samples
-    error('Not enough samples available for interference estimation.');
+c = dw1000decoder.constants();
+totalSamples = floor(info.bytes / (c.BYTES_PER_IQ_SAMPLE*params.ant_num));
 end
 
-fid = fopen(params.file_name, 'rb');
-if fid < 0
-    error('Cannot open capture: %s', params.file_name);
+function coefficient = estimateInterferenceCoefficient(params, totalSamples, c)
+quietOffset = params.interference_quiet_offset;
+quietNum = params.interference_quiet_num;
+if quietOffset < 0 || quietOffset >= totalSamples
+    error('decode_x410_dw1000_all:QuietOffsetOutOfRange', ...
+        'interference_quiet_offset is outside the capture.');
 end
-file_guard = onCleanup(@() fclose(fid));
-status = fseek(fid, quiet_offset*params.ant_num*4, 'bof');
-if status ~= 0
-    error('Failed to seek to the interference-estimation interval.');
+quietNum = min(quietNum, totalSamples - quietOffset);
+if quietNum < params.interference_period_samples
+    error('decode_x410_dw1000_all:NotEnoughQuietSamples', ...
+        'Not enough samples available for interference estimation.');
 end
-raw_quiet = fread(fid, [2*params.ant_num, quiet_num], 'int16=>double');
-if size(raw_quiet, 2) < quiet_num
-    error('Could not read the interference-estimation interval.');
-end
-rx_quiet = dw1000decoder.selectIqChannel(raw_quiet, params.channel_index);
-quiet_n = quiet_offset+(0:length(rx_quiet)-1).';
-quiet_basis = dw1000decoder.synchronousTone(quiet_n, ...
+
+rawQuiet = dw1000decoder.readIqRaw(params.file_name, quietOffset, quietNum, params.ant_num);
+rxQuiet = dw1000decoder.selectIqChannel(rawQuiet, params.channel_index);
+quietN = quietOffset + (0:length(rxQuiet)-1).';
+quietBasis = dw1000decoder.synchronousTone(quietN, ...
     params.interference_tone_bin, params.interference_period_samples);
-coefficient = mean(rx_quiet.*conj(quiet_basis));
-clear file_guard;
+coefficient = mean(rxQuiet .* conj(quietBasis));
 
 fprintf('Precomputed interference coefficient once for full-file scan.\n');
 fprintf('  Amplitude: %.3f ADC counts, phase: %.3f deg\n', ...
@@ -311,128 +307,130 @@ end
 
 function template = buildCoarseTemplate(params, reference, batch)
 %BUILDCOARSETEMPLATE Map one preamble symbol to the coarse decimated grid.
-[p, q] = rat(params.fs_rx/reference.fs, 1e-12);
-pref_rx = resample(reference.preamble_waveform, p, q);
-pref_rx = pref_rx(:);
+c = dw1000decoder.constants();
+
+[p, q] = rat(params.fs_rx / reference.fs, 1e-12);
+prefRx = resample(reference.preamble_waveform, p, q);
+prefRx = prefRx(:);
 D = batch.coarse_decimation;
-pref_ds = pref_rx(1:D:end);
-pref_ds = pref_ds/(norm(pref_ds)+eps);
+prefDs = prefRx(1:D:end);
+prefDs = prefDs / (norm(prefDs) + eps);
 template = struct( ...
     'decimation', D, ...
-    'preamble_ds', pref_ds, ...
-    'preamble_rx_length', numel(pref_rx));
+    'preamble_ds', prefDs, ...
+    'preamble_rx_length', numel(prefRx));
 end
 
 function [candidates, stats] = findCoarseCandidates(params, template, ...
-        batch, total_samples)
+        batch, totalSamples)
 candidates = zeros(0, 1);
-raw_peak_count = 0;
-chunk_count = 0;
+rawPeakCount = 0;
+chunkCount = 0;
 offset = 0;
 D = batch.coarse_decimation;
 
 fprintf('Stage 1/2: coarse pre-screen over full capture...\n');
-while offset + batch.min_window_samples <= total_samples
-    chunk_samples = min(batch.coarse_chunk_samples, total_samples-offset);
-    chunk_count = chunk_count+1;
-    rx = readProcessedChunkSilent(params, offset, chunk_samples);
+while offset + batch.min_window_samples <= totalSamples
+    chunkSamples = min(batch.coarse_chunk_samples, totalSamples - offset);
+    chunkCount = chunkCount + 1;
+    rx = readProcessedChunkSilent(params, offset, chunkSamples);
 
-    local_peaks = detectChunkCandidates(rx, offset, template, batch);
-    raw_peak_count = raw_peak_count+numel(local_peaks);
-    candidates = [candidates; local_peaks(:)]; %#ok<AGROW>
+    localPeaks = detectChunkCandidates(rx, offset, template, batch);
+    rawPeakCount = rawPeakCount + numel(localPeaks);
+    candidates = [candidates; localPeaks(:)]; %#ok<AGROW>
 
-    if mod(chunk_count, 10) == 0 || ...
-            offset+batch.coarse_step_samples >= total_samples
+    if mod(chunkCount, 10) == 0 || ...
+            offset + batch.coarse_step_samples >= totalSamples
         fprintf('  coarse chunk %d | offset=%d (%.1f%%) | peaks so far=%d\n', ...
-            chunk_count, offset, 100*offset/max(total_samples, 1), ...
-            raw_peak_count);
+            chunkCount, offset, 100*offset / max(totalSamples, 1), ...
+            rawPeakCount);
     end
 
-    if offset + chunk_samples >= total_samples
+    if offset + chunkSamples >= totalSamples
         break;
     end
-    offset = offset+batch.coarse_step_samples;
+    offset = offset + batch.coarse_step_samples;
 end
 
 candidates = mergeCandidates(candidates, batch.candidate_merge_samples);
 % Keep candidates that still leave room for a fine window.
-max_start = max(0, total_samples-batch.min_window_samples);
-candidates = candidates(candidates <= max_start);
+maxStart = max(0, totalSamples - batch.min_window_samples);
+candidates = candidates(candidates <= maxStart);
 
 stats = struct( ...
-    'chunk_count', chunk_count, ...
-    'raw_peak_count', raw_peak_count, ...
+    'chunk_count', chunkCount, ...
+    'raw_peak_count', rawPeakCount, ...
     'decimation', D);
 end
 
-function peaks = detectChunkCandidates(rx, sample_offset, template, batch)
+function peaks = detectChunkCandidates(rx, sampleOffset, template, batch)
 D = batch.coarse_decimation;
-rx_ds = rx(1:D:end);
-if numel(rx_ds) < 32
+rxDs = rx(1:D:end);
+if numel(rxDs) < 32
     peaks = zeros(0, 1);
     return;
 end
 
 % --- Energy gate on decimated magnitude-squared ---
-power = abs(rx_ds).^2;
-smooth_len = max(3, round(batch.energy_smooth_rx_samples/D));
-energy = movmean(power, smooth_len);
-energy_median = median(energy);
-energy_sigma = 1.4826*median(abs(energy-energy_median));
-energy_thr = energy_median+batch.energy_threshold_sigma*max(energy_sigma, eps);
-energy_mask = energy > energy_thr;
+power = abs(rxDs).^2;
+smoothLen = max(3, round(batch.energy_smooth_rx_samples / D));
+energy = movmean(power, smoothLen);
+energyMedian = median(energy);
+energySigma = 1.4826*median(abs(energy - energyMedian));
+energyThr = energyMedian + batch.energy_threshold_sigma*max(energySigma, eps);
+energyMask = energy > energyThr;
 
 metric = energy;
 if batch.use_coarse_correlation && numel(template.preamble_ds) >= 4 && ...
-        numel(rx_ds) > numel(template.preamble_ds)
-    matched = fftfilt(flipud(conj(template.preamble_ds)), rx_ds);
-    energy_norm = sqrt(movsum(abs(rx_ds).^2, ...
-        [numel(template.preamble_ds)-1, 0]))+eps;
-    corr_score = abs(matched)./energy_norm;
+        numel(rxDs) > numel(template.preamble_ds)
+    matched = fftfilt(flipud(conj(template.preamble_ds)), rxDs);
+    energyNorm = sqrt(movsum(abs(rxDs).^2, ...
+        [numel(template.preamble_ds)-1, 0])) + eps;
+    corrScore = abs(matched) ./ energyNorm;
     % Accumulate several noncoherent, symbol-spaced correlations. Using
     % rounded cumulative shifts (rather than one rounded period) preserves
     % the fractional decimated-grid period over multiple repetitions.
-    repetition_count = min(batch.coarse_correlation_repetitions, ...
-        max(1, floor((numel(corr_score)-1)*D/ ...
-        max(template.preamble_rx_length, 1))+1));
-    shifts = round((0:repetition_count-1)* ...
-        template.preamble_rx_length/D);
-    valid_length = numel(corr_score)-shifts(end);
-    repeated_score = zeros(size(corr_score));
-    for r = 1:repetition_count
-        repeated_score(1:valid_length) = ...
-            repeated_score(1:valid_length)+ ...
-            corr_score(1+shifts(r):valid_length+shifts(r));
+    repetitionCount = min(batch.coarse_correlation_repetitions, ...
+        max(1, floor((numel(corr_score)-1)*D / ...
+        max(template.preamble_rx_length, 1)) + 1));
+    shifts = round((0:repetitionCount-1)* ...
+        template.preamble_rx_length / D);
+    validLength = numel(corr_score) - shifts(end);
+    repeatedScore = zeros(size(corr_score));
+    for r = 1:repetitionCount
+        repeatedScore(1:validLength) = ...
+            repeatedScore(1:validLength) + ...
+            corrScore(1+shifts(r):validLength+shifts(r));
     end
-    repeated_score(1:valid_length) = ...
-        repeated_score(1:valid_length)/repetition_count;
-    corr_valid = repeated_score(1:valid_length);
-    corr_median = median(corr_valid);
-    corr_sigma = 1.4826*median(abs(corr_valid-corr_median));
-    corr_thr = corr_median+batch.corr_threshold_sigma*max(corr_sigma, eps);
-    metric = repeated_score;
+    repeatedScore(1:validLength) = ...
+        repeatedScore(1:validLength) / repetitionCount;
+    corrValid = repeatedScore(1:validLength);
+    corrMedian = median(corrValid);
+    corrSigma = 1.4826*median(abs(corrValid - corrMedian));
+    corrThr = corrMedian + batch.corr_threshold_sigma*max(corrSigma, eps);
+    metric = repeatedScore;
     % A UWB preamble can be well below a long-window energy threshold.
     % Correlation is therefore independent by default; callers may restore
     % the stricter AND gate for captures with many false correlations.
     if batch.require_energy_gate_for_correlation
-        metric(~energy_mask) = 0;
+        metric(~energyMask) = 0;
     end
-    peak_thr = corr_thr;
+    peakThr = corrThr;
 else
-    if ~any(energy_mask)
+    if ~any(energyMask)
         peaks = zeros(0, 1);
         return;
     end
-    peak_thr = energy_thr;
+    peakThr = energyThr;
 end
 
-min_sep = max(1, round(batch.candidate_merge_samples/D));
+minSep = max(1, round(batch.candidate_merge_samples / D));
 if exist('findpeaks', 'file') == 2
     [~, locs] = findpeaks(metric, ...
-        'MinPeakHeight', peak_thr, ...
-        'MinPeakDistance', min_sep);
+        'MinPeakHeight', peakThr, ...
+        'MinPeakDistance', minSep);
 else
-    locs = simpleFindPeaks(metric, peak_thr, min_sep);
+    locs = simpleFindPeaks(metric, peakThr, minSep);
 end
 
 if isempty(locs)
@@ -442,11 +440,11 @@ end
 
 % Map decimated peak index -> absolute capture sample, then back up a little
 % so the fine window starts before the burst / correlation peak.
-peaks = sample_offset+(double(locs(:))-1)*D;
-peaks = max(0, peaks-batch.pre_packet_guard_samples);
+peaks = sampleOffset + (double(locs(:)) - 1)*D;
+peaks = max(0, peaks - batch.pre_packet_guard_samples);
 end
 
-function locs = simpleFindPeaks(metric, threshold, min_sep)
+function locs = simpleFindPeaks(metric, threshold, minSep)
 %SIMPLEFINDPEAKS Minimal peak picker when Signal Toolbox is unavailable.
 locs = zeros(0, 1);
 n = numel(metric);
@@ -469,14 +467,14 @@ end
 idx = idx(order);
 keep = false(size(idx));
 for k = 1:numel(idx)
-    if all(abs(idx(k)-idx(keep)) >= min_sep)
+    if all(abs(idx(k) - idx(keep)) >= minSep)
         keep(k) = true;
     end
 end
 locs = sort(idx(keep));
 end
 
-function merged = mergeCandidates(candidates, merge_samples)
+function merged = mergeCandidates(candidates, mergeSamples)
 if isempty(candidates)
     merged = zeros(0, 1);
     return;
@@ -484,77 +482,67 @@ end
 candidates = sort(candidates(:));
 merged = candidates(1);
 for k = 2:numel(candidates)
-    if candidates(k)-merged(end) > merge_samples
+    if candidates(k) - merged(end) > mergeSamples
         merged(end+1, 1) = candidates(k); %#ok<AGROW>
     end
 end
 end
 
-function rx = readProcessedChunkSilent(params, sample_offset, sample_num)
+function rx = readProcessedChunkSilent(params, sampleOffset, sampleNum)
 %READPROCESSEDCHUNKSILENT Cheap read + tone cancel + CF shift (no logging).
-fid = fopen(params.file_name, 'rb');
-if fid < 0
-    error('Cannot open capture: %s', params.file_name);
-end
-file_guard = onCleanup(@() fclose(fid));
-status = fseek(fid, sample_offset*params.ant_num*4, 'bof');
-if status ~= 0
-    error('Failed to seek to sample offset %d.', sample_offset);
-end
-raw = fread(fid, [2*params.ant_num, sample_num], 'int16=>double');
-if size(raw, 2) ~= sample_num
-    error('Could not read %d samples at offset %d.', sample_num, sample_offset);
-end
+c = dw1000decoder.constants();
+
+raw = dw1000decoder.readIqRaw(params.file_name, sampleOffset, sampleNum, params.ant_num);
 rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
-clear file_guard;
 
 if params.enable_interference_cancellation
     if isempty(params.interference_coefficient)
-        error('Silent chunk reader requires a precomputed interference coefficient.');
+        error('decode_x410_dw1000_all:MissingInterferenceCoefficient', ...
+            'Silent chunk reader requires a precomputed interference coefficient.');
     end
     coefficient = params.interference_coefficient(1);
-    n = sample_offset+(0:length(rx)-1).';
+    n = sampleOffset + (0:length(rx)-1).';
     basis = dw1000decoder.synchronousTone(n, ...
         params.interference_tone_bin, params.interference_period_samples);
-    rx = rx-coefficient.*basis;
+    rx = rx - coefficient .* basis;
 end
 
-frequency_shift = params.x410_center_frequency-params.dw1000_center_frequency;
-n = sample_offset+(0:length(rx)-1).';
-rx = rx.*exp(1j*2*pi*frequency_shift*n/params.fs_rx);
-rx = rx-mean(rx);
+frequencyShift = params.x410_center_frequency - params.dw1000_center_frequency;
+n = sampleOffset + (0:length(rx)-1).';
+rx = rx .* exp(1j*2*pi*frequencyShift*n / params.fs_rx);
+rx = rx - mean(rx);
 end
 
-function abs_sample = absoluteRxSample(sample_offset, work_sample, fs_rx, fs_work)
-abs_sample = sample_offset+round((work_sample-1)*fs_rx/fs_work);
-abs_sample = max(0, abs_sample);
+function absSample = absoluteRxSample(sampleOffset, workSample, fsRx, fsWork)
+absSample = sampleOffset + round((workSample - 1)*fsRx / fsWork);
+absSample = max(0, absSample);
 end
 
-function abs_end = estimatePacketEndSample(sample_offset, result, params, ...
+function absEnd = estimatePacketEndSample(sampleOffset, result, params, ...
         reference, batch)
-fs_rx = params.fs_rx;
-fs_work = reference.fs;
+fsRx = params.fs_rx;
+fsWork = reference.fs;
 period = result.preamble.samples_per_repetition;
-start_work = result.preamble.start_sample;
+startWork = result.preamble.start_sample;
 
 if ~isempty(result.payload.end_chip) && result.payload.end_chip > 0
-    chips_per_symbol = reference.chips_per_symbol;
-    samples_per_chip = period/max(chips_per_symbol, 1);
-    end_work = start_work+result.payload.end_chip*samples_per_chip;
+    chipsPerSymbol = reference.chips_per_symbol;
+    samplesPerChip = period / max(chipsPerSymbol, 1);
+    endWork = startWork + result.payload.end_chip*samplesPerChip;
 else
-    sfd_symbols = max(1, numel(result.sfd.sequence));
-    end_work = start_work+ ...
-        (params.preamble_repetitions+sfd_symbols+64)*period;
+    sfdSymbols = max(1, numel(result.sfd.sequence));
+    endWork = startWork + ...
+        (params.preamble_repetitions + sfdSymbols + 64)*period;
 end
 
-abs_end = sample_offset+ceil(end_work*fs_rx/fs_work)+ ...
+absEnd = sampleOffset + ceil(endWork*fsRx / fsWork) + ...
     batch.post_packet_guard_samples;
 end
 
-function tf = isDuplicatePacket(frames, packet_count, abs_start, tolerance)
+function tf = isDuplicatePacket(frames, packetCount, absStart, tolerance)
 tf = false;
-for k = 1:packet_count
-    if abs(frames(k).abs_start_sample-abs_start) <= tolerance
+for k = 1:packetCount
+    if abs(frames(k).abs_start_sample - absStart) <= tolerance
         tf = true;
         return;
     end
@@ -584,20 +572,20 @@ record = struct( ...
     'cir', {});
 end
 
-function record = packageFrameRecord(index, window_offset, abs_start, ...
-        abs_end, result, params)
-payload_bytes = result.payload.bytes;
-if isempty(payload_bytes)
-    payload_bytes = uint8([]);
+function record = packageFrameRecord(index, windowOffset, absStart, ...
+        absEnd, result, params)
+payloadBytes = result.payload.bytes;
+if isempty(payloadBytes)
+    payloadBytes = uint8([]);
 end
 
 record = struct();
 record.index = index;
-record.window_offset = window_offset;
-record.abs_start_sample = abs_start;
-record.abs_end_sample = abs_end;
-record.time_start_s = abs_start/params.fs_rx;
-record.time_end_s = abs_end/params.fs_rx;
+record.window_offset = windowOffset;
+record.abs_start_sample = absStart;
+record.abs_end_sample = absEnd;
+record.time_start_s = absStart / params.fs_rx;
+record.time_end_s = absEnd / params.fs_rx;
 record.detected_repetitions = result.preamble.detected_repetitions;
 record.samples_per_repetition = result.preamble.samples_per_repetition;
 record.sample_clock_error_ppm = result.preamble.sample_clock_error_ppm;
@@ -607,20 +595,21 @@ record.sfd_name = char(string(result.sfd.name));
 record.sfd_correlation = result.sfd.correlation;
 record.phr_secded_pass = logical(result.phr.secded_pass);
 record.psdu_length_bytes = result.phr.psdu_length_bytes;
-record.payload_bytes = payload_bytes(:).';
+record.payload_bytes = payloadBytes(:).';
 record.fcs_received = result.payload.fcs_received;
 record.fcs_calculated = result.payload.fcs_calculated;
 record.fcs_pass = logical(result.payload.fcs_pass);
 record.cir = result.cir;
 end
 
-function writeSummaryCsv(csv_file, frames)
-fid = fopen(csv_file, 'w');
+function writeSummaryCsv(csvFile, frames)
+fid = fopen(csvFile, 'w');
 if fid < 0
-    warning('Could not write summary CSV: %s', csv_file);
+    warning('decode_x410_dw1000_all:CsvWriteError', ...
+        'Could not write summary CSV: %s', csvFile);
     return;
 end
-cleanup_obj = onCleanup(@() fclose(fid));
+fileGuard = onCleanup(@() fclose(fid));
 
 fprintf(fid, ['index,window_offset,abs_start_sample,abs_end_sample,', ...
     'time_start_ms,time_end_ms,detected_repetitions,', ...
@@ -631,9 +620,9 @@ fprintf(fid, ['index,window_offset,abs_start_sample,abs_end_sample,', ...
 for k = 1:numel(frames)
     frame = frames(k);
     if isempty(frame.payload_bytes)
-        payload_hex = '';
+        payloadHex = '';
     else
-        payload_hex = sprintf('%02X', frame.payload_bytes);
+        payloadHex = sprintf('%02X', frame.payload_bytes);
     end
     fprintf(fid, ['%d,%d,%d,%d,%.6f,%.6f,%d,%.6f,%.6f,"%s",%.6f,', ...
         '%d,%d,0x%04X,0x%04X,%d,"%s"\n'], ...
@@ -643,7 +632,7 @@ for k = 1:numel(frames)
         frame.sample_clock_error_ppm, frame.carrier_frequency_offset_hz, ...
         frame.sfd_name, frame.sfd_correlation, frame.phr_secded_pass, ...
         frame.psdu_length_bytes, frame.fcs_received, ...
-        frame.fcs_calculated, frame.fcs_pass, payload_hex);
+        frame.fcs_calculated, frame.fcs_pass, payloadHex);
 end
-clear cleanup_obj;
+clear fileGuard;
 end

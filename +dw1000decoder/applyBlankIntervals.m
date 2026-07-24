@@ -1,9 +1,14 @@
-function [rx, info] = applyBlankIntervals(rx, sample_offset, intervals, ...
-        taper_samples, blank_weight)
+function [rx, info] = applyBlankIntervals(rx, sampleOffset, intervals, ...
+        taperSamples, blankWeight)
 %APPLYBLANKINTERVALS Soft-blank absolute capture intervals inside a window.
-%   INTERVALS is N-by-2 absolute complex-sample indices [start end] (0-based
-%   start preferred; both ends treated as inclusive absolute indices).
-%   BLANK_WEIGHT in [0,1]: 0 fully zeros the interferer, 1 leaves it unchanged.
+%   [RX, INFO] = APPLYBLANKINTERVALS(RX, SAMPLEOFFSET, INTERVALS,
+%   TAPERSAMPLES, BLANKWEIGHT) multiplies the samples in each absolute
+%   interval by a weight between BLANKWEIGHT and 1, with a cosine taper at
+%   each edge. INTERVALS is N-by-2 in absolute complex-sample indices
+%   [start end] (inclusive). BLANKWEIGHT in [0,1]: 0 fully zeros the
+%   interferer, 1 leaves it unchanged.
+%
+%   See also READANDCANCELINTERFERENCE.
 
 rx = rx(:);
 n = numel(rx);
@@ -12,45 +17,45 @@ if isempty(intervals) || n < 1
     return;
 end
 
-taper_samples = max(0, round(taper_samples));
-blank_weight = min(1, max(0, blank_weight));
-win_start = sample_offset;                 % absolute index of rx(1)
-win_end = sample_offset + n - 1;           % absolute index of rx(end)
+taperSamples = max(0, round(taperSamples));
+blankWeight = min(1, max(0, blankWeight));
+winStart = sampleOffset;                 % absolute index of rx(1)
+winEnd = sampleOffset + n - 1;           % absolute index of rx(end)
 
 mask = ones(n, 1);
 for k = 1:size(intervals, 1)
     a = min(intervals(k, 1), intervals(k, 2));
     b = max(intervals(k, 1), intervals(k, 2));
-    % Overlap of [a,b] with [win_start, win_end] in absolute samples.
-    o0 = max(a, win_start);
-    o1 = min(b, win_end);
+    % Overlap of [a,b] with [winStart, winEnd] in absolute samples.
+    o0 = max(a, winStart);
+    o1 = min(b, winEnd);
     if o1 < o0
         continue;
     end
-    i0 = o0 - win_start + 1;
-    i1 = o1 - win_start + 1;
-    seg_len = i1 - i0 + 1;
-    if seg_len < 1
+    i0 = o0 - winStart + 1;
+    i1 = o1 - winStart + 1;
+    segLen = i1 - i0 + 1;
+    if segLen < 1
         continue;
     end
 
-    w = blank_weight * ones(seg_len, 1);
-    if taper_samples > 0 && seg_len > 2
-        tlen = min(taper_samples, floor(seg_len/2));
+    w = blankWeight * ones(segLen, 1);
+    if taperSamples > 0 && segLen > 2
+        tlen = min(taperSamples, floor(segLen/2));
         if tlen >= 1
             ramp = 0.5 - 0.5*cos(pi*(0:tlen-1).'/tlen);  % 0->1
-            % Outside interferer weight=1; inside core weight=blank_weight.
-            % Edge: blend 1 -> blank_weight.
-            w(1:tlen) = 1 - (1-blank_weight)*ramp;
-            w(end-tlen+1:end) = 1 - (1-blank_weight)*flipud(ramp);
-            if seg_len > 2*tlen
-                w(tlen+1:end-tlen) = blank_weight;
+            % Outside interferer weight=1; inside core weight=blankWeight.
+            % Edge: blend 1 -> blankWeight.
+            w(1:tlen) = 1 - (1 - blankWeight)*ramp;
+            w(end-tlen+1:end) = 1 - (1 - blankWeight)*flipud(ramp);
+            if segLen > 2*tlen
+                w(tlen+1:end-tlen) = blankWeight;
             end
         end
     end
     mask(i0:i1) = min(mask(i0:i1), w);
     info.applied_count = info.applied_count + 1;
-    info.samples_touched = info.samples_touched + seg_len;
+    info.samples_touched = info.samples_touched + segLen;
 end
 
 rx = rx .* mask;

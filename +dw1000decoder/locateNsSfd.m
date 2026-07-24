@@ -1,43 +1,57 @@
-function sfd = locateNsSfd(soft_chips, reference, params, preamble)
+function sfd = locateNsSfd(softChips, reference, params, preamble)
 %LOCATENSSFD Locate the selected SFD in the soft chip stream.
+%   SFD = LOCATENSSFD(SOFTCHIPS, REFERENCE, PARAMS, PREAMBLE) searches
+%   a small window around the expected SFD start for the best match of
+%   the selected SFD sequence. Returns the chip index, correlation, and
+%   polarity.
+%
+%   See also REFINETIMINGWITHNSSFD, DECODEPHRANDPAYLOAD.
+
 if nargin >= 4 && isfield(preamble, 'selected_sfd_sequence')
     sequence = preamble.selected_sfd_sequence(:);
-    sfd_name = preamble.selected_sfd_name;
+    sfdName = preamble.selected_sfd_name;
 else
     sequence = params.decawave_sfd(:);
-    sfd_name = 'Decawave DW-8';
+    sfdName = 'Decawave DW-8';
 end
+
 spread = kron(sequence, reference.spread_code);
-expected_start = 1+params.preamble_repetitions*reference.chips_per_symbol;
-half_width = 8;
-search_start = max(1, expected_start-half_width);
-search_end = min(length(soft_chips)-length(spread)+1, expected_start+half_width);
-if search_end < search_start
-    error('Capture is too short to contain the expected SFD.');
+expectedStart = 1 + params.preamble_repetitions*reference.chips_per_symbol;
+halfWidth = 8;
+searchStart = max(1, expectedStart - halfWidth);
+searchEnd = min(length(softChips) - length(spread) + 1, expectedStart + halfWidth);
+if searchEnd < searchStart
+    error('locateNsSfd:CaptureTooShort', ...
+        'Capture is too short to contain the expected SFD.');
 end
-metric = zeros(search_end-search_start+1, 1);
-for k = search_start:search_end
-    segment = soft_chips(k:k+length(spread)-1);
-    metric(k-search_start+1) = real(spread'*segment)/ ...
-        (norm(spread)*norm(segment)+eps);
+
+metric = zeros(searchEnd - searchStart + 1, 1);
+for k = searchStart:searchEnd
+    segment = softChips(k:k+length(spread)-1);
+    metric(k - searchStart + 1) = real(spread'*segment) / ...
+        (norm(spread)*norm(segment) + eps);
 end
-[correlation, local_index] = max(abs(metric));
-start_chip = search_start+local_index-1;
-polarity = sign(metric(local_index));
+
+[correlation, localIdx] = max(abs(metric));
+startChip = searchStart + localIdx - 1;
+polarity = sign(metric(localIdx));
 if polarity == 0
     polarity = 1;
 end
-sfd = struct('name', sfd_name, 'sequence', sequence, 'spread', spread, ...
-    'start_chip', start_chip, 'end_chip', start_chip+length(spread)-1, ...
+
+sfd = struct('name', sfdName, 'sequence', sequence, 'spread', spread, ...
+    'start_chip', startChip, 'end_chip', startChip + length(spread) - 1, ...
     'correlation', correlation, 'polarity', polarity, ...
-    'search_start', search_start, 'search_end', search_end, ...
-    'metric', metric, 'local_index', local_index);
+    'search_start', searchStart, 'search_end', searchEnd, ...
+    'metric', metric, 'local_index', localIdx);
+
 if isfield(params, 'verbose') && params.verbose
     fprintf('%s start: chip %d, normalized correlation: %.3f.\n', ...
-        sfd_name, start_chip, correlation);
-end
-if correlation < 0.35
-    warning('Weak %s match. Check configuration and timing.', sfd_name);
-end
+        sfdName, startChip, correlation);
 end
 
+if correlation < 0.35
+    warning('locateNsSfd:WeakMatch', ...
+        'Weak %s match. Check configuration and timing.', sfdName);
+end
+end

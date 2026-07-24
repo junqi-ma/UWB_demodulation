@@ -1,51 +1,58 @@
 function diagnostics = analyzeNsSfdSymbols(rx, preamble, reference, params)
 %ANALYZENSSFDSYMBOLS Evaluate selected SFD timing at symbol resolution.
-%   Uses a local matched filter around the expected SFD only.
+%   DIAGNOSTICS = ANALYZENSSFDSYMBOLS(RX, PREAMBLE, REFERENCE, PARAMS)
+%   tests small preamble-symbol shifts of the selected SFD against a
+%   local matched filter around the expected SFD and returns the best
+%   shift and its correlation.
+%
+%   See also REFINETIMINGWITHNSSFD, LOCATENSSFD.
 
-sfd_sequence = preamble.selected_sfd_sequence(:);
+sfdSequence = preamble.selected_sfd_sequence(:);
 period = preamble.measured_period;
-half_width = preamble.search_half_width;
+halfWidth = preamble.search_half_width;
 shifts = -2:2;
 
 % Local ROI covering every candidate SFD symbol peak under test.
-first_end = preamble.start_sample+(params.preamble_repetitions+shifts(1)+1)* ...
-    period-1;
-last_end = preamble.start_sample+(params.preamble_repetitions+shifts(end)+ ...
-    numel(sfd_sequence))*period-1;
-roi_start = max(1, floor(first_end-half_width-reference.samples_per_symbol));
-roi_end = min(numel(rx), ceil(last_end+half_width+reference.samples_per_symbol));
-roi = rx(roi_start:roi_end);
-matched_roi = fftfilt(flipud(conj(reference.preamble_waveform)), roi);
+firstEnd = preamble.start_sample + (params.preamble_repetitions + shifts(1) + 1)* ...
+    period - 1;
+lastEnd = preamble.start_sample + (params.preamble_repetitions + shifts(end) + ...
+    numel(sfdSequence))*period - 1;
+roiStart = max(1, floor(firstEnd - halfWidth - reference.samples_per_symbol));
+roiEnd = min(numel(rx), ceil(lastEnd + halfWidth + reference.samples_per_symbol));
+roi = rx(roiStart:roiEnd);
+matchedRoi = fftfilt(flipud(conj(reference.preamble_waveform)), roi);
 
 correlations = zeros(size(shifts));
-for shift_index = 1:length(shifts)
-    values = complex(zeros(length(sfd_sequence), 1));
-    for symbol_index = 1:length(sfd_sequence)
-        expected_end = round(preamble.start_sample+(params.preamble_repetitions+ ...
-            shifts(shift_index)+symbol_index)*period-1);
-        local_center = expected_end-roi_start+1;
-        indices = local_center-half_width:local_center+half_width;
-        indices = indices(indices >= 1 & indices <= numel(matched_roi));
+for shiftIdx = 1:length(shifts)
+    values = complex(zeros(length(sfdSequence), 1));
+    for symbolIdx = 1:length(sfdSequence)
+        expectedEnd = round(preamble.start_sample + (params.preamble_repetitions + ...
+            shifts(shiftIdx) + symbolIdx)*period - 1);
+        localCenter = expectedEnd - roiStart + 1;
+        indices = localCenter-halfWidth:localCenter+halfWidth;
+        indices = indices(indices >= 1 & indices <= numel(matchedRoi));
         if isempty(indices)
-            values(symbol_index) = 0;
+            values(symbolIdx) = 0;
             continue;
         end
-        [~, local_peak] = max(abs(matched_roi(indices)));
-        values(symbol_index) = matched_roi(indices(local_peak));
+        [~, localPeak] = max(abs(matchedRoi(indices)));
+        values(symbolIdx) = matchedRoi(indices(localPeak));
     end
-    correlations(shift_index) = abs(sfd_sequence'*values)/ ...
-        (norm(sfd_sequence)*norm(values)+eps);
+    correlations(shiftIdx) = abs(sfdSequence'*values) / ...
+        (norm(sfdSequence)*norm(values) + eps);
 end
-[best_correlation, best_index] = max(correlations);
+
+[bestCorrelation, bestIdx] = max(correlations);
 diagnostics = struct('shifts', shifts, 'correlations', correlations, ...
-    'best_shift', shifts(best_index), 'best_correlation', best_correlation, ...
-    'sfd_name', preamble.selected_sfd_name, 'sequence', sfd_sequence);
+    'best_shift', shifts(bestIdx), 'best_correlation', bestCorrelation, ...
+    'sfd_name', preamble.selected_sfd_name, 'sequence', sfdSequence);
+
 if isfield(params, 'verbose') && params.verbose
     fprintf(['Code-level SFD correlation: %.3f, preamble-symbol best ', ...
-        '%s-template shift: %d.\n'], best_correlation, ...
-        preamble.selected_sfd_name, shifts(best_index));
+        '%s-template shift: %d.\n'], bestCorrelation, ...
+        preamble.selected_sfd_name, shifts(bestIdx));
     fprintf('Using measured %d + %d boundary: SFD shift = 0.\n', ...
-        params.preamble_repetitions, length(sfd_sequence));
+        params.preamble_repetitions, length(sfdSequence));
     fprintf('SFD shift candidates [shift; correlation]:\n');
     disp([shifts; correlations]);
 end

@@ -1,6 +1,13 @@
 function result = packageResult(params, reference, interference, ...
-        preamble, sfd_symbols, cir, chips, sfd, frame)
+        preamble, sfdSymbols, cir, chips, sfd, frame)
 %PACKAGERESULT Convert internal stage structures to the public result API.
+%   RESULT = PACKAGERESULT(PARAMS, REFERENCE, INTERFERENCE, PREAMBLE,
+%   SFDSYMBOLS, CIR, CHIPS, SFD, FRAME) flattens every decoder stage
+%   output into the single structure returned to callers of
+%   decode_x410_dw1000.
+%
+%   See also DECODE_X410_DW1000.
+
 result = struct('settings', params, 'phy_config', reference.cfg, ...
     'interference', interference);
 result.preamble = struct('metric_peak', preamble.metric_peak, ...
@@ -12,7 +19,7 @@ result.preamble = struct('metric_peak', preamble.metric_peak, ...
     'carrier_frequency_offset_hz', preamble.frequency_offset_hz, ...
     'sfd_waveform_correlation', preamble.sfd_waveform_correlation);
 result.cir = cir;
-result.sfd_symbol_diagnostics = sfd_symbols;
+result.sfd_symbol_diagnostics = sfdSymbols;
 result.sfd = sfd;
 result.phr = struct('start_chip', frame.phr_start, 'end_chip', frame.phr_end, ...
     'coded_bits', frame.coded_phr, 'secded_pass', frame.secded_pass, ...
