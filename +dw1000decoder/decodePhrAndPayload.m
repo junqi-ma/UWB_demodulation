@@ -1,4 +1,4 @@
-function frame = decodePhrAndPayload(softChips, sfd, cfg)
+function frame = decodePhrAndPayload(softChips, sfd, cfg, maxPsduBytes)
 %DECODEPHRANDPAYLOAD Decode the PHR, PSDU, and reflected frame CRC.
 %   FRAME = DECODEPHRANDPAYLOAD(SOFTCHIPS, SFD, CFG) de-interleaves and
 %   decodes the PHR, PSDU, and FCS from the signed soft-chip stream.
@@ -7,6 +7,9 @@ function frame = decodePhrAndPayload(softChips, sfd, cfg)
 %   See also LOCATENSSFD, IEEE802154CRC16.
 
 softChips = sfd.polarity * softChips;
+if nargin < 4 || isempty(maxPsduBytes)
+    maxPsduBytes = 127;
+end
 phrStart = sfd.end_chip + 1;
 [cwPhr, phrEnd] = helperUWBBPRFDemod(true, softChips, phrStart, cfg);
 [secdedPass, psduLength] = helperUWBPHRDecode(cwPhr, cfg, 3);
@@ -16,7 +19,7 @@ fprintf('PHR SECDED pass: %d, decoded PSDU length: %d bytes.\n', ...
 bits = []; bytes = uint8([]); payloadStart = []; payloadEnd = [];
 fcsPass = false; calculatedFcs = uint16(0); receivedFcs = uint16(0);
 
-if secdedPass && psduLength >= 0 && psduLength <= 127
+if secdedPass && psduLength >= 0 && psduLength <= maxPsduBytes
     cfg.PSDULength = psduLength;
     payloadStart = phrEnd + 1;
     [bits, payloadEnd] = helperUWBPayloadDecode( ...
@@ -35,7 +38,8 @@ if secdedPass && psduLength >= 0 && psduLength <= 127
     end
 else
     warning('decodePhrAndPayload:InvalidPhr', ...
-        'Payload decoding skipped because the PHR is invalid.');
+        ['Payload decoding skipped because the PHR is invalid or the ', ...
+        'decoded PSDU length exceeds max_psdu_bytes=%d.'], maxPsduBytes);
 end
 
 frame = struct('phr_start', phrStart, 'phr_end', phrEnd, ...

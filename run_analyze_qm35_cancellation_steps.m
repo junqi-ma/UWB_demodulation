@@ -11,12 +11,12 @@ addpath(project_dir);
 
 %% 0. Analysis knobs -- edit these first
 % Use 'dw1000' for the original DW1000 transmitter or 'qm35' for QM35.
-device_profile = 'qm35';
+device_profile = 'DW1000';
 
 switch lower(device_profile)
     case 'dw1000'
         device_label = 'DW1000';
-        capture_file = 'F:\UWB基带数据\DW1000_1.dat';
+        capture_file = 'F:\UWB基带数据\DW1000_2.dat';
         output_dir = fullfile(project_dir, 'decoded_results', ...
             'dw1000_cancellation');
         options = struct( ...
