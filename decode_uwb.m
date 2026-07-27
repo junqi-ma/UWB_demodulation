@@ -1,4 +1,4 @@
-function result = decode_uwb(options, preprocessedRx, interference)
+function result = decode_uwb(options, preprocessedRx, interference, preparedReference)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -6,6 +6,9 @@ function result = decode_uwb(options, preprocessedRx, interference)
 %   and tone cancellation, using the already tone-cancelled RX vector and
 %   its INTERFERENCE diagnostic structure. This ensures downstream decode
 %   and comparison operate on exactly the same preprocessed samples.
+%   RESULT = DECODE_UWB(OPTIONS, RX, INTERFERENCE, REFERENCE) reuses a
+%   prebuilt UWB reference. Batch decoders use this form to avoid rebuilding
+%   the same PHY waveform for every candidate packet.
 %
 %   Processing stages are implemented as separate files in the
 %   +uwbdecoder package folder.
@@ -18,6 +21,11 @@ end
 params = uwbdecoder.mergeOptions( ...
     uwbdecoder.defaultOptions(), options);
 addpath(params.helper_path);
+
+% Suppress all progress fprintf inside +uwbdecoder so the console stays
+% clean for CLI / LLM-driven debugging. The decode results are fully saved
+% to disk; use visualize_decode_uwb_all.m to inspect them.
+params.verbose = false;
 
 if nargin < 2 || isempty(preprocessedRx)
     [rx, interference] = uwbdecoder.readAndCancelInterference(params);
@@ -35,7 +43,11 @@ else
 end
 
 rx = uwbdecoder.compensateCenterFrequency(rx, params);
-reference = uwbdecoder.buildUwbReference(params);
+if nargin < 4 || isempty(preparedReference)
+    reference = uwbdecoder.buildUwbReference(params);
+else
+    reference = preparedReference;
+end
 rxWork = uwbdecoder.resampleCapture(rx, params.fs_rx, reference.fs);
 
 preamble = uwbdecoder.detectRepeatedPreamble( ...

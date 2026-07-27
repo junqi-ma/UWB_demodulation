@@ -2,7 +2,13 @@
 % Reuses the full-file scan produced by decode_uwb_all, reconstructs
 % every FCS-valid frame, applies stable-SYNC CFO/global-gain fitting plus
 % field-specific PHR/Payload complex fitting, and patches one output copy.
-clear;
+% When called by sic_pipeline/uwbSicPipeline.m, sic_stage_config carries
+% explicit stage paths. Direct interactive use keeps the original defaults.
+sic_managed_run = exist('sic_stage_config', 'var') == 1;
+if ~sic_managed_run
+    clear;
+    sic_managed_run = false;
+end
 close all;
 clc;
 
@@ -13,8 +19,21 @@ addpath(project_dir);
 %% 0. User configuration
 % Keep phy_profile consistent with run_decode_uwb_all.m.
 phy_profile = 'QM35';  % 'DW1000' or 'QM35'
-input_file = 'F:\UWB基带数据\qm35_1.dat';
+input_file = 'F:\UWB基带数据\qm35_dw1000_1.dat';
+fitting_file = input_file;
+output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
+remove_synchronous_tone = false;
+output_tone_coefficient = [];
+if sic_managed_run
+    phy_profile = sic_stage_config.phy_profile;
+    input_file = sic_stage_config.input_file;
+    fitting_file = sic_stage_config.input_file;
+    output_base_file = sic_stage_config.output_base_file;
+    final_cancellation_mode = sic_stage_config.cancellation_mode;
+    remove_synchronous_tone = sic_stage_config.remove_synchronous_tone;
+    output_tone_coefficient = sic_stage_config.tone_coefficient;
+end
 
 switch upper(phy_profile)
     case 'DW1000'
@@ -61,12 +80,20 @@ end
 % -------------------------------------------------------------------------
 result_stem = [capture_stem profile_suffix];
 packet_result_dir = fullfile(project_dir, 'decoded_results', result_stem);
+if sic_managed_run
+    packet_result_dir = sic_stage_config.result_directory;
+end
 packet_summary_file = fullfile(packet_result_dir, 'frame_summary.csv');
 scan_file = fullfile(packet_result_dir, 'all_frames_cir.mat');
 cancelled_tag = sprintf('cancelled_%s', final_cancellation_mode);
 output_file = fullfile(packet_result_dir, [cancelled_tag '.dat']);
 metadata_file = fullfile(packet_result_dir, [cancelled_tag '_metadata.mat']);
 summary_file = fullfile(packet_result_dir, [cancelled_tag '_summary.csv']);
+if sic_managed_run
+    output_file = sic_stage_config.output_file;
+    metadata_file = sic_stage_config.metadata_file;
+    summary_file = sic_stage_config.summary_file;
+end
 
 max_psdu_bytes = 32;
 require_fcs_pass = true;
@@ -216,11 +243,18 @@ fprintf('Scan frames        : %d\n', results.packet_count);
 fprintf('FCS-pass frames    : %d\n', results.fcs_pass_count);
 fprintf('Selected frames    : %d\n', numel(frames));
 fprintf('Cancellation mode  : %s\n', final_cancellation_mode);
+fprintf('Fitting input      : %s\n', fitting_file);
+fprintf('Output base        : %s\n', output_base_file);
+fprintf('Remove sync tone   : %d\n', remove_synchronous_tone);
 
 %% 2. Create the full output capture once
-if strcmpi(input_file, output_file)
+if strcmpi(output_base_file, output_file)
     error('run_cancel_all_uwb_packets:SameInputOutput', ...
-        'Input and output files must be different.');
+        'Output base and output files must be different.');
+end
+if ~isfile(output_base_file)
+    error('run_cancel_all_uwb_packets:OutputBaseNotFound', ...
+        'Output-base capture does not exist: %s', output_base_file);
 end
 output_dir = fileparts(output_file);
 if ~isfolder(output_dir)
@@ -228,16 +262,25 @@ if ~isfolder(output_dir)
 end
 
 fprintf('Copying complete capture to:\n  %s\n', output_file);
-[copy_ok, copy_message] = copyfile(input_file, output_file, 'f');
+[copy_ok, copy_message] = copyfile(output_base_file, output_file, 'f');
 if ~copy_ok
     error('run_cancel_all_uwb_packets:CopyFailed', ...
         'Cannot create output capture: %s', copy_message);
 end
 
 c = uwbdecoder.constants();
-input_info = dir(input_file);
+input_info = dir(fitting_file);
+base_info = dir(output_base_file);
+if input_info.bytes ~= base_info.bytes
+    error('run_cancel_all_uwb_packets:InputLengthMismatch', ...
+        'Fitting input and output base must have identical lengths.');
+end
 bytes_per_time_sample = c.BYTES_PER_IQ_SAMPLE * params.ant_num;
 total_samples = input_info.bytes / bytes_per_time_sample;
+if remove_synchronous_tone
+    removeToneFromCapture(output_file, total_samples, params, ...
+        output_tone_coefficient, c);
+end
 
 %% 3. Reconstruct, fit, and subtract every selected packet
 % The per-packet work is split into a compute-only stage and a serial
@@ -265,7 +308,7 @@ parfor k = 1:numel(frames)
     report.abs_start_detected = frame.abs_start_sample;
     try
         [report, patch_raw, patch_offset, patch_samples] = ...
-            computeOnePacketPatch(output_file, frame, params, ...
+            computeOnePacketPatch(fitting_file, frame, params, ...
             total_samples, c, final_cancellation_mode, ...
             fixed_phr_payload_scale, ...
             cfo_fit_first_sync, cfo_fit_last_sync, ...
@@ -295,7 +338,8 @@ fprintf('Applying %d computed patches to the output file (serial I/O).\n', ...
 for k = 1:numel(frames)
     report = reports(k);
     if report.success
-        applyPatchToFile(output_file, report, params.ant_num, c);
+        applyPatchToFile( ...
+            fitting_file, output_file, report, params.ant_num, c);
     end
     fprintf('[%4d/%4d] abs_start=%d: ', ...
         k, numel(frames), report.abs_start_detected);
@@ -322,14 +366,15 @@ end
 report_table = struct2table(reports);
 writetable(report_table, summary_file);
 save(metadata_file, 'reports', 'success_count', 'frames', 'params', ...
-    'input_file', 'output_file', 'scan_file', 'packet_summary_file', ...
-    'final_cancellation_mode', '-v7.3');
+    'input_file', 'fitting_file', 'output_base_file', 'output_file', ...
+    'scan_file', 'packet_summary_file', 'final_cancellation_mode', ...
+    'remove_synchronous_tone', 'output_tone_coefficient', '-v7.3');
 
 output_info = dir(output_file);
-if output_info.bytes ~= input_info.bytes
+if output_info.bytes ~= base_info.bytes
     error('run_cancel_all_uwb_packets:OutputLengthMismatch', ...
         'Output has %d bytes; expected %d.', ...
-        output_info.bytes, input_info.bytes);
+        output_info.bytes, base_info.bytes);
 end
 
 fprintf('\n=== Final summary ===\n');
@@ -344,7 +389,7 @@ fprintf('Summary CSV      : %s\n', summary_file);
 
 %% ------------------------------------------------------------------------
 function [report, patchRaw, patchOffset, patchSamples] = ...
-        computeOnePacketPatch(outputFile, frame, params, totalSamples, ...
+        computeOnePacketPatch(fittingFile, frame, params, totalSamples, ...
         c, cancellationMode, fixedScale, cfoFirst, cfoLast, gainFirst, ...
         gainLast, searchRadius, templateSyncs, fractionalMaxSamples, ...
         fractionalCoarseStep, fractionalFineStep, ...
@@ -383,7 +428,7 @@ nominal_start = frame.abs_start_sample;
 read_first = max(0, nominal_start - searchRadius);
 read_last = min(totalSamples - 1, ...
     nominal_start + numel(replica) - 1 + searchRadius);
-[raw, received] = readIqSegment(outputFile, read_first, ...
+[raw, received] = readIqSegment(fittingFile, read_first, ...
     read_last - read_first + 1, params.ant_num, params.channel_index);
 
 % The tone is removed only in the fitting copy. The saved residual retains
@@ -500,14 +545,24 @@ report.fcs_pass = frame.fcs_pass;
 report.message = '';
 end
 
-function applyPatchToFile(outputFile, report, antNum, c)
-% Write a precomputed patch back to the output capture. Called serially from
-% the main loop so that only one worker touches the file at a time.
+function applyPatchToFile(inputFile, outputFile, report, antNum, c)
+% Apply the modeled component as a delta against the current output.
+% Reading the current output preserves an earlier cancellation when two
+% packet patch windows overlap; writing report.patch_raw directly would
+% restore the old samples in the overlap.
 if ~report.success || isempty(report.patch_raw)
     return
 end
-writeIqSegment(outputFile, report.patch_offset, ...
-    report.patch_raw, antNum, c);
+[sourceRaw, ~] = readIqSegment(inputFile, report.patch_offset, ...
+    report.patch_samples, antNum, 1);
+[currentRaw, ~] = readIqSegment(outputFile, report.patch_offset, ...
+    report.patch_samples, antNum, 1);
+removedRaw = double(sourceRaw) - double(report.patch_raw);
+mergedRaw = double(currentRaw) - removedRaw;
+mergedRaw = int16(max(double(intmin('int16')), ...
+    min(double(intmax('int16')), round(mergedRaw))));
+writeIqSegment( ...
+    outputFile, report.patch_offset, mergedRaw, antNum, c);
 end
 
 function [bestStart, bestCorrelation] = alignReplica( ...
@@ -702,6 +757,37 @@ if count ~= numel(raw)
     error('Only %d of %d int16 values were written.', count, numel(raw));
 end
 clear guard;
+end
+
+function removeToneFromCapture( ...
+        fileName, totalSamples, params, coefficient, c)
+% Remove the absolute-sample synchronous tone from one complete capture.
+if isempty(coefficient)
+    error('run_cancel_all_uwb_packets:MissingToneCoefficient', ...
+        'A tone coefficient is required for output tone removal.');
+end
+if ~isfield(params, 'interference_tone_bin') || ...
+        ~isfield(params, 'interference_period_samples')
+    error('run_cancel_all_uwb_packets:MissingToneParameters', ...
+        'Tone bin and period are missing from decode parameters.');
+end
+
+chunkSamples = 5e6;
+fprintf('Removing synchronous tone from output base ...\n');
+offset = 0;
+while offset < totalSamples
+    count = min(chunkSamples, totalSamples - offset);
+    [raw, rx] = readIqSegment( ...
+        fileName, offset, count, params.ant_num, params.channel_index);
+    absoluteN = offset + (0:count - 1).';
+    basis = uwbdecoder.synchronousTone(absoluteN, ...
+        params.interference_tone_bin, params.interference_period_samples);
+    rx = rx - coefficient(1) .* basis;
+    [raw, ~] = replaceIqChannel(raw, rx, params.channel_index, c);
+    writeIqSegment(fileName, offset, raw, params.ant_num, c);
+    offset = offset + count;
+    fprintf('  tone removal %.1f%%\n', 100 * offset / totalSamples);
+end
 end
 
 function report = emptyReport()

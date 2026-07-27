@@ -44,40 +44,23 @@ reference = uwbdecoder.buildUwbReference(baseParams);
 addpath(baseParams.helper_path);
 coarseTemplate = buildCoarseTemplate(baseParams, reference, batch);
 
-fprintf('\n========== Full-file DW1000 decode (energy+corr+fine) ==========\n');
-fprintf('Capture file                 : %s\n', baseParams.file_name);
-fprintf('Total complex samples        : %d (%.3f ms @ %.2f MHz)\n', ...
-    totalSamples, totalSamples/baseParams.fs_rx*1e3, ...
-    baseParams.fs_rx/1e6);
-fprintf('Energy chunk/step            : %d / %d\n', ...
-    batch.energy_chunk_samples, batch.energy_step_samples);
-fprintf('Energy read stride           : %d\n', batch.energy_read_stride);
-fprintf('Correlation decimation       : %d\n', ...
-    batch.correlation_decimation);
-fprintf('Fine decode window           : %d\n', batch.window_samples);
-fprintf('==============================================================\n\n');
+printProgress('Stage 1/3: energy scan', 0, 0);
 
 %% -------------------- Stage 1: strided energy-envelope scan --------------------
 ticEnergy = tic;
 [energyRegions, energyStats] = findEnergyRegions( ...
-    baseParams, batch, totalSamples);
+    baseParams, batch, totalSamples, @(frac) printProgress('Stage 1/3: energy scan', frac, 0));
 energySeconds = toc(ticEnergy);
-fprintf(['Energy scan done in %.1f s | chunks=%d | samples read=%d ', ...
-    '(%.2f%%) | regions=%d\n\n'], ...
-    energySeconds, energyStats.chunk_count, ...
-    energyStats.samples_read, energyStats.read_fraction*100, ...
-    size(energyRegions, 1));
+printProgress('Stage 1/3: energy scan', 1, energySeconds);
 
 %% -------------------- Stage 2: preamble correlation in energy regions --------------------
 ticCorrelation = tic;
 [candidates, candidateRegions, correlationStats] = refineEnergyRegions( ...
-    baseParams, coarseTemplate, batch, energyRegions, totalSamples);
+    baseParams, coarseTemplate, batch, energyRegions, totalSamples, ...
+    @(frac) printProgress('Stage 2/3: correlation', frac, 0));
 correlationSeconds = toc(ticCorrelation);
 coarseSeconds = energySeconds + correlationSeconds;
-fprintf(['Correlation refinement done in %.1f s | regions=%d | ', ...
-    'raw clusters=%d | selected candidates=%d\n\n'], ...
-    correlationSeconds, correlationStats.region_count, ...
-    correlationStats.raw_candidate_count, numel(candidates));
+printProgress('Stage 2/3: correlation', 1, correlationSeconds);
 
 %% -------------------- Stage 3: full decode only at candidates --------------------
 % Decoding each candidate is independent, so it runs in parfor across
@@ -85,7 +68,6 @@ fprintf(['Correlation refinement done in %.1f s | regions=%d | ', ...
 % they depend on previously accepted frames.
 frames = emptyFrameRecord();
 packetCount = 0;
-attemptCount = 0;
 ticFine = tic;
 
 % Ensure a parallel pool is open for the fine-decode stage.
@@ -117,6 +99,7 @@ for candIdx = 1:numCandidates
 end
 
 attemptCount = nnz(candValid);
+interferenceCoefficient = baseParams.interference_coefficient;
 
 % Collect decode results in a cell array; each entry is [] on failure.
 decodeCells = cell(numCandidates, 1);
@@ -134,13 +117,11 @@ parfor c = 1:numCandidates
     windowOptions.sample_num = windowSamples;
     windowOptions.show_plots = false;
     windowOptions.interference_coefficient = ...
-        baseParams.interference_coefficient;
+        interferenceCoefficient;
 
     try
-        result = decode_uwb(windowOptions);
+        result = decode_uwb(windowOptions, [], [], reference);
     catch decodeError
-        fprintf('  [candidate %d] Decode failed: %s\n', ...
-            c, decodeError.message);
         continue;
     end
 
@@ -163,14 +144,10 @@ for c = 1:numCandidates
 
     if isDuplicatePacket(frames, packetCount, absStart, ...
             batch.start_tolerance_samples)
-        fprintf('  Duplicate packet near abs_start=%d; skipping.\n', ...
-            absStart);
         continue;
     end
 
     if batch.require_fcs_pass && ~result.payload.fcs_pass
-        fprintf('  Packet rejected: FCS failed at abs_start=%d.\n', ...
-            absStart);
         continue;
     end
 
@@ -178,19 +155,12 @@ for c = 1:numCandidates
     frames(packetCount) = packageFrameRecord( ...
         packetCount, candOffsets(c), timing, result, baseParams);
 
-    fprintf(['  Saved packet #%d | abs_start=%d | t=%.3f ms | ', ...
-        'SFD=%s | corr=%.3f | FCS=%d\n'], ...
-        packetCount, absStart, frames(packetCount).time_start_s*1e3, ...
-        frames(packetCount).sfd_name, ...
-        frames(packetCount).sfd_correlation, ...
-        frames(packetCount).fcs_pass);
-
     if batch.save_individual_cir
         cirFile = fullfile(batch.output_directory, ...
             sprintf('cir_%03d.mat', packetCount));
         cir = frames(packetCount).cir; %#ok<NASGU>
         meta = frames(packetCount); %#ok<NASGU>
-        save(cirFile, 'cir', 'meta', '-v7.3');
+        save(cirFile, 'cir', 'meta', '-v7');
     end
 end
 
@@ -260,14 +230,56 @@ if packetCount > 0
     end
 end
 
-save(batch.mat_file, 'results', '-v7.3');
+save(batch.mat_file, 'results', '-v7');
 writeSummaryCsv(batch.summary_csv, frames);
+fineSeconds = toc(ticFine);
 
-fprintf('\nSaved %d packet(s) to:\n  %s\n  %s\n', ...
-    packetCount, batch.mat_file, batch.summary_csv);
-fprintf(['Timing: energy %.1f s | correlation %.1f s | ', ...
-    'full decode %.1f s | fine attempts %d\n'], ...
-    energySeconds, correlationSeconds, fineSeconds, attemptCount);
+printProgress('Stage 3/3: fine decode', 1, fineSeconds);
+fprintf('\n');
+end
+
+% -------------------------------------------------------------------------
+function printProgress(stage, frac, elapsed)
+%PRINTPROGRESS Single-line CLI progress bar, overwritten in place.
+%   STAGE  : string label, e.g. 'Stage 1/3: energy scan'
+%   FRAC   : 0..1 fraction complete (0 = just started, 1 = done)
+%   ELAPSED: seconds elapsed for this stage (ignored when frac < 1)
+persistent lastFrac lastStage prevLen
+if isempty(lastFrac), lastFrac = -1; end
+if isempty(lastStage), lastStage = ''; end
+if isempty(prevLen), prevLen = 0; end
+
+% Reset state when a new stage begins.
+if ~strcmp(stage, lastStage)
+    lastFrac = -1;
+    lastStage = stage;
+    prevLen = 0;
+end
+
+barLen = 30;
+nRound = max(0, min(barLen, round(frac * barLen)));
+bar = [repmat('=', 1, nRound) repmat(' ', 1, barLen - nRound)];
+
+if frac >= 1
+    % Clear the previous line (backspace) then print done.
+    fprintf(repmat('\b', 1, prevLen));
+    msg = sprintf('[%s] [%-*s] done  %.1f s\n', stage, barLen, bar, elapsed);
+    fprintf('%s', msg);
+    prevLen = 0;
+    lastFrac = -1;
+else
+    % Only refresh when the integer percentage changes (throttle to ~1%).
+    pct = floor(frac * 100);
+    if pct == lastFrac, return; end
+    lastFrac = pct;
+    % Clear the previous line (backspace) then print new progress.
+    fprintf(repmat('\b', 1, prevLen));
+    msg = sprintf('[%s] [%-*s] %3.0f%%', stage, barLen, bar, frac * 100);
+    fprintf('%s', msg);
+    prevLen = numel(msg);
+end
+% Force flush so the bar updates in real time even without a newline.
+drawnow('limitrate');
 end
 
 % -------------------------------------------------------------------------
@@ -319,7 +331,7 @@ defaults = struct( ...
     'start_tolerance_samples', 4096, ...
     'min_window_samples', 0.3e6, ...
     'require_fcs_pass', false, ...
-    'save_individual_cir', true, ...
+    'save_individual_cir', false, ...
     'output_directory', '', ...
     'mat_file', '', ...
     'summary_csv', '');
@@ -422,9 +434,6 @@ quietBasis = uwbdecoder.synchronousTone(quietN, ...
     params.interference_tone_bin, params.interference_period_samples);
 coefficient = mean(rxQuiet .* conj(quietBasis));
 
-fprintf('Precomputed interference coefficient once for full-file scan.\n');
-fprintf('  Amplitude: %.3f ADC counts, phase: %.3f deg\n', ...
-    abs(coefficient), angle(coefficient)*180/pi);
 end
 
 function template = buildCoarseTemplate(params, reference, batch)
@@ -441,20 +450,20 @@ template = struct( ...
     'preamble_rx_length', numel(prefRx));
 end
 
-function [regions, stats] = findEnergyRegions(params, batch, totalSamples)
+function [regions, stats] = findEnergyRegions(params, batch, totalSamples, progress_cb)
 %FINDENERGYREGIONS Locate burst intervals from a truly strided file read.
+%   progress_cb(frac) is an optional callback for live progress updates.
 regions = zeros(0, 2);
 chunkCount = 0;
 samplesRead = 0;
 offset = 0;
 estimatedChunks = ceil(totalSamples/batch.energy_step_samples);
+if nargin < 4, progress_cb = []; end
 chunkOffsets = zeros(estimatedChunks, 1);
 thresholdHigh = zeros(estimatedChunks, 1);
 thresholdLow = zeros(estimatedChunks, 1);
 chunkRegionCount = zeros(estimatedChunks, 1);
 
-fprintf('Stage 1/3: %dx strided energy-envelope scan...\n', ...
-    batch.energy_read_stride);
 while offset < totalSamples
     chunkSamples = min(batch.energy_chunk_samples, totalSamples - offset);
     chunkCount = chunkCount + 1;
@@ -499,12 +508,10 @@ while offset < totalSamples
     thresholdLow(chunkCount) = low;
     chunkRegionCount(chunkCount) = size(localRegions, 1);
 
-    if mod(chunkCount, 5) == 0 || offset + chunkSamples >= totalSamples
-        fprintf(['  energy chunk %d | offset=%d (%.1f%%) | ', ...
-            'regions so far=%d\n'], ...
-            chunkCount, offset, 100*offset/max(totalSamples, 1), ...
-            size(regions, 1));
+    if ~isempty(progress_cb)
+        progress_cb(min(1, offset / totalSamples));
     end
+
     if offset + chunkSamples >= totalSamples
         break;
     end
@@ -548,8 +555,10 @@ end
 end
 
 function [candidates, candidateRegions, stats] = refineEnergyRegions( ...
-        params, template, batch, energyRegions, totalSamples)
+        params, template, batch, energyRegions, totalSamples, progress_cb)
 %REFINEENERGYREGIONS Correlate only the continuous energetic intervals.
+%   progress_cb(frac) is an optional callback for live progress updates.
+if nargin < 6, progress_cb = []; end
 candidates = zeros(0, 1);
 candidateRegions = zeros(0, 2);
 rawCandidateCount = 0;
@@ -559,7 +568,6 @@ correlationChunkCount = 0;
 step = batch.correlation_chunk_samples - ...
     batch.correlation_overlap_samples;
 
-fprintf('Stage 2/3: preamble correlation inside energy regions...\n');
 for regionIdx = 1:size(energyRegions, 1)
     regionFirst = energyRegions(regionIdx, 1);
     regionLast = energyRegions(regionIdx, 2);
@@ -570,9 +578,10 @@ for regionIdx = 1:size(energyRegions, 1)
         chunkSamples = min(batch.correlation_chunk_samples, ...
             regionLast - offset + 1);
         correlationChunkCount = correlationChunkCount + 1;
-        rx = readProcessedChunkSilent(params, offset, chunkSamples);
+        rxDs = readProcessedChunkStrided( ...
+            params, offset, chunkSamples, batch.correlation_decimation);
         [localCandidates, ~, ~] = ...
-            detectCorrelationCandidates(rx, offset, template, batch);
+            detectCorrelationCandidates(rxDs, offset, template, batch);
         regionCandidates = [regionCandidates; localCandidates(:)]; %#ok<AGROW>
         if offset + chunkSamples - 1 >= regionLast
             break;
@@ -601,10 +610,9 @@ for regionIdx = 1:size(energyRegions, 1)
     candidates(end + 1, 1) = selectedCandidate; %#ok<AGROW>
     candidateRegions(end + 1, :) = [regionFirst, regionLast]; %#ok<AGROW>
 
-    fprintf(['  correlation region %d/%d | %d..%d | ', ...
-        'clusters=%d | selected=%d\n'], ...
-        regionIdx, size(energyRegions, 1), regionFirst, regionLast, ...
-        numel(regionCandidates), selectedCandidate);
+    if ~isempty(progress_cb)
+        progress_cb(regionIdx / size(energyRegions, 1));
+    end
 end
 
 valid = candidateRegions(:, 1) + batch.min_window_samples <= totalSamples;
@@ -620,9 +628,8 @@ stats = struct( ...
 end
 
 function [candidates, fallbackCandidate, fallbackScore] = ...
-        detectCorrelationCandidates(rx, sampleOffset, template, batch)
+        detectCorrelationCandidates(rxDs, sampleOffset, template, batch)
 D = batch.correlation_decimation;
-rxDs = rx(1:D:end);
 candidates = zeros(0, 1);
 fallbackCandidate = sampleOffset;
 fallbackScore = -Inf;
@@ -631,7 +638,14 @@ if templateLength < 4 || numel(rxDs) <= templateLength
     return;
 end
 
-matched = fftfilt(flipud(conj(template.preamble_ds)), rxDs);
+matchedFilter = flipud(conj(template.preamble_ds));
+% At D=32 the preamble template is only about 24 taps. MATLAB's direct FIR
+% is substantially faster than setting up an FFT for each short region.
+if templateLength <= 128
+    matched = filter(matchedFilter, 1, rxDs);
+else
+    matched = fftfilt(matchedFilter, rxDs);
+end
 energyNorm = sqrt(movsum(abs(rxDs).^2, [templateLength - 1, 0])) + eps;
 corrScore = abs(matched)./energyNorm;
 repetitionCount = min(batch.correlation_repetitions, ...
@@ -769,26 +783,29 @@ basis = uwbdecoder.synchronousTone(sampleIndices(:), ...
 rx = rx - params.interference_coefficient(1).*basis;
 end
 
-function rx = readProcessedChunkSilent(params, sampleOffset, sampleNum)
-%READPROCESSEDCHUNKSILENT Cheap read + tone cancel + CF shift (no logging).
-raw = uwbdecoder.readIqRaw(params.file_name, sampleOffset, sampleNum, params.ant_num);
+function rx = readProcessedChunkStrided( ...
+        params, sampleOffset, sampleNum, stride)
+%READPROCESSEDCHUNKSTRIDED Read only samples used by coarse correlation.
+%   The previous implementation loaded and converted every full-rate IQ
+%   record, frequency-shifted all of them, and then retained 1/STRIDE.
+%   FREAD now skips unused complete IQ records at the file level.
+[raw, sampleIndices] = uwbdecoder.readIqRawStrided( ...
+    params.file_name, sampleOffset, sampleNum, params.ant_num, stride);
 rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 
 if params.enable_interference_cancellation
     if isempty(params.interference_coefficient)
         error('decode_uwb_all:MissingInterferenceCoefficient', ...
-            'Silent chunk reader requires a precomputed interference coefficient.');
+            'Strided chunk reader requires a precomputed interference coefficient.');
     end
     coefficient = params.interference_coefficient(1);
-    n = sampleOffset + (0:length(rx)-1).';
-    basis = uwbdecoder.synchronousTone(n, ...
+    basis = uwbdecoder.synchronousTone(sampleIndices, ...
         params.interference_tone_bin, params.interference_period_samples);
     rx = rx - coefficient .* basis;
 end
 
 frequencyShift = params.x410_center_frequency - params.dw1000_center_frequency;
-n = sampleOffset + (0:length(rx)-1).';
-rx = rx .* exp(1j*2*pi*frequencyShift*n / params.fs_rx);
+rx = rx .* exp(1j*2*pi*frequencyShift*sampleIndices / params.fs_rx);
 rx = rx - mean(rx);
 end
 
