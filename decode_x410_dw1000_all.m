@@ -80,15 +80,28 @@ fprintf(['Correlation refinement done in %.1f s | regions=%d | ', ...
     correlationStats.raw_candidate_count, numel(candidates));
 
 %% -------------------- Stage 3: full decode only at candidates --------------------
+% Decoding each candidate is independent, so it runs in parfor across
+% workers. Duplicate filtering and frame saving are done afterwards because
+% they depend on previously accepted frames.
 frames = emptyFrameRecord();
 packetCount = 0;
 attemptCount = 0;
 ticFine = tic;
 
-for candIdx = 1:numel(candidates)
+% Ensure a parallel pool is open for the fine-decode stage.
+if isempty(gcp('nocreate'))
+    parpool('local');
+end
+
+% Pre-compute per-candidate window offsets so the parfor body is a pure
+% function of the candidate index.
+numCandidates = numel(candidates);
+candOffsets = zeros(numCandidates, 1);
+candWindowSamples = zeros(numCandidates, 1);
+candValid = false(numCandidates, 1);
+for candIdx = 1:numCandidates
     candidate = candidates(candIdx);
     candidateRegion = candidateRegions(candIdx, :);
-
     offset = max(0, min(candidate - batch.pre_packet_guard_samples, ...
         candidateRegion(1)));
     if offset + batch.min_window_samples > totalSamples
@@ -98,7 +111,23 @@ for candIdx = 1:numel(candidates)
     windowSamples = min(batch.window_samples, ...
         max(batch.min_window_samples, regionWindowSamples));
     windowSamples = min(windowSamples, totalSamples - offset);
-    attemptCount = attemptCount + 1;
+    candOffsets(candIdx) = offset;
+    candWindowSamples(candIdx) = windowSamples;
+    candValid(candIdx) = true;
+end
+
+attemptCount = nnz(candValid);
+
+% Collect decode results in a cell array; each entry is [] on failure.
+decodeCells = cell(numCandidates, 1);
+timingCells = cell(numCandidates, 1);
+
+parfor c = 1:numCandidates
+    if ~candValid(c)
+        continue;
+    end
+    offset = candOffsets(c);
+    windowSamples = candWindowSamples(c);
 
     windowOptions = options;
     windowOptions.sample_offset = offset;
@@ -107,20 +136,29 @@ for candIdx = 1:numel(candidates)
     windowOptions.interference_coefficient = ...
         baseParams.interference_coefficient;
 
-    fprintf(['---- Fine decode %d/%d | candidate=%d | ', ...
-        'offset=%d | samples=%d ----\n'], ...
-        attemptCount, numel(candidates), candidate, offset, windowSamples);
-
     try
         result = decode_x410_dw1000(windowOptions);
     catch decodeError
-        fprintf('  Decode failed: %s\n', decodeError.message);
-        % Keep searching nearby candidates; do not jump over a long gap.
+        fprintf('  [candidate %d] Decode failed: %s\n', ...
+            c, decodeError.message);
         continue;
     end
 
     timing = locateDecodedFrameSamples( ...
         offset, result, baseParams, reference, batch, totalSamples);
+
+    decodeCells{c} = result;
+    timingCells{c} = timing;
+end
+
+% Sequential post-processing: dedup + frame saving. Iterating in candidate
+% order preserves the original first-seen-wins behaviour.
+for c = 1:numCandidates
+    if isempty(decodeCells{c})
+        continue;
+    end
+    result = decodeCells{c};
+    timing = timingCells{c};
     absStart = timing.abs_start_sample;
 
     if isDuplicatePacket(frames, packetCount, absStart, ...
@@ -138,7 +176,7 @@ for candIdx = 1:numel(candidates)
 
     packetCount = packetCount + 1;
     frames(packetCount) = packageFrameRecord( ...
-        packetCount, offset, timing, result, baseParams);
+        packetCount, candOffsets(c), timing, result, baseParams);
 
     fprintf(['  Saved packet #%d | abs_start=%d | t=%.3f ms | ', ...
         'SFD=%s | corr=%.3f | FCS=%d\n'], ...
@@ -154,8 +192,8 @@ for candIdx = 1:numel(candidates)
         meta = frames(packetCount); %#ok<NASGU>
         save(cirFile, 'cir', 'meta', '-v7.3');
     end
-
 end
+
 fineSeconds = toc(ticFine);
 
 if packetCount == 0

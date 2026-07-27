@@ -7,9 +7,13 @@ clear;
 close all;
 clc;
 
+%% -------------------- Signal type --------------------
+% Select exactly one signal type: 'DW1000' or 'QM35'.
+signal_type = 'QM35';
+
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\DW1000_2.dat';
+options.file_name = 'F:\UWB基带数据\qm35_1.dat';
 options.ant_num = 1;
 options.channel_index = 1;
 
@@ -17,12 +21,8 @@ options.channel_index = 1;
 options.fs_rx = 737.28e6;
 options.x410_center_frequency = 6500e6;
 options.dw1000_center_frequency = 6489.6e6;
-options.preamble_repetitions = 256;
-options.cir_repetitions = 64;
-options.code_index = 10;
 options.data_rate = 6.81;
 
-options.sfd_mode = 'auto';
 options.decawave_sfd = [-1; -1; -1; -1; 1; -1; 0; 0];
 options.ieee_sfd = [0; 1; 0; -1; 1; 0; 0; -1];
 options.sfd4z_1 = [-1; -1; 1; -1];
@@ -33,10 +33,35 @@ options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
     -1; -1; 1; -1; -1; 1; -1; 1; -1; 1; -1; -1; ...
     -1; 1; 1; -1; -1; -1; 1; -1; 1; 1; -1; -1];
 
+switch upper(signal_type)
+    case 'DW1000'
+        signal_type = 'DW1000';
+        options.preamble_repetitions = 256;
+        options.code_index = 10;
+        options.sfd_mode = 'decawave';
+        options.cir_skip_initial_repetitions = [];
+        options.cir_repetitions = 64;
+        interference_quiet_num = 1500000;
+        output_suffix = '';
+    case 'QM35'
+        signal_type = 'QM35';
+        options.preamble_repetitions = 128;
+        options.code_index = 9;
+        % QM35 uses IEEE 802.15.4z SFD #2. Its first 24 SYNCs have a
+        % visible phase transient, so estimate CIR from stable SYNC 25..128.
+        options.sfd_mode = '4z2';
+        options.cir_skip_initial_repetitions = 24;
+        options.cir_repetitions = 60;
+        interference_quiet_num = 262144;
+        output_suffix = '_qm35';
+    otherwise
+        error('signal_type must be ''DW1000'' or ''QM35''.');
+end
+
 %% -------------------- Interference cancellation --------------------
 options.enable_interference_cancellation = true;
 options.interference_quiet_offset = 400000;
-options.interference_quiet_num = 1500000;
+options.interference_quiet_num = interference_quiet_num;
 options.interference_tone_bin = -169;
 options.interference_period_samples = 512;
 % Leave empty to estimate once from the quiet interval, then reuse.
@@ -89,46 +114,45 @@ batch.save_individual_cir = true;
 
 %% -------------------- Output paths --------------------
 [~, capture_stem] = fileparts(options.file_name);
-batch.output_directory = fullfile(pwd, 'decoded_results', capture_stem);
+batch.output_directory = fullfile(pwd, 'decoded_results', ...
+    [capture_stem output_suffix]);
 batch.mat_file = fullfile(batch.output_directory, 'all_frames_cir.mat');
 batch.summary_csv = fullfile(batch.output_directory, 'frame_summary.csv');
 batch.timeline_png = fullfile(batch.output_directory, 'packet_timeline.png');
 
-%% -------------------- Run full-file decode --------------------
+%% -------------------- Run one full-file decode --------------------
+fprintf('\n========== Selected signal type: %s ==========\n', signal_type);
 results = decode_x410_dw1000_all(options, batch);
 
 %% -------------------- Compact console summary --------------------
-fprintf('\n========== Full-file DW1000 decode summary ==========\n');
+fprintf('\n========== Full-file %s decode summary ==========\n', signal_type);
 fprintf('Capture file                 : %s\n', options.file_name);
 fprintf('Total complex samples        : %d\n', results.total_samples);
 fprintf('Capture duration             : %.3f ms\n', results.duration_s*1e3);
-fprintf('Coarse chunks                : %d\n', results.coarse_chunk_count);
-fprintf('Energy regions               : %d\n', size(results.energy_regions, 1));
-fprintf('Energy samples read          : %d (%.2f%%)\n', ...
-    results.energy_stats.samples_read, ...
-    100*results.energy_stats.read_fraction);
-fprintf('Correlation raw candidates   : %d\n', ...
-    results.coarse_raw_peak_count);
-fprintf('Selected candidates         : %d\n', results.candidate_count);
-fprintf('Fine decode attempts        : %d\n', results.attempt_count);
-fprintf('Unique packets found        : %d\n', results.packet_count);
+fprintf('%-30s: %d\n', [signal_type ' packets'], results.packet_count);
 fprintf('FCS-pass packets            : %d\n', results.fcs_pass_count);
 fprintf('Precisely bounded packets   : %d\n', ...
     sum(results.precise_interval_mask));
 fprintf('Time energy / corr / fine   : %.1f s / %.1f s / %.1f s\n', ...
     results.energy_seconds, results.correlation_seconds, ...
     results.fine_seconds);
-fprintf('Results MAT                 : %s\n', batch.mat_file);
-fprintf('Summary CSV                 : %s\n', batch.summary_csv);
-fprintf('Timeline PNG                : %s\n', batch.timeline_png);
-fprintf('=====================================================\n');
+fprintf('Results MAT                  : %s\n', batch.mat_file);
+fprintf('Summary CSV                  : %s\n', batch.summary_csv);
+fprintf('Timeline PNG                 : %s\n', batch.timeline_png);
+fprintf('=============================================================\n');
 
 if results.packet_count > 0
     for k = 1:results.packet_count
         frame = results.frames(k);
-        fprintf(['#%02d  start=%.3f ms  end=%.3f ms  dur=%.3f us  ', ...
-            'samples=[%d,%d]  SFD=%s  corr=%.3f  PSDU=%d B  FCS=%d\n'], ...
-            k, frame.time_start_s*1e3, frame.time_end_s*1e3, ...
+        profile = signal_type;
+        if isfield(frame, 'profile') && ~isempty(frame.profile)
+            profile = frame.profile;
+        end
+        fprintf(['#%02d [%s]  start=%.3f ms  end=%.3f ms  ', ...
+            'dur=%.3f us  samples=[%d,%d]  SFD=%s  corr=%.3f  ', ...
+            'PSDU=%d B  FCS=%d\n'], ...
+            k, profile, ...
+            frame.time_start_s*1e3, frame.time_end_s*1e3, ...
             (frame.time_end_s-frame.time_start_s)*1e6, ...
             frame.abs_start_sample, frame.abs_end_sample, ...
             frame.sfd_name, frame.sfd_correlation, ...
