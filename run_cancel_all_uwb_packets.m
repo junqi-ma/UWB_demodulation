@@ -19,7 +19,7 @@ final_cancellation_mode = 'optimal_complex';
 switch upper(phy_profile)
     case 'DW1000'
         phy_profile = 'DW1000';
-        profile_suffix = '_dw1000';
+        profile_tag = 'dw1000';
         expected_code_index = 10;
         expected_preamble_repetitions = 256;
         expected_sfd_mode = 'decawave';
@@ -29,7 +29,7 @@ switch upper(phy_profile)
         tx_sfd_sequence = [-1; -1; -1; -1; 1; -1; 0; 0];
     case 'QM35'
         phy_profile = 'QM35';
-        profile_suffix = '_qm35';
+        profile_tag = 'qm35';
         expected_code_index = 9;
         expected_preamble_repetitions = 128;
         expected_sfd_mode = '4z2';
@@ -41,23 +41,32 @@ switch upper(phy_profile)
         error('phy_profile must be ''DW1000'' or ''QM35''.');
 end
 
+% Avoid redundant suffix when the capture filename already encodes the
+% profile (e.g. qm35_1.dat decoded as QM35 -> qm35_1/, not qm35_1_qm35/).
+[~, capture_stem] = fileparts(input_file);
+capture_lower = lower(capture_stem);
+if contains(capture_lower, 'qm35') && strcmpi(phy_profile, 'QM35')
+    profile_suffix = '';
+elseif contains(capture_lower, 'dw1000') && strcmpi(phy_profile, 'DW1000')
+    profile_suffix = '';
+else
+    profile_suffix = ['_' profile_tag];
+end
+
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit below unless your decode output layout
 % differs from the decode_uwb_all defaults.
+% All outputs (scan + cancelled capture + reports) live under
+% decoded_results/<capture_stem><profile_suffix>/.
 % -------------------------------------------------------------------------
-[~, capture_stem] = fileparts(input_file);
 result_stem = [capture_stem profile_suffix];
 packet_result_dir = fullfile(project_dir, 'decoded_results', result_stem);
 packet_summary_file = fullfile(packet_result_dir, 'frame_summary.csv');
 scan_file = fullfile(packet_result_dir, 'all_frames_cir.mat');
-output_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s.dat', result_stem, final_cancellation_mode));
-metadata_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s_metadata.mat', ...
-    result_stem, final_cancellation_mode));
-summary_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s_summary.csv', ...
-    result_stem, final_cancellation_mode));
+cancelled_tag = sprintf('cancelled_%s', final_cancellation_mode);
+output_file = fullfile(packet_result_dir, [cancelled_tag '.dat']);
+metadata_file = fullfile(packet_result_dir, [cancelled_tag '_metadata.mat']);
+summary_file = fullfile(packet_result_dir, [cancelled_tag '_summary.csv']);
 
 max_psdu_bytes = 32;
 require_fcs_pass = true;

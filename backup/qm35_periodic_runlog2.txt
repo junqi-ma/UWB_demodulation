@@ -1,0 +1,3911 @@
+Tone coefficient |A|=148.459  phase=-75.7 deg
+
+========== Periodic QM35 CIR search ==========
+File                         : F:\qm35_dw1000_1.dat
+Duration                     : 999.959 ms  (737250000 samples)
+QM35 config                  : code=9  SYNC=128
+Packet period                : 5.000 ms  (3686400 samples)
+================================================
+
+--- Stage 1: find first QM35 ---
+  first-search attempt 1 | offset=0 (0.000 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 2 | offset=250000 (0.339 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 3 | offset=500000 (0.678 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 4 | offset=750000 (1.017 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 5 | offset=1000000 (1.356 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 6 | offset=1250000 (1.695 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 7 | offset=1500000 (2.035 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 8 | offset=1750000 (2.374 ms)
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+First QM35 abs_start=1752252  t=2.377 ms  SFD=IEEE 802.15.4z SFD #2  FCS=1
+
+--- Stage 2: follow 5.000 ms period ---
+
+==== Slot 2 / ~200 | expected start=5438652 (7.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 61 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=5440904  t=7.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.855  FCS=1
+
+==== Slot 3 / ~200 | expected start=9125052 (12.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 42 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  MISS  (streak=1)  best: SFD=IEEE 802.15.4z SFD #2 corr=0.579 PHR=0 FCS=0 dt=0.139ms (PHR fail)
+
+==== Slot 4 / ~200 | expected start=12811452 (17.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 68 D2 A8 6C 65 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0x5A4F, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 87 29 1A A8 DC A9 6E C9 04 EB AB 70 5A 
+FCS received: 0x5A70, calculated: 0x611F, pass: 0.
+  LOCK  abs_start=12813704  t=17.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.857  FCS=1
+
+==== Slot 5 / ~200 | expected start=16497852 (22.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=16400103  t=22.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 6 / ~200 | expected start=20184252 (27.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x84D2, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+74 C7 C1 4C 44 16 46 64 61 44 16 12 DA 58 
+FCS received: 0x58DA, calculated: 0xF059, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=20286504  t=27.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.831  FCS=1
+
+==== Slot 7 / ~200 | expected start=23870652 (32.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 2C 13 11 43 13 31 34 11 C3 B9 70 
+FCS received: 0x70B9, calculated: 0xF932, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 47 A6 FB EF 86 9E 91 BF 11 13 12 DA A0 
+FCS received: 0xA0DA, calculated: 0x0027, pass: 0.
+  LOCK  abs_start=23972904  t=32.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.809  FCS=0
+
+==== Slot 8 / ~200 | expected start=27557052 (37.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 15 bytes.
+Decoded 120 PSDU bits.
+First decoded PSDU bytes (hex):
+0F 36 29 13 11 43 13 31 34 11 13 12 DA F0 D8 
+FCS received: 0xD8F0, calculated: 0xB1CC, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=27659303  t=37.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 9 / ~200 | expected start=31243452 (42.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=31245704  t=42.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 10 / ~200 | expected start=34929852 (47.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 8 bytes.
+Decoded 64 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 
+FCS received: 0x3113, calculated: 0x94AA, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=35032103  t=47.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.849  FCS=1
+
+==== Slot 11 / ~200 | expected start=38616252 (52.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 67 23 4E 44 16 46 64 61 44 16 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x16A8, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=38718503  t=52.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.837  FCS=1
+
+==== Slot 12 / ~200 | expected start=42302652 (57.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+A5 1C 81 13 11 43 13 31 34 11 13 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x7861, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=42304904  t=57.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 13 / ~200 | expected start=45989052 (62.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=45991303  t=62.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.856  FCS=1
+
+==== Slot 14 / ~200 | expected start=49675452 (67.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=49677704  t=67.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.846  FCS=1
+
+==== Slot 15 / ~200 | expected start=53361852 (72.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=53464104  t=72.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.835  FCS=1
+
+==== Slot 16 / ~200 | expected start=57048252 (77.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=57150504  t=77.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 17 / ~200 | expected start=60734652 (82.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=60636904  t=82.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.855  FCS=1
+
+==== Slot 18 / ~200 | expected start=64421052 (87.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=64523304  t=87.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 19 / ~200 | expected start=68107452 (92.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 C9 
+FCS received: 0xC943, calculated: 0x6943, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=68009703  t=92.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 20 / ~200 | expected start=71793852 (97.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=71796104  t=97.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 21 / ~200 | expected start=75480252 (102.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=75482504  t=102.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.858  FCS=1
+
+==== Slot 22 / ~200 | expected start=79166652 (107.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=79068904  t=107.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.854  FCS=1
+
+==== Slot 23 / ~200 | expected start=82853052 (112.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=82755304  t=112.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 24 / ~200 | expected start=86539452 (117.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=86541703  t=117.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 25 / ~200 | expected start=90225852 (122.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=90228104  t=122.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.837  FCS=1
+
+==== Slot 26 / ~200 | expected start=93912252 (127.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+A5 1C 84 13 11 43 13 31 34 11 C3 B9 70 5A 
+FCS received: 0x5A70, calculated: 0xA038, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+A5 1C 84 13 11 C3 49 24 64 44 16 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x884C, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 67 89 4C 44 16 46 64 61 44 96 B8 70 5A 
+FCS received: 0x5A70, calculated: 0x34EA, pass: 0.
+  LOCK  abs_start=93814504  t=127.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.628  FCS=0
+
+==== Slot 27 / ~200 | expected start=97598652 (132.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 10 bytes.
+Decoded 80 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 27 36 4E 44 16 46 6C 61 44 
+FCS received: 0x4461, calculated: 0xE4FB, pass: 0.
+  LOCK  abs_start=97600903  t=132.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 28 / ~200 | expected start=101285052 (137.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=101287304  t=137.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.863  FCS=1
+
+==== Slot 29 / ~200 | expected start=104971452 (142.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 7 bytes.
+Decoded 56 PSDU bits.
+First decoded PSDU bytes (hex):
+5F 63 CB EC EE BC EC 
+FCS received: 0xECBC, calculated: 0xCEC2, pass: 0.
+  LOCK  abs_start=105073704  t=142.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.620  FCS=0
+
+==== Slot 30 / ~200 | expected start=108657852 (147.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 67 23 4E 44 56 13 31 34 11 13 12 DA F0 
+FCS received: 0xF0DA, calculated: 0xA9D9, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=108660103  t=147.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.574  FCS=0
+
+==== Slot 31 / ~200 | expected start=112344252 (152.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=112246503  t=152.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 32 / ~200 | expected start=116030652 (157.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=116032903  t=157.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.872  FCS=1
+
+==== Slot 33 / ~200 | expected start=119717052 (162.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=119719303  t=162.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 34 / ~200 | expected start=123403452 (167.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+74 67 23 4E 44 16 46 64 61 44 96 B8 70 5A 
+FCS received: 0x5A70, calculated: 0x9AD8, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 29 78 8A A8 BD 04 C2 13 DA F8 
+FCS received: 0xF8DA, calculated: 0x7F3C, pass: 0.
+  LOCK  abs_start=123505703  t=167.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.825  FCS=0
+
+==== Slot 35 / ~200 | expected start=127089852 (172.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 61 bytes.
+Decoded 488 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 8B B9 BB E9 B9 9B 9E BB E9 BB 70 5A 52 C7 1B 50 E0 3A 0D 65 2B E9 B1 6B A7 D1 8D 0E 6A 37 
+FCS received: 0x8149, calculated: 0x16D6, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=127192103  t=172.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.872  FCS=1
+
+==== Slot 36 / ~200 | expected start=130776252 (177.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=130778504  t=177.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 37 / ~200 | expected start=134462652 (182.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 13 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=134464903  t=182.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 38 / ~200 | expected start=138149052 (187.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=138151304  t=187.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.839  FCS=1
+
+==== Slot 39 / ~200 | expected start=141835452 (192.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=141837704  t=192.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 40 / ~200 | expected start=145521852 (197.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=145524104  t=197.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.848  FCS=1
+
+==== Slot 41 / ~200 | expected start=149208252 (202.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=149110504  t=202.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.850  FCS=1
+
+==== Slot 42 / ~200 | expected start=152894652 (207.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 88 43 71 
+FCS received: 0x7143, calculated: 0x4A51, pass: 0.
+  LOCK  abs_start=152896904  t=207.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 43 / ~200 | expected start=156581052 (212.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 A5 10 13 12 8F A5 
+FCS received: 0xA58F, calculated: 0xC653, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 A5 98 C9 18 8F 0D 
+FCS received: 0x0D8F, calculated: 0x016C, pass: 0.
+  LOCK  abs_start=156483303  t=212.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 44 / ~200 | expected start=160267452 (217.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=160269703  t=217.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.861  FCS=1
+
+==== Slot 45 / ~200 | expected start=163953852 (222.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=163956103  t=222.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.852  FCS=1
+
+==== Slot 46 / ~200 | expected start=167640252 (227.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=167642504  t=227.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.850  FCS=1
+
+==== Slot 47 / ~200 | expected start=171326652 (232.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=171228903  t=232.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 48 / ~200 | expected start=175013052 (237.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 8D B7 8A 88 D2 FE 39 E4 1A 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x8ECF, pass: 0.
+  LOCK  abs_start=174915304  t=237.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.837  FCS=1
+
+==== Slot 49 / ~200 | expected start=178699452 (242.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 87 29 1A 11 83 AC 6E 61 44 16 06 DA F0 
+FCS received: 0xF0DA, calculated: 0x67C6, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 27 29 1A 11 83 AC CE CB EE BC EE 25 0F 
+FCS received: 0x0F25, calculated: 0xC664, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=178701703  t=242.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.594  FCS=0
+
+==== Slot 50 / ~200 | expected start=182385852 (247.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=182388104  t=247.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.863  FCS=1
+
+==== Slot 51 / ~200 | expected start=186072252 (252.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=186074503  t=252.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 52 / ~200 | expected start=189758652 (257.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=189760904  t=257.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 53 / ~200 | expected start=193445052 (262.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+AF 49 81 03 44 14 4A 8C CE C0 E8 BA 70 AA 
+FCS received: 0xAA70, calculated: 0xAC4F, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+AF 09 C4 06 4E 1E CA 8E CE C0 FC BA 20 7D 
+FCS received: 0x7D20, calculated: 0xF0CD, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=193447304  t=262.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.604  FCS=0
+
+==== Slot 54 / ~200 | expected start=197131452 (267.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=197033703  t=267.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 55 / ~200 | expected start=200817852 (272.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=200820104  t=272.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 56 / ~200 | expected start=204504252 (277.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=204406503  t=277.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.855  FCS=1
+
+==== Slot 57 / ~200 | expected start=208190652 (282.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 
+FCS received: 0x70BB, calculated: 0x28F3, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=208092904  t=282.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.677  FCS=0
+
+==== Slot 58 / ~200 | expected start=211877052 (287.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=211979304  t=287.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.863  FCS=1
+
+==== Slot 59 / ~200 | expected start=215563452 (292.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=215565704  t=292.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 60 / ~200 | expected start=219249852 (297.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=219352104  t=297.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.848  FCS=1
+
+==== Slot 61 / ~200 | expected start=222936252 (302.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7D 87 29 1A 88 D8 A9 6E E9 EE BC EC 8F A5 
+FCS received: 0xA58F, calculated: 0x6000, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=222938503  t=302.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.824  FCS=1
+
+==== Slot 62 / ~200 | expected start=226622652 (307.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 13 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=226624903  t=307.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.859  FCS=1
+
+==== Slot 63 / ~200 | expected start=230309052 (312.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=230311304  t=312.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 64 / ~200 | expected start=233995452 (317.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=233997704  t=317.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.843  FCS=1
+
+==== Slot 65 / ~200 | expected start=237681852 (322.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 6 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 A5 8E 98 D7 BE 24 25 41 16 4A 8F A5 
+FCS received: 0xA58F, calculated: 0x9B95, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 98 D2 BE 24 65 C1 1C 4A 8F 0D 
+FCS received: 0x0D8F, calculated: 0xDAD1, pass: 0.
+  LOCK  abs_start=237784104  t=322.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.805  FCS=0
+
+==== Slot 66 / ~200 | expected start=241368252 (327.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 37 bytes.
+Decoded 296 PSDU bits.
+First decoded PSDU bytes (hex):
+A6 E5 8C 5F E0 4C 2C 19 54 05 4C 0F 93 D7 7A 7B 36 27 F2 A1 22 0C B6 87 1C 24 FC 59 C1 2B 2F 31 
+FCS received: 0x44B9, calculated: 0x0E80, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=241270503  t=327.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 67 / ~200 | expected start=245054652 (332.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=245056904  t=332.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.848  FCS=1
+
+==== Slot 68 / ~200 | expected start=248741052 (337.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+75 97 9D B8 BB E9 B9 9B 9E BB E9 BB 70 5A 
+FCS received: 0x5A70, calculated: 0x36FA, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 10 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=248643303  t=337.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.764  FCS=0
+
+==== Slot 69 / ~200 | expected start=252427452 (342.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 76 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=252329704  t=342.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.851  FCS=1
+
+==== Slot 70 / ~200 | expected start=256113852 (347.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=256216104  t=347.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 71 / ~200 | expected start=259800252 (352.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=259802503  t=352.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.851  FCS=1
+
+==== Slot 72 / ~200 | expected start=263486652 (357.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 120 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=263588904  t=357.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.839  FCS=1
+
+==== Slot 73 / ~200 | expected start=267173052 (362.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=267175303  t=362.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.841  FCS=1
+
+==== Slot 74 / ~200 | expected start=270859452 (367.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=270861704  t=367.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 75 / ~200 | expected start=274545852 (372.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=274548104  t=372.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 76 / ~200 | expected start=278232252 (377.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 68 bytes.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  MISS  (streak=1)  best: SFD=IEEE 802.15.4z SFD #2 corr=0.548 PHR=0 FCS=0 dt=0.139ms (PHR fail)
+
+==== Slot 77 / ~200 | expected start=281918652 (382.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 28 DA 9A 68 A4 41 EB 09 CF F8 
+FCS received: 0xF8CF, calculated: 0x6B98, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+29 87 29 4E C4 5C 03 6C C9 EE BC EE 25 0F 
+FCS received: 0x0F25, calculated: 0xA521, pass: 0.
+  LOCK  abs_start=281920903  t=382.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 78 / ~200 | expected start=285605052 (387.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=285707303  t=387.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.861  FCS=1
+
+==== Slot 79 / ~200 | expected start=289291452 (392.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=289293704  t=392.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 80 / ~200 | expected start=292977852 (397.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 
+FCS received: 0x70BB, calculated: 0x28F3, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=292880104  t=397.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.696  FCS=0
+
+==== Slot 81 / ~200 | expected start=296664252 (402.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 8B B9 BB E9 B9 9B 9E BB B9 BA 70 
+FCS received: 0x70BA, calculated: 0xF7FA, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=296566503  t=402.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 82 / ~200 | expected start=300350652 (407.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=300352904  t=407.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 83 / ~200 | expected start=304037052 (412.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 8 bytes.
+Decoded 64 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 
+FCS received: 0x3113, calculated: 0x94AA, pass: 0.
+  LOCK  abs_start=303939303  t=412.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.830  FCS=1
+
+==== Slot 84 / ~200 | expected start=307723452 (417.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 87 29 4E 44 16 46 64 61 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0x8EFA, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+15 03 A4 83 4C 16 CA 8E 8D 00 53 18 DA E8 
+FCS received: 0xE8DA, calculated: 0x72F7, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=307725704  t=417.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.605  FCS=0
+
+==== Slot 85 / ~200 | expected start=311409852 (422.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7D 87 29 1A 91 DC A9 6E 61 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0x14C9, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=311412103  t=422.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 86 / ~200 | expected start=315096252 (427.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=315098503  t=427.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 87 / ~200 | expected start=318782652 (432.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=318784904  t=432.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.851  FCS=1
+
+==== Slot 88 / ~200 | expected start=322469052 (437.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+15 23 C4 06 4E 12 CA 24 8B B8 E9 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x7657, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 8 bytes.
+Decoded 64 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 
+FCS received: 0x3113, calculated: 0x94AA, pass: 0.
+  LOCK  abs_start=322371304  t=437.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.640  FCS=0
+
+==== Slot 89 / ~200 | expected start=326155452 (442.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 68 bytes.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=326157704  t=442.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 90 / ~200 | expected start=329841852 (447.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=329744104  t=447.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.856  FCS=1
+
+==== Slot 91 / ~200 | expected start=333528252 (452.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=333630503  t=452.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 92 / ~200 | expected start=337214652 (457.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=337216903  t=457.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.853  FCS=1
+
+==== Slot 93 / ~200 | expected start=340901052 (462.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 76 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=340903303  t=462.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 94 / ~200 | expected start=344587452 (467.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=344589704  t=467.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.858  FCS=1
+
+==== Slot 95 / ~200 | expected start=348273852 (472.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x84D2, pass: 0.
+  LOCK  abs_start=348276103  t=472.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.839  FCS=1
+
+==== Slot 96 / ~200 | expected start=351960252 (477.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=351862504  t=477.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 97 / ~200 | expected start=355646652 (482.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=355548904  t=482.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 98 / ~200 | expected start=359333052 (487.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 02 4B D3 D0 4D 
+FCS received: 0x4DD0, calculated: 0xD914, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=359335304  t=487.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.841  FCS=1
+
+==== Slot 99 / ~200 | expected start=363019452 (492.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=363021704  t=492.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.838  FCS=1
+
+==== Slot 100 / ~200 | expected start=366705852 (497.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=366708104  t=497.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.854  FCS=1
+
+==== Slot 101 / ~200 | expected start=370392252 (502.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=370394503  t=502.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 102 / ~200 | expected start=374078652 (507.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=373980903  t=507.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.813  FCS=1
+
+==== Slot 103 / ~200 | expected start=377765052 (512.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  MISS  (streak=1)  best: SFD=IEEE 802.15.4z SFD #2 corr=0.623 PHR=0 FCS=0 dt=0.139ms (PHR fail)
+
+==== Slot 104 / ~200 | expected start=381451452 (517.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 78 bytes.
+  LOCK  abs_start=381353704  t=517.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 105 / ~200 | expected start=385137852 (522.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=385140104  t=522.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 106 / ~200 | expected start=388824252 (527.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=388826504  t=527.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.854  FCS=1
+
+==== Slot 107 / ~200 | expected start=392510652 (532.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 78 bytes.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  MISS  (streak=1)  best: SFD=IEEE 802.15.4z SFD #2 corr=0.617 PHR=0 FCS=0 dt=0.139ms (PHR fail)
+
+==== Slot 108 / ~200 | expected start=396197052 (537.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+74 67 CB 4C 44 16 46 64 61 44 16 12 DA F0 
+FCS received: 0xF0DA, calculated: 0xB1AF, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=396299304  t=537.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 109 / ~200 | expected start=399883452 (542.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=399785703  t=542.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 110 / ~200 | expected start=403569852 (547.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 13 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=403572104  t=547.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 111 / ~200 | expected start=407256252 (552.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 BD 0A 82 DA EA 91 2B AF E9 BB 70 5A 
+FCS received: 0x5A70, calculated: 0x0E1B, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 0A 82 DA EA 99 25 AF B9 B8 70 5A 
+FCS received: 0x5A70, calculated: 0xC947, pass: 0.
+  LOCK  abs_start=407258504  t=552.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.810  FCS=0
+
+==== Slot 112 / ~200 | expected start=410942652 (557.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=410944903  t=557.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 113 / ~200 | expected start=414629052 (562.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=414631304  t=562.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 114 / ~200 | expected start=418315452 (567.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 12 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=418317703  t=567.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.838  FCS=1
+
+==== Slot 115 / ~200 | expected start=422001852 (572.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+36 63 CB EC EE BC EC CE CB EE BC EE 25 0F 
+FCS received: 0x0F25, calculated: 0xBC35, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 5A 88 43 69 
+FCS received: 0x6943, calculated: 0xC69D, pass: 0.
+  LOCK  abs_start=422104103  t=572.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.833  FCS=0
+
+==== Slot 116 / ~200 | expected start=425688252 (577.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=425690504  t=577.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 117 / ~200 | expected start=429374652 (582.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=429376903  t=582.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.850  FCS=1
+
+==== Slot 118 / ~200 | expected start=433061052 (587.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=432963303  t=587.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.831  FCS=1
+
+==== Slot 119 / ~200 | expected start=436747452 (592.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 3D A2 C5 D0 94 6C 4D 44 96 B8 70 5A 
+FCS received: 0x5A70, calculated: 0x5CFE, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=436849703  t=592.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 120 / ~200 | expected start=440433852 (597.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=440436104  t=597.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.863  FCS=1
+
+==== Slot 121 / ~200 | expected start=444120252 (602.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=444122504  t=602.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 122 / ~200 | expected start=447806652 (607.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=447708903  t=607.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.851  FCS=1
+
+==== Slot 123 / ~200 | expected start=451493052 (612.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=451495303  t=612.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.856  FCS=1
+
+==== Slot 124 / ~200 | expected start=455179452 (617.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=455181703  t=617.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 125 / ~200 | expected start=458865852 (622.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=458868103  t=622.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 126 / ~200 | expected start=462552252 (627.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 3D 1A 15 56 93 6C 61 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0x527E, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+29 67 21 4E 44 16 46 64 61 44 16 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x8C7D, pass: 0.
+  LOCK  abs_start=462554503  t=627.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.847  FCS=1
+
+==== Slot 127 / ~200 | expected start=466238652 (632.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=466240904  t=632.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.853  FCS=1
+
+==== Slot 128 / ~200 | expected start=469925052 (637.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=470027304  t=637.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 129 / ~200 | expected start=473611452 (642.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=473513704  t=642.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.836  FCS=1
+
+==== Slot 130 / ~200 | expected start=477297852 (647.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 27 36 4E 44 D6 B9 9B 9E BB E9 BB 70 5A 
+FCS received: 0x5A70, calculated: 0x1805, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=477300104  t=647.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.601  FCS=0
+
+==== Slot 131 / ~200 | expected start=480984252 (652.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 13 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=481086504  t=652.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 132 / ~200 | expected start=484670652 (657.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=484672904  t=657.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 133 / ~200 | expected start=488357052 (662.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=488259303  t=662.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.846  FCS=1
+
+==== Slot 134 / ~200 | expected start=492043452 (667.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 87 29 CE BA F9 B9 3B 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x491B, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D C7 AF B6 81 13 EE 8E 9E BB E9 B9 70 5A 
+FCS received: 0x5A70, calculated: 0x72A1, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+F1 9D B4 19 11 43 13 31 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x3C37, pass: 0.
+  LOCK  abs_start=492045704  t=667.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.806  FCS=0
+
+==== Slot 135 / ~200 | expected start=495729852 (672.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 8B B9 BB E9 B9 9B 9E BB B9 BA 70 
+FCS received: 0x70BA, calculated: 0xF7FA, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=495732103  t=672.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.868  FCS=1
+
+==== Slot 136 / ~200 | expected start=499416252 (677.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=499418503  t=677.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 137 / ~200 | expected start=503102652 (682.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 8 bytes.
+Decoded 64 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 
+FCS received: 0x3113, calculated: 0x94AA, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=503104904  t=682.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.852  FCS=1
+
+==== Slot 138 / ~200 | expected start=506789052 (687.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 123 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 
+FCS received: 0x70BB, calculated: 0x28F3, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=506791303  t=687.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.817  FCS=1
+
+==== Slot 139 / ~200 | expected start=510475452 (692.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=510477703  t=692.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 140 / ~200 | expected start=514161852 (697.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=514064104  t=697.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.871  FCS=1
+
+==== Slot 141 / ~200 | expected start=517848252 (702.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 
+FCS received: 0x70BB, calculated: 0x28F3, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=517950503  t=702.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 142 / ~200 | expected start=521534652 (707.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AF 28 12 53 27 2D 
+FCS received: 0x2D27, calculated: 0x10C4, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 A5 78 46 EE 25 2D 
+FCS received: 0x2D25, calculated: 0x9570, pass: 0.
+  LOCK  abs_start=521436904  t=707.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.825  FCS=1
+
+==== Slot 143 / ~200 | expected start=525221052 (712.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=525223303  t=712.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 144 / ~200 | expected start=528907452 (717.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=528909703  t=717.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.852  FCS=1
+
+==== Slot 145 / ~200 | expected start=532593852 (722.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=532596104  t=722.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.854  FCS=1
+
+==== Slot 146 / ~200 | expected start=536280252 (727.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=536182504  t=727.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.844  FCS=1
+
+==== Slot 147 / ~200 | expected start=539966652 (732.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=539868904  t=732.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.867  FCS=1
+
+==== Slot 148 / ~200 | expected start=543653052 (737.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=543655303  t=737.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.850  FCS=1
+
+==== Slot 149 / ~200 | expected start=547339452 (742.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 D2 82 A8 AD 90 DE 88 17 68 
+FCS received: 0x6817, calculated: 0x91D2, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=547241704  t=742.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.837  FCS=1
+
+==== Slot 150 / ~200 | expected start=551025852 (747.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 10 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=551028103  t=747.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.843  FCS=1
+
+==== Slot 151 / ~200 | expected start=554712252 (752.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=554714504  t=752.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 152 / ~200 | expected start=558398652 (757.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 A8 A0 2C D2 BE 2C C8 EE BC EE 25 0F 
+FCS received: 0x0F25, calculated: 0x1368, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=558300904  t=757.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.792  FCS=0
+
+==== Slot 153 / ~200 | expected start=562085052 (762.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 BD 0A C4 DC A9 64 61 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0xA07C, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=562087301  t=762.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.689  FCS=0
+
+==== Slot 154 / ~200 | expected start=565771452 (767.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+29 87 3C 1A 11 56 83 3B 34 11 EB BB 70 5A 
+FCS received: 0x5A70, calculated: 0xA71B, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=565673703  t=767.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.859  FCS=1
+
+==== Slot 155 / ~200 | expected start=569457852 (772.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=569460103  t=772.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 156 / ~200 | expected start=573144252 (777.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 82 DA 8A 40 A5 38 13 92 DA F8 
+FCS received: 0xF8DA, calculated: 0xD0B7, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=573246503  t=777.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.846  FCS=1
+
+==== Slot 157 / ~200 | expected start=576830652 (782.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 2 bytes.
+Decoded 16 PSDU bits.
+First decoded PSDU bytes (hex):
+F5 C9 
+FCS received: 0xC9F5, calculated: 0x0000, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=576732903  t=782.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.560  FCS=0
+
+==== Slot 158 / ~200 | expected start=580517052 (787.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 27 36 4E 44 16 46 64 61 44 16 12 DA F0 
+FCS received: 0xF0DA, calculated: 0x9544, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=580619303  t=787.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 159 / ~200 | expected start=584203452 (792.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=584105704  t=792.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.870  FCS=1
+
+==== Slot 160 / ~200 | expected start=587889852 (797.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7C 87 3C 1A 15 53 03 39 61 44 16 46 8F A5 
+FCS received: 0xA58F, calculated: 0x71D2, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 D2 8A 80 A5 05 DA 8D 25 D0 
+FCS received: 0xD025, calculated: 0xEFEA, pass: 0.
+  LOCK  abs_start=587892104  t=797.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 161 / ~200 | expected start=591576252 (802.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 13 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 78 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+85 CD 8F A3 1B D3 E9 CE CB EE BC B8 70 5A 
+FCS received: 0x5A70, calculated: 0x492C, pass: 0.
+  LOCK  abs_start=591678504  t=802.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.802  FCS=0
+
+==== Slot 162 / ~200 | expected start=595262652 (807.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=595264903  t=807.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 163 / ~200 | expected start=598949052 (812.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=598951303  t=812.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 164 / ~200 | expected start=602635452 (817.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 76 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 8B 58 50 70 08 
+FCS received: 0x0870, calculated: 0x408C, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 85 C9 8E 11 43 13 31 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0x0F4D, pass: 0.
+  LOCK  abs_start=602637704  t=817.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.842  FCS=1
+
+==== Slot 165 / ~200 | expected start=606321852 (822.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 61 bytes.
+Decoded 488 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 5A 72 C7 1B 2F 47 05 B0 FD A9 D8 F4 89 23 01 AB 6B 05 04 
+FCS received: 0x3E4A, calculated: 0x78D0, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=606424104  t=822.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.836  FCS=1
+
+==== Slot 166 / ~200 | expected start=610008252 (827.377 ms) ====
+[警告: Weak IEEE 802.15.4z SFD #2 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 31 bytes.
+Decoded 248 PSDU bits.
+First decoded PSDU bytes (hex):
+47 E8 A6 01 D5 0C AA 8B 03 DD 5A 4B 9B EF 48 41 14 30 27 8F 60 B1 79 E3 35 EF 1E 04 6E EC 9E 
+FCS received: 0x9EEC, calculated: 0xCABB, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=610010504  t=827.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 167 / ~200 | expected start=613694652 (832.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=613696904  t=832.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.858  FCS=1
+
+==== Slot 168 / ~200 | expected start=617381052 (837.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=617483304  t=837.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.851  FCS=1
+
+==== Slot 169 / ~200 | expected start=621067452 (842.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 1A 88 01 F8 
+FCS received: 0xF801, calculated: 0x80FB, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=621169703  t=842.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.846  FCS=1
+
+==== Slot 170 / ~200 | expected start=624753852 (847.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=624756103  t=847.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.863  FCS=1
+
+==== Slot 171 / ~200 | expected start=628440252 (852.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=628342504  t=852.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.855  FCS=1
+
+==== Slot 172 / ~200 | expected start=632126652 (857.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 2 bytes.
+Decoded 16 PSDU bits.
+First decoded PSDU bytes (hex):
+F5 C9 
+FCS received: 0xC9F5, calculated: 0x0000, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 2 bytes.
+Decoded 16 PSDU bits.
+First decoded PSDU bytes (hex):
+F5 C9 
+FCS received: 0xC9F5, calculated: 0x0000, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 2 bytes.
+Decoded 16 PSDU bits.
+First decoded PSDU bytes (hex):
+F5 C9 
+FCS received: 0xC9F5, calculated: 0x0000, pass: 0.
+  LOCK  abs_start=632128904  t=857.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.677  FCS=0
+
+==== Slot 173 / ~200 | expected start=635813052 (862.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=635815303  t=862.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.841  FCS=1
+
+==== Slot 174 / ~200 | expected start=639499452 (867.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=639501704  t=867.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.861  FCS=1
+
+==== Slot 175 / ~200 | expected start=643185852 (872.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=643188104  t=872.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.841  FCS=1
+
+==== Slot 176 / ~200 | expected start=646872252 (877.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+F1 CD C1 4C 44 16 46 64 61 44 96 B8 70 5A 
+FCS received: 0x5A70, calculated: 0x4FAE, pass: 0.
+  LOCK  abs_start=646874503  t=877.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.824  FCS=1
+
+==== Slot 177 / ~200 | expected start=650558652 (882.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 0, decoded PSDU length: 15 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=650560904  t=882.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.860  FCS=1
+
+==== Slot 178 / ~200 | expected start=654245052 (887.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=654147304  t=887.244 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.869  FCS=1
+
+==== Slot 179 / ~200 | expected start=657931452 (892.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 61 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 40 bytes.
+Decoded 320 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 34 11 43 13 DA F0 D8 4D B1 85 6D 05 8E 35 83 85 CF A6 BB 78 6C 1C B4 10 
+FCS received: 0xCF6B, calculated: 0xBCFC, pass: 0.
+  LOCK  abs_start=658033704  t=892.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.604  FCS=0
+
+==== Slot 180 / ~200 | expected start=661617852 (897.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 8 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 CD 8C 43 03 DA F0 
+FCS received: 0xF0DA, calculated: 0x444A, pass: 0.
+  LOCK  abs_start=661720102  t=897.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.628  FCS=0
+
+==== Slot 181 / ~200 | expected start=665304252 (902.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 8E B9 BB E9 B9 9B 9E BB E9 B9 70 
+FCS received: 0x70B9, calculated: 0xD767, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=665406504  t=902.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.865  FCS=1
+
+==== Slot 182 / ~200 | expected start=668990652 (907.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=668992903  t=907.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 183 / ~200 | expected start=672677052 (912.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 61 bytes.
+Decoded 488 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 8B B9 BB E9 B9 9B 9E BB E9 BB 70 5A 72 C7 1B 50 60 30 E0 15 42 E4 7C E0 D4 E6 33 09 C4 1B 
+FCS received: 0x2E21, calculated: 0xA89D, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 2 bytes.
+Decoded 16 PSDU bits.
+First decoded PSDU bytes (hex):
+F5 C9 
+FCS received: 0xC9F5, calculated: 0x0000, pass: 0.
+  LOCK  abs_start=672679304  t=912.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.845  FCS=1
+
+==== Slot 184 / ~200 | expected start=676363452 (917.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 12 bytes.
+Decoded 96 PSDU bits.
+First decoded PSDU bytes (hex):
+A4 9C 3C 13 11 43 13 31 34 11 43 13 
+FCS received: 0x1343, calculated: 0x7E5F, pass: 0.
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+  LOCK  abs_start=676365704  t=917.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.714  FCS=0
+
+==== Slot 185 / ~200 | expected start=680049852 (922.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+7D 87 29 1A 80 DC A9 6E 69 46 BE AE 70 5A 
+FCS received: 0x5A70, calculated: 0x9417, pass: 0.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=680052103  t=922.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 186 / ~200 | expected start=683736252 (927.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=683738503  t=927.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.864  FCS=1
+
+==== Slot 187 / ~200 | expected start=687422652 (932.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+  LOCK  abs_start=687424904  t=932.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.837  FCS=1
+
+==== Slot 188 / ~200 | expected start=691109052 (937.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 0, decoded PSDU length: 23 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 370 行)
+位置: run_search_qm35_periodic_cir (第 140 行)
+位置: run (第 112 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+Decoded 104 PSDU bits.
+First decoded PSDU bytes (hex):
+0E 36 9E B9 BB E9 B9 9B 9E BB E9 BB 70 
+FCS received: 0x70BB, calculated: 0x28F3, pass: 0.
+  LOCK  abs_start=691211303  t=937.515 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.679  FCS=0
+
+==== Slot 189 / ~200 | expected start=694795452 (942.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 47 89 1B 91 D3 B9 31 34 11 43 13 DA F0 
+FCS received: 0xF0DA, calculated: 0xB2AB, pass: 0.
+  LOCK  abs_start=694797704  t=942.380 ms  SFD=IEEE 802.15.4z SFD #2  corr=0.866  FCS=1
+
+==== Slot 190 / ~200 | expected start=698481852 (947.377 ms) ====
+  MISS  (streak=1)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 191 / ~200 | expected start=702168252 (952.377 ms) ====
+  MISS  (streak=2)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 192 / ~200 | expected start=705854652 (957.377 ms) ====
+  MISS  (streak=3)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 193 / ~200 | expected start=709541052 (962.377 ms) ====
+  MISS  (streak=4)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 194 / ~200 | expected start=713227452 (967.377 ms) ====
+  MISS  (streak=5)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 195 / ~200 | expected start=716913852 (972.377 ms) ====
+  MISS  (streak=6)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 196 / ~200 | expected start=720600252 (977.377 ms) ====
+  MISS  (streak=7)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 197 / ~200 | expected start=724286652 (982.377 ms) ====
+  MISS  (streak=8)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 198 / ~200 | expected start=727973052 (987.377 ms) ====
+  MISS  (streak=9)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 199 / ~200 | expected start=731659452 (992.377 ms) ====
+  MISS  (streak=10)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+==== Slot 200 / ~200 | expected start=735345852 (997.377 ms) ====
+  MISS  (streak=11)  best: decode-error: A reliable repeated preamble was not found. Check receiver settings.
+
+Measured inter-packet intervals (ms):
+  mean=5.109  std=0.747  min=4.729  max=10.136
+
+========== Summary ==========
+QM35 packets found            : 185
+#01  t=2.377 ms  start=1752252  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=134  PSDU=14 B  FCS=1
+#02  t=7.380 ms  start=5440904  SFD=IEEE 802.15.4z SFD #2  corr=0.855  SYNC=136  PSDU=14 B  FCS=1
+#03  t=17.380 ms  start=12813704  SFD=IEEE 802.15.4z SFD #2  corr=0.857  SYNC=136  PSDU=14 B  FCS=1
+#04  t=22.244 ms  start=16400103  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#05  t=27.515 ms  start=20286504  SFD=IEEE 802.15.4z SFD #2  corr=0.831  SYNC=136  PSDU=14 B  FCS=1
+#06  t=32.515 ms  start=23972904  SFD=IEEE 802.15.4z SFD #2  corr=0.809  SYNC=85  PSDU=14 B  FCS=0
+#07  t=37.515 ms  start=27659303  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+#08  t=42.380 ms  start=31245704  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#09  t=47.515 ms  start=35032103  SFD=IEEE 802.15.4z SFD #2  corr=0.849  SYNC=136  PSDU=14 B  FCS=1
+#10  t=52.515 ms  start=38718503  SFD=IEEE 802.15.4z SFD #2  corr=0.837  SYNC=105  PSDU=14 B  FCS=1
+#11  t=57.380 ms  start=42304904  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#12  t=62.380 ms  start=45991303  SFD=IEEE 802.15.4z SFD #2  corr=0.856  SYNC=128  PSDU=14 B  FCS=1
+#13  t=67.380 ms  start=49677704  SFD=IEEE 802.15.4z SFD #2  corr=0.846  SYNC=136  PSDU=14 B  FCS=1
+#14  t=72.515 ms  start=53464104  SFD=IEEE 802.15.4z SFD #2  corr=0.835  SYNC=125  PSDU=14 B  FCS=1
+#15  t=77.515 ms  start=57150504  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=136  PSDU=14 B  FCS=1
+#16  t=82.244 ms  start=60636904  SFD=IEEE 802.15.4z SFD #2  corr=0.855  SYNC=136  PSDU=14 B  FCS=1
+#17  t=87.515 ms  start=64523304  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#18  t=92.244 ms  start=68009703  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=128  PSDU=14 B  FCS=1
+#19  t=97.380 ms  start=71796104  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#20  t=102.380 ms  start=75482504  SFD=IEEE 802.15.4z SFD #2  corr=0.858  SYNC=136  PSDU=14 B  FCS=1
+#21  t=107.244 ms  start=79068904  SFD=IEEE 802.15.4z SFD #2  corr=0.854  SYNC=136  PSDU=14 B  FCS=1
+#22  t=112.244 ms  start=82755304  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#23  t=117.380 ms  start=86541703  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=118  PSDU=14 B  FCS=1
+#24  t=122.380 ms  start=90228104  SFD=IEEE 802.15.4z SFD #2  corr=0.837  SYNC=136  PSDU=14 B  FCS=1
+#25  t=127.244 ms  start=93814504  SFD=IEEE 802.15.4z SFD #2  corr=0.628  SYNC=55  PSDU=14 B  FCS=0
+#26  t=132.380 ms  start=97600903  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#27  t=137.380 ms  start=101287304  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=136  PSDU=14 B  FCS=1
+#28  t=142.515 ms  start=105073704  SFD=IEEE 802.15.4z SFD #2  corr=0.620  SYNC=63  PSDU=7 B  FCS=0
+#29  t=147.380 ms  start=108660103  SFD=IEEE 802.15.4z SFD #2  corr=0.574  SYNC=48  PSDU=14 B  FCS=0
+#30  t=152.244 ms  start=112246503  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=136  PSDU=14 B  FCS=1
+#31  t=157.380 ms  start=116032903  SFD=IEEE 802.15.4z SFD #2  corr=0.872  SYNC=136  PSDU=14 B  FCS=1
+#32  t=162.380 ms  start=119719303  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=136  PSDU=14 B  FCS=1
+#33  t=167.515 ms  start=123505703  SFD=IEEE 802.15.4z SFD #2  corr=0.825  SYNC=92  PSDU=14 B  FCS=0
+#34  t=172.515 ms  start=127192103  SFD=IEEE 802.15.4z SFD #2  corr=0.872  SYNC=136  PSDU=14 B  FCS=1
+#35  t=177.380 ms  start=130778504  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#36  t=182.380 ms  start=134464903  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#37  t=187.380 ms  start=138151304  SFD=IEEE 802.15.4z SFD #2  corr=0.839  SYNC=110  PSDU=14 B  FCS=1
+#38  t=192.380 ms  start=141837704  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#39  t=197.380 ms  start=145524104  SFD=IEEE 802.15.4z SFD #2  corr=0.848  SYNC=136  PSDU=14 B  FCS=1
+#40  t=202.244 ms  start=149110504  SFD=IEEE 802.15.4z SFD #2  corr=0.850  SYNC=136  PSDU=14 B  FCS=1
+#41  t=207.380 ms  start=152896904  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=131  PSDU=14 B  FCS=1
+#42  t=212.244 ms  start=156483303  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=121  PSDU=14 B  FCS=1
+#43  t=217.380 ms  start=160269703  SFD=IEEE 802.15.4z SFD #2  corr=0.861  SYNC=136  PSDU=14 B  FCS=1
+#44  t=222.380 ms  start=163956103  SFD=IEEE 802.15.4z SFD #2  corr=0.852  SYNC=123  PSDU=14 B  FCS=1
+#45  t=227.380 ms  start=167642504  SFD=IEEE 802.15.4z SFD #2  corr=0.850  SYNC=136  PSDU=14 B  FCS=1
+#46  t=232.244 ms  start=171228903  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=132  PSDU=14 B  FCS=1
+#47  t=237.244 ms  start=174915304  SFD=IEEE 802.15.4z SFD #2  corr=0.837  SYNC=136  PSDU=14 B  FCS=1
+#48  t=242.380 ms  start=178701703  SFD=IEEE 802.15.4z SFD #2  corr=0.594  SYNC=51  PSDU=14 B  FCS=0
+#49  t=247.380 ms  start=182388104  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=136  PSDU=14 B  FCS=1
+#50  t=252.380 ms  start=186074503  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=119  PSDU=14 B  FCS=1
+#51  t=257.380 ms  start=189760904  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=136  PSDU=14 B  FCS=1
+#52  t=262.380 ms  start=193447304  SFD=IEEE 802.15.4z SFD #2  corr=0.604  SYNC=62  PSDU=14 B  FCS=0
+#53  t=267.244 ms  start=197033703  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=123  PSDU=14 B  FCS=1
+#54  t=272.380 ms  start=200820104  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#55  t=277.244 ms  start=204406503  SFD=IEEE 802.15.4z SFD #2  corr=0.855  SYNC=136  PSDU=14 B  FCS=1
+#56  t=282.244 ms  start=208092904  SFD=IEEE 802.15.4z SFD #2  corr=0.677  SYNC=67  PSDU=13 B  FCS=0
+#57  t=287.515 ms  start=211979304  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=112  PSDU=14 B  FCS=1
+#58  t=292.380 ms  start=215565704  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=136  PSDU=14 B  FCS=1
+#59  t=297.515 ms  start=219352104  SFD=IEEE 802.15.4z SFD #2  corr=0.848  SYNC=136  PSDU=14 B  FCS=1
+#60  t=302.380 ms  start=222938503  SFD=IEEE 802.15.4z SFD #2  corr=0.824  SYNC=99  PSDU=14 B  FCS=1
+#61  t=307.380 ms  start=226624903  SFD=IEEE 802.15.4z SFD #2  corr=0.859  SYNC=113  PSDU=14 B  FCS=1
+#62  t=312.380 ms  start=230311304  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=136  PSDU=14 B  FCS=1
+#63  t=317.380 ms  start=233997704  SFD=IEEE 802.15.4z SFD #2  corr=0.843  SYNC=136  PSDU=14 B  FCS=1
+#64  t=322.515 ms  start=237784104  SFD=IEEE 802.15.4z SFD #2  corr=0.805  SYNC=89  PSDU=14 B  FCS=0
+#65  t=327.244 ms  start=241270503  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=136  PSDU=14 B  FCS=1
+#66  t=332.380 ms  start=245056904  SFD=IEEE 802.15.4z SFD #2  corr=0.848  SYNC=136  PSDU=14 B  FCS=1
+#67  t=337.244 ms  start=248643303  SFD=IEEE 802.15.4z SFD #2  corr=0.764  SYNC=80  PSDU=14 B  FCS=0
+#68  t=342.244 ms  start=252329704  SFD=IEEE 802.15.4z SFD #2  corr=0.851  SYNC=136  PSDU=14 B  FCS=1
+#69  t=347.515 ms  start=256216104  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#70  t=352.380 ms  start=259802503  SFD=IEEE 802.15.4z SFD #2  corr=0.851  SYNC=136  PSDU=14 B  FCS=1
+#71  t=357.515 ms  start=263588904  SFD=IEEE 802.15.4z SFD #2  corr=0.839  SYNC=136  PSDU=14 B  FCS=1
+#72  t=362.380 ms  start=267175303  SFD=IEEE 802.15.4z SFD #2  corr=0.841  SYNC=125  PSDU=14 B  FCS=1
+#73  t=367.380 ms  start=270861704  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=136  PSDU=14 B  FCS=1
+#74  t=372.380 ms  start=274548104  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#75  t=382.380 ms  start=281920903  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+#76  t=387.515 ms  start=285707303  SFD=IEEE 802.15.4z SFD #2  corr=0.861  SYNC=136  PSDU=14 B  FCS=1
+#77  t=392.380 ms  start=289293704  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=136  PSDU=14 B  FCS=1
+#78  t=397.244 ms  start=292880104  SFD=IEEE 802.15.4z SFD #2  corr=0.696  SYNC=66  PSDU=13 B  FCS=0
+#79  t=402.244 ms  start=296566503  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=129  PSDU=14 B  FCS=1
+#80  t=407.380 ms  start=300352904  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#81  t=412.244 ms  start=303939303  SFD=IEEE 802.15.4z SFD #2  corr=0.830  SYNC=136  PSDU=14 B  FCS=1
+#82  t=417.380 ms  start=307725704  SFD=IEEE 802.15.4z SFD #2  corr=0.605  SYNC=62  PSDU=14 B  FCS=0
+#83  t=422.380 ms  start=311412103  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#84  t=427.380 ms  start=315098503  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#85  t=432.380 ms  start=318784904  SFD=IEEE 802.15.4z SFD #2  corr=0.851  SYNC=136  PSDU=14 B  FCS=1
+#86  t=437.244 ms  start=322371304  SFD=IEEE 802.15.4z SFD #2  corr=0.640  SYNC=63  PSDU=14 B  FCS=0
+#87  t=442.380 ms  start=326157704  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#88  t=447.244 ms  start=329744104  SFD=IEEE 802.15.4z SFD #2  corr=0.856  SYNC=136  PSDU=14 B  FCS=1
+#89  t=452.515 ms  start=333630503  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=136  PSDU=14 B  FCS=1
+#90  t=457.380 ms  start=337216903  SFD=IEEE 802.15.4z SFD #2  corr=0.853  SYNC=121  PSDU=14 B  FCS=1
+#91  t=462.380 ms  start=340903303  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=133  PSDU=14 B  FCS=1
+#92  t=467.380 ms  start=344589704  SFD=IEEE 802.15.4z SFD #2  corr=0.858  SYNC=136  PSDU=14 B  FCS=1
+#93  t=472.380 ms  start=348276103  SFD=IEEE 802.15.4z SFD #2  corr=0.839  SYNC=105  PSDU=14 B  FCS=1
+#94  t=477.244 ms  start=351862504  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=136  PSDU=14 B  FCS=1
+#95  t=482.244 ms  start=355548904  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#96  t=487.380 ms  start=359335304  SFD=IEEE 802.15.4z SFD #2  corr=0.841  SYNC=136  PSDU=14 B  FCS=1
+#97  t=492.380 ms  start=363021704  SFD=IEEE 802.15.4z SFD #2  corr=0.838  SYNC=136  PSDU=14 B  FCS=1
+#98  t=497.380 ms  start=366708104  SFD=IEEE 802.15.4z SFD #2  corr=0.854  SYNC=136  PSDU=14 B  FCS=1
+#99  t=502.380 ms  start=370394503  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#100  t=507.244 ms  start=373980903  SFD=IEEE 802.15.4z SFD #2  corr=0.813  SYNC=100  PSDU=14 B  FCS=1
+#101  t=517.244 ms  start=381353704  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#102  t=522.380 ms  start=385140104  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+#103  t=527.380 ms  start=388826504  SFD=IEEE 802.15.4z SFD #2  corr=0.854  SYNC=136  PSDU=14 B  FCS=1
+#104  t=537.515 ms  start=396299304  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#105  t=542.244 ms  start=399785703  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=136  PSDU=14 B  FCS=1
+#106  t=547.380 ms  start=403572104  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=136  PSDU=14 B  FCS=1
+#107  t=552.380 ms  start=407258504  SFD=IEEE 802.15.4z SFD #2  corr=0.810  SYNC=86  PSDU=14 B  FCS=0
+#108  t=557.380 ms  start=410944903  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#109  t=562.380 ms  start=414631304  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#110  t=567.380 ms  start=418317703  SFD=IEEE 802.15.4z SFD #2  corr=0.838  SYNC=122  PSDU=14 B  FCS=1
+#111  t=572.515 ms  start=422104103  SFD=IEEE 802.15.4z SFD #2  corr=0.833  SYNC=99  PSDU=14 B  FCS=0
+#112  t=577.380 ms  start=425690504  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=136  PSDU=14 B  FCS=1
+#113  t=582.380 ms  start=429376903  SFD=IEEE 802.15.4z SFD #2  corr=0.850  SYNC=136  PSDU=14 B  FCS=1
+#114  t=587.244 ms  start=432963303  SFD=IEEE 802.15.4z SFD #2  corr=0.831  SYNC=127  PSDU=14 B  FCS=1
+#115  t=592.515 ms  start=436849703  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=126  PSDU=14 B  FCS=1
+#116  t=597.380 ms  start=440436104  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=136  PSDU=14 B  FCS=1
+#117  t=602.380 ms  start=444122504  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#118  t=607.244 ms  start=447708903  SFD=IEEE 802.15.4z SFD #2  corr=0.851  SYNC=136  PSDU=14 B  FCS=1
+#119  t=612.380 ms  start=451495303  SFD=IEEE 802.15.4z SFD #2  corr=0.856  SYNC=136  PSDU=14 B  FCS=1
+#120  t=617.380 ms  start=455181703  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+#121  t=622.380 ms  start=458868103  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#122  t=627.380 ms  start=462554503  SFD=IEEE 802.15.4z SFD #2  corr=0.847  SYNC=136  PSDU=14 B  FCS=1
+#123  t=632.380 ms  start=466240904  SFD=IEEE 802.15.4z SFD #2  corr=0.853  SYNC=100  PSDU=14 B  FCS=1
+#124  t=637.515 ms  start=470027304  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=129  PSDU=14 B  FCS=1
+#125  t=642.244 ms  start=473513704  SFD=IEEE 802.15.4z SFD #2  corr=0.836  SYNC=136  PSDU=14 B  FCS=1
+#126  t=647.380 ms  start=477300104  SFD=IEEE 802.15.4z SFD #2  corr=0.601  SYNC=49  PSDU=14 B  FCS=0
+#127  t=652.515 ms  start=481086504  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=132  PSDU=14 B  FCS=1
+#128  t=657.380 ms  start=484672904  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=136  PSDU=14 B  FCS=1
+#129  t=662.244 ms  start=488259303  SFD=IEEE 802.15.4z SFD #2  corr=0.846  SYNC=136  PSDU=14 B  FCS=1
+#130  t=667.380 ms  start=492045704  SFD=IEEE 802.15.4z SFD #2  corr=0.806  SYNC=80  PSDU=14 B  FCS=0
+#131  t=672.380 ms  start=495732103  SFD=IEEE 802.15.4z SFD #2  corr=0.868  SYNC=136  PSDU=14 B  FCS=1
+#132  t=677.380 ms  start=499418503  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#133  t=682.380 ms  start=503104904  SFD=IEEE 802.15.4z SFD #2  corr=0.852  SYNC=136  PSDU=14 B  FCS=1
+#134  t=687.380 ms  start=506791303  SFD=IEEE 802.15.4z SFD #2  corr=0.817  SYNC=99  PSDU=14 B  FCS=1
+#135  t=692.380 ms  start=510477703  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=128  PSDU=14 B  FCS=1
+#136  t=697.244 ms  start=514064104  SFD=IEEE 802.15.4z SFD #2  corr=0.871  SYNC=136  PSDU=14 B  FCS=1
+#137  t=702.515 ms  start=517950503  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=136  PSDU=14 B  FCS=1
+#138  t=707.244 ms  start=521436904  SFD=IEEE 802.15.4z SFD #2  corr=0.825  SYNC=94  PSDU=14 B  FCS=1
+#139  t=712.380 ms  start=525223303  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=124  PSDU=14 B  FCS=1
+#140  t=717.380 ms  start=528909703  SFD=IEEE 802.15.4z SFD #2  corr=0.852  SYNC=136  PSDU=14 B  FCS=1
+#141  t=722.380 ms  start=532596104  SFD=IEEE 802.15.4z SFD #2  corr=0.854  SYNC=136  PSDU=14 B  FCS=1
+#142  t=727.244 ms  start=536182504  SFD=IEEE 802.15.4z SFD #2  corr=0.844  SYNC=136  PSDU=14 B  FCS=1
+#143  t=732.244 ms  start=539868904  SFD=IEEE 802.15.4z SFD #2  corr=0.867  SYNC=136  PSDU=14 B  FCS=1
+#144  t=737.380 ms  start=543655303  SFD=IEEE 802.15.4z SFD #2  corr=0.850  SYNC=136  PSDU=14 B  FCS=1
+#145  t=742.244 ms  start=547241704  SFD=IEEE 802.15.4z SFD #2  corr=0.837  SYNC=136  PSDU=14 B  FCS=1
+#146  t=747.380 ms  start=551028103  SFD=IEEE 802.15.4z SFD #2  corr=0.843  SYNC=136  PSDU=14 B  FCS=1
+#147  t=752.380 ms  start=554714504  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=136  PSDU=14 B  FCS=1
+#148  t=757.244 ms  start=558300904  SFD=IEEE 802.15.4z SFD #2  corr=0.792  SYNC=86  PSDU=14 B  FCS=0
+#149  t=762.380 ms  start=562087301  SFD=IEEE 802.15.4z SFD #2  corr=0.689  SYNC=49  PSDU=14 B  FCS=0
+#150  t=767.244 ms  start=565673703  SFD=IEEE 802.15.4z SFD #2  corr=0.859  SYNC=99  PSDU=14 B  FCS=1
+#151  t=772.380 ms  start=569460103  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#152  t=777.515 ms  start=573246503  SFD=IEEE 802.15.4z SFD #2  corr=0.846  SYNC=136  PSDU=14 B  FCS=1
+#153  t=782.244 ms  start=576732903  SFD=IEEE 802.15.4z SFD #2  corr=0.560  SYNC=61  PSDU=2 B  FCS=0
+#154  t=787.515 ms  start=580619303  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#155  t=792.244 ms  start=584105704  SFD=IEEE 802.15.4z SFD #2  corr=0.870  SYNC=136  PSDU=14 B  FCS=1
+#156  t=797.380 ms  start=587892104  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=136  PSDU=14 B  FCS=1
+#157  t=802.515 ms  start=591678504  SFD=IEEE 802.15.4z SFD #2  corr=0.802  SYNC=83  PSDU=14 B  FCS=0
+#158  t=807.380 ms  start=595264903  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=129  PSDU=14 B  FCS=1
+#159  t=812.380 ms  start=598951303  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+#160  t=817.380 ms  start=602637704  SFD=IEEE 802.15.4z SFD #2  corr=0.842  SYNC=129  PSDU=14 B  FCS=1
+#161  t=822.515 ms  start=606424104  SFD=IEEE 802.15.4z SFD #2  corr=0.836  SYNC=104  PSDU=14 B  FCS=1
+#162  t=827.380 ms  start=610010504  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#163  t=832.380 ms  start=613696904  SFD=IEEE 802.15.4z SFD #2  corr=0.858  SYNC=136  PSDU=14 B  FCS=1
+#164  t=837.515 ms  start=617483304  SFD=IEEE 802.15.4z SFD #2  corr=0.851  SYNC=136  PSDU=14 B  FCS=1
+#165  t=842.515 ms  start=621169703  SFD=IEEE 802.15.4z SFD #2  corr=0.846  SYNC=125  PSDU=14 B  FCS=1
+#166  t=847.380 ms  start=624756103  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=136  PSDU=14 B  FCS=1
+#167  t=852.244 ms  start=628342504  SFD=IEEE 802.15.4z SFD #2  corr=0.855  SYNC=136  PSDU=14 B  FCS=1
+#168  t=857.380 ms  start=632128904  SFD=IEEE 802.15.4z SFD #2  corr=0.677  SYNC=66  PSDU=2 B  FCS=0
+#169  t=862.380 ms  start=635815303  SFD=IEEE 802.15.4z SFD #2  corr=0.841  SYNC=131  PSDU=14 B  FCS=1
+#170  t=867.380 ms  start=639501704  SFD=IEEE 802.15.4z SFD #2  corr=0.861  SYNC=120  PSDU=14 B  FCS=1
+#171  t=872.380 ms  start=643188104  SFD=IEEE 802.15.4z SFD #2  corr=0.841  SYNC=136  PSDU=14 B  FCS=1
+#172  t=877.380 ms  start=646874503  SFD=IEEE 802.15.4z SFD #2  corr=0.824  SYNC=104  PSDU=14 B  FCS=1
+#173  t=882.380 ms  start=650560904  SFD=IEEE 802.15.4z SFD #2  corr=0.860  SYNC=136  PSDU=14 B  FCS=1
+#174  t=887.244 ms  start=654147304  SFD=IEEE 802.15.4z SFD #2  corr=0.869  SYNC=136  PSDU=14 B  FCS=1
+#175  t=892.515 ms  start=658033704  SFD=IEEE 802.15.4z SFD #2  corr=0.604  SYNC=62  PSDU=40 B  FCS=0
+#176  t=897.515 ms  start=661720102  SFD=IEEE 802.15.4z SFD #2  corr=0.628  SYNC=53  PSDU=14 B  FCS=0
+#177  t=902.515 ms  start=665406504  SFD=IEEE 802.15.4z SFD #2  corr=0.865  SYNC=136  PSDU=14 B  FCS=1
+#178  t=907.380 ms  start=668992903  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=135  PSDU=14 B  FCS=1
+#179  t=912.380 ms  start=672679304  SFD=IEEE 802.15.4z SFD #2  corr=0.845  SYNC=136  PSDU=14 B  FCS=1
+#180  t=917.380 ms  start=676365704  SFD=IEEE 802.15.4z SFD #2  corr=0.714  SYNC=66  PSDU=12 B  FCS=0
+#181  t=922.380 ms  start=680052103  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=136  PSDU=14 B  FCS=1
+#182  t=927.380 ms  start=683738503  SFD=IEEE 802.15.4z SFD #2  corr=0.864  SYNC=136  PSDU=14 B  FCS=1
+#183  t=932.380 ms  start=687424904  SFD=IEEE 802.15.4z SFD #2  corr=0.837  SYNC=132  PSDU=14 B  FCS=1
+#184  t=937.515 ms  start=691211303  SFD=IEEE 802.15.4z SFD #2  corr=0.679  SYNC=65  PSDU=13 B  FCS=0
+#185  t=942.380 ms  start=694797704  SFD=IEEE 802.15.4z SFD #2  corr=0.866  SYNC=136  PSDU=14 B  FCS=1
+=============================
+Saved: F:\感知安全相关\干扰抑制\USRP数据解调\decoded_results\qm35_dw1000_1_periodic_cir

@@ -23,12 +23,15 @@ cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit unless your cancel script naming differs.
+% The cancelled capture lives inside the profile subdirectory produced by
+% run_cancel_all_uwb_packets (decoded_results/<capture>/<cancelled_mode>.dat).
 % -------------------------------------------------------------------------
 [~, capture_stem] = fileparts(input_file);
-output_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s.dat', capture_stem, cancellation_mode));
-metadata_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s_metadata.mat', capture_stem, cancellation_mode));
+cancelled_tag = sprintf('cancelled_%s', cancellation_mode);
+output_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
+    [cancelled_tag '.dat']);
+metadata_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
+    [cancelled_tag '_metadata.mat']);
 
 % Noise-floor reference region [offset_samples, length_samples] inside the
 % read window. Pick a quiet span with no UWB packets. Set to [] to skip.
@@ -37,7 +40,7 @@ noise_ref_region = [3e5, 0.5e5];
 % Save figures to disk when true. Set to false to only display on screen.
 save_figures = false;
 output_dir = fullfile(project_dir, 'decoded_results', ...
-    sprintf('visualize_%s', capture_stem));
+    capture_stem, 'visualize_10ms');
 figure_resolution_dpi = 140;
 
 %% 1. Load parameters and read the 10 ms window

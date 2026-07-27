@@ -1,0 +1,92 @@
+﻿F:\MATLAB\bin\matlab.exe : {错误: 文件: C:\Users\junqima\Documents\MATLAB\startup.m 行: 1 列: 24
+所在位置 行:1 字符: 76
++ ... unlog.txt"; F:\MATLAB\bin\matlab.exe -batch "cd('F:\感知安全相关\干扰抑制\USRP数 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ({错误: 文件: C:\Us...up.m 行: 1 列: 24:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+文本字符无效。请检查不受支持的符号、不可见的字符或非 ASCII 字符的粘贴。
+} 
+Tone coefficient |A|=148.459  phase=-75.7 deg
+
+========== Periodic QM35 CIR search ==========
+File                         : F:\qm35_dw1000_1.dat
+Duration                     : 999.959 ms  (737250000 samples)
+QM35 config                  : code=9  SYNC=128
+Packet period                : 5.000 ms  (3686400 samples)
+================================================
+
+--- Stage 1: find first QM35 ---
+  first-search attempt 1 | offset=0 (0.000 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 2 | offset=250000 (0.339 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 3 | offset=500000 (0.678 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 4 | offset=750000 (1.017 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 5 | offset=1000000 (1.356 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 6 | offset=1250000 (1.695 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 7 | offset=1500000 (2.035 ms)
+    fail: A reliable repeated preamble was not found. Check receiver settings.
+  first-search attempt 8 | offset=1750000 (2.374 ms)
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+Decoded 112 PSDU bits.
+First decoded PSDU bytes (hex):
+3D 05 AD 8A 88 DA 8A A8 AD 88 DA 8A 43 69 
+FCS received: 0x6943, calculated: 0x6943, pass: 1.
+First QM35 abs_start=1752252  t=2.377 ms  SFD=IEEE 802.15.4z SFD #2  FCS=1
+
+--- Stage 2: follow 5.000 ms period ---
+
+==== Slot 2 / ~200 | expected start=5438652 (7.377 ms) ====
+[警告: Weak Decawave DW-8 match. Check configuration and timing.] 
+[> 位置：dw1000decoder.locateNsSfd (第 40 行)
+位置: decode_x410_dw1000 (第 40 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 362 行)
+位置: run_search_qm35_periodic_cir (第 133 行)] 
+PHR SECDED pass: 1, decoded PSDU length: 69 bytes.
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=1)
+
+==== Slot 3 / ~200 | expected start=9125052 (12.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 13 bytes.
+  MISS  (streak=2)
+
+==== Slot 4 / ~200 | expected start=12811452 (17.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=3)
+
+==== Slot 5 / ~200 | expected start=16497852 (22.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=4)
+
+==== Slot 6 / ~200 | expected start=20184252 (27.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=5)
+
+==== Slot 7 / ~200 | expected start=23870652 (32.377 ms) ====
+PHR SECDED pass: 0, decoded PSDU length: 14 bytes.
+[警告: Payload decoding skipped because the PHR is invalid.] 
+[> 位置：dw1000decoder.decodePhrAndPayload (第 29 行)
+位置: decode_x410_dw1000 (第 41 行)
+位置: run_search_qm35_periodic_cir>tryDecodeAround (第 362 行)
+位置: run_search_qm35_periodic_cir (第 133 行)] 
+  MISS  (streak=6)
+
+==== Slot 8 / ~200 | expected start=27557052 (37.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=7)
+
+==== Slot 9 / ~200 | expected start=31243452 (42.377 ms) ====
+PHR SECDED pass: 1, decoded PSDU length: 14 bytes.
+  MISS  (streak=8)
+Stopping after 8 consecutive misses.
+
+========== Summary ==========
+QM35 packets found            : 1
+#01  t=2.377 ms  start=1752252  SFD=IEEE 802.15.4z SFD #2  corr=0.863  SYNC=134  PSDU=14 B  FCS=1
+=============================
+Saved: F:\感知安全相关\干扰抑制\USRP数据解调\decoded_results\qm35_dw1000_1_periodic_cir

@@ -1,0 +1,3 @@
+index,success,abs_start_detected,abs_start_fitted,samples_subtracted,alignment_correlation,fractional_delay_samples,validation_correlation,fitted_cfo_hz,gain_real,gain_imag,fit_power_before,fit_power_after,fit_suppression_db,saved_power_before,saved_float_power_after,saved_power_after,saved_suppression_db,clipped_sample_count,fcs_pass,message
+1,1,96652,96463,227565,0.985963152,0.15,0.829776284,-800.792886,3747.50068,957.204573,1.07096703,0.333575514,5.06581939,1159237.41,519064.694,519066.404,3.48949466,0,1,""
+2,0,387340,NaN,0,NaN,NaN,NaN,NaN,NaN,0,NaN,NaN,NaN,NaN,NaN,NaN,NaN,0,0,"Alignment correlation 0.048 is below threshold 0.100."

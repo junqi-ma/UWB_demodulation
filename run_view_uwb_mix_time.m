@@ -356,7 +356,7 @@ assignin('base', 'sample_offset_view', sample_offset);
 assignin('base', 'qm35_result', qm35_result);
 assignin('base', 'qm35_cir_ok', qm35_ok);
 
-out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_conflict_view');
+out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_mixed', 'conflict_view');
 if ~isfolder(out_dir)
     mkdir(out_dir);
 end

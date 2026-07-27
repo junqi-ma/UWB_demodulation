@@ -17,8 +17,7 @@ switch lower(phy_profile)
     case 'dw1000'
         device_label = 'DW1000';
         capture_file = 'F:\UWB基带数据\DW1000_2.dat';
-        output_dir = fullfile(project_dir, 'decoded_results', ...
-            'dw1000_cancellation');
+        profile_tag = 'dw1000';
         options = struct( ...
             'file_name', capture_file, ...
             'sample_offset', 0, 'sample_num', 1.5e6, ...
@@ -38,16 +37,12 @@ switch lower(phy_profile)
             'interference_tone_bin', -169, ...
             'interference_period_samples', 512, ...
             'show_plots', false, 'verbose', true);
-        saved_result_file = fullfile(output_dir, ...
-            'dw1000_decoded_and_regenerated.mat');
         cfo_fit_last_sync_default = 256;
         gain_fit_last_sync_default = 256;
     case 'qm35'
         device_label = 'QM35';
         capture_file = 'F:\UWB基带数据\qm35_1.dat';
-        output_dir = fullfile(project_dir, 'regenerated_qm35');
-        saved_result_file = fullfile(output_dir, ...
-            'qm35_decoded_and_regenerated.mat');
+        profile_tag = 'qm35';
         cfo_fit_last_sync_default = 128;
         gain_fit_last_sync_default = 128;
         options = struct( ...
@@ -72,6 +67,21 @@ switch lower(phy_profile)
     otherwise
         error('Unknown phy_profile: %s', phy_profile);
 end
+
+% Build a unified output directory: decoded_results/<capture>[_<profile>]/regenerated/
+[~, capture_stem] = fileparts(capture_file);
+capture_lower = lower(capture_stem);
+if contains(capture_lower, 'qm35') && strcmpi(phy_profile, 'QM35')
+    profile_suffix = '';
+elseif contains(capture_lower, 'dw1000') && strcmpi(phy_profile, 'DW1000')
+    profile_suffix = '';
+else
+    profile_suffix = ['_' profile_tag];
+end
+scan_dir = fullfile(project_dir, 'decoded_results', ...
+    [capture_stem profile_suffix]);
+output_dir = fullfile(scan_dir, 'regenerated');
+saved_result_file = fullfile(output_dir, 'decoded_and_regenerated.mat');
 if ~isfolder(output_dir)
     mkdir(output_dir);
 end

@@ -1,0 +1,3 @@
+index,window_offset,abs_start_sample,abs_end_sample,time_start_ms,time_end_ms,detected_repetitions,sample_clock_error_ppm,cfo_hz,sfd_name,sfd_correlation,phr_secded_pass,psdu_length_bytes,fcs_received,fcs_calculated,fcs_pass,payload_hex
+1,94400,96652,328313,0.131093,0.445303,262,0.000000,-1673.230783,"Decawave DW-8",0.951958,1,12,0x7D8B,0x7D8B,1,"61880CF2F002000100008B7D"
+2,385088,387340,619001,0.525363,0.839574,262,0.000000,-1673.230737,"Decawave DW-8",0.951958,1,12,0x7D8B,0x7D8B,1,"61880CF2F002000100008B7D"

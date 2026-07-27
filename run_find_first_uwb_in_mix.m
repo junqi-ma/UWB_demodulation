@@ -402,11 +402,11 @@ assignin('base', 'qm35_first_meta', qm35_meta);
 assignin('base', 'qm35_first_options', options);
 assignin('base', 'qm35_corr_diag', corr_diag);
 
-out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_first_qm35');
+out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_qm35', 'first_packet');
 if ~isfolder(out_dir)
     mkdir(out_dir);
 end
-save(fullfile(out_dir, 'first_qm35_packet.mat'), ...
+save(fullfile(out_dir, 'first_packet.mat'), ...
     'qm35_result', 'qm35_meta', 'options', 'corr_diag', '-v7.3');
 figs = findall(0, 'Type', 'figure');
 for k = 1:numel(figs)

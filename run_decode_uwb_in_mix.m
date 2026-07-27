@@ -93,10 +93,10 @@ qm35_gate.require_fcs_pass = false;   % set true to keep only FCS-OK frames
 %% -------------------- Output paths --------------------
 [~, capture_stem] = fileparts(options.file_name);
 batch.output_directory = fullfile(pwd, 'decoded_results', ...
-    [capture_stem '_all_qm35']);
-batch.mat_file = fullfile(batch.output_directory, 'all_qm35_frames_cir.mat');
-batch.summary_csv = fullfile(batch.output_directory, 'qm35_frame_summary.csv');
-batch.timeline_png = fullfile(batch.output_directory, 'qm35_packet_timeline.png');
+    [capture_stem '_qm35']);
+batch.mat_file = fullfile(batch.output_directory, 'all_frames_cir.mat');
+batch.summary_csv = fullfile(batch.output_directory, 'frame_summary.csv');
+batch.timeline_png = fullfile(batch.output_directory, 'packet_timeline.png');
 
 %% -------------------- Full-file decode with QM35 profile --------------------
 fprintf('Scanning mixed capture for QM35 packets (code=%d, SYNC=%d)...\n', ...
@@ -116,7 +116,7 @@ writeQm35SummaryCsv(batch.summary_csv, results.frames);
 % Optional: rewrite individual CIR files with filtered indices only.
 if batch.save_individual_cir && results.packet_count > 0
     for k = 1:results.packet_count
-        cir_file = fullfile(batch.output_directory, sprintf('qm35_cir_%03d.mat', k));
+        cir_file = fullfile(batch.output_directory, sprintf('cir_%03d.mat', k));
         cir = results.frames(k).cir; %#ok<NASGU>
         meta = results.frames(k); %#ok<NASGU>
         save(cir_file, 'cir', 'meta', '-v7.3');

@@ -27,14 +27,17 @@ cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit unless your cancel script naming differs.
+% The cancelled capture lives inside the profile subdirectory produced by
+% run_cancel_all_uwb_packets (decoded_results/<capture>/<cancelled_mode>.dat).
 % -------------------------------------------------------------------------
 [~, capture_stem] = fileparts(input_file);
-output_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s.dat', capture_stem, cancellation_mode));
-metadata_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s_metadata.mat', capture_stem, cancellation_mode));
-summary_file = fullfile(project_dir, 'decoded_results', ...
-    sprintf('%s_all_cancelled_%s_summary.csv', capture_stem, cancellation_mode));
+cancelled_tag = sprintf('cancelled_%s', cancellation_mode);
+output_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
+    [cancelled_tag '.dat']);
+metadata_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
+    [cancelled_tag '_metadata.mat']);
+summary_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
+    [cancelled_tag '_summary.csv']);
 
 % Context window (samples) shown on each side of the packet.
 window_pad_samples = 2048;
@@ -48,7 +51,7 @@ noise_ref_region = [];   % e.g. [400000, 227565]
 save_figures = false;
 pause_on_suppression_preview = false;
 output_dir = fullfile(project_dir, 'decoded_results', ...
-    sprintf('visualize_%s', capture_stem));
+    capture_stem, 'visualize');
 figure_resolution_dpi = 140;
 
 % -------------------------------------------------------------------------

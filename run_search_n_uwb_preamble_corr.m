@@ -98,7 +98,7 @@ search.max_timing_error_frac = 0.40;
 
 %% -------------------- Output --------------------
 out_dir = fullfile(project_dir, 'decoded_results', ...
-    sprintf('qm35_n%d_preamble_corr', N));
+    sprintf('qm35_dw1000_1_qm35_n%d_preamble_corr', N));
 if ~isfolder(out_dir)
     mkdir(out_dir);
 end
@@ -202,7 +202,7 @@ fprintf('\nFound %d / %d in %.1f s\n', n_found, N, elapsed);
 fprintf('Exporting preamble correlation figures...\n');
 for k = 1:n_found
     fig = plotPreambleCorrelation(records(k), options);
-    png = fullfile(fig_dir, sprintf('qm35_%03d_preamble_corr.png', k));
+    png = fullfile(fig_dir, sprintf('%03d_preamble_corr.png', k));
     try
         exportgraphics(fig, png, 'Resolution', 140);
     catch
@@ -255,12 +255,12 @@ if worst.enable
     worst_segments = exportWorstSegments(records, options, worst);
 end
 
-save(fullfile(out_dir, 'qm35_n_preamble_corr.mat'), ...
+save(fullfile(out_dir, 'n_preamble_corr.mat'), ...
     'records', 'options', 'search', 'worst', 'worst_segments', ...
     'N', 'n_found', 'anchor', '-v7.3');
-writeCsv(fullfile(out_dir, 'qm35_n_summary.csv'), records, options.fs_rx);
-assignin('base', 'qm35_n_records', records);
-assignin('base', 'qm35_n_found', n_found);
+writeCsv(fullfile(out_dir, 'n_summary.csv'), records, options.fs_rx);
+assignin('base', 'uwb_n_records', records);
+assignin('base', 'uwb_n_found', n_found);
 
 fprintf('\n========== Done ==========\n');
 fprintf('Packets found : %d / %d\n', n_found, N);

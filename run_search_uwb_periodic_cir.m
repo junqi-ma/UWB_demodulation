@@ -292,16 +292,16 @@ if n_found > 0 && any([sir_table.ok])
 end
 
 %% -------------------- Save --------------------
-out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_periodic_cir');
+out_dir = fullfile(project_dir, 'decoded_results', 'qm35_dw1000_1_qm35', 'periodic_cir');
 if ~isfolder(out_dir)
     mkdir(out_dir);
 end
-save(fullfile(out_dir, 'qm35_periodic_cir.mat'), ...
+save(fullfile(out_dir, 'periodic_cir.mat'), ...
     'records', 'cir_values', 'cir_delay_ns', 'starts_ms', ...
     'sir_table', 'sir', 'options', 'search', 'first', '-v7.3');
-writePeriodicCsv(fullfile(out_dir, 'qm35_periodic_summary.csv'), ...
+writePeriodicCsv(fullfile(out_dir, 'periodic_summary.csv'), ...
     records, options.fs_rx);
-writeSirCsv(fullfile(out_dir, 'qm35_prepath_sir.csv'), sir_table);
+writeSirCsv(fullfile(out_dir, 'prepath_sir.csv'), sir_table);
 figs = findall(0, 'Type', 'figure');
 for k = 1:numel(figs)
     try

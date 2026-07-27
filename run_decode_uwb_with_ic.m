@@ -68,7 +68,7 @@ batch.save_individual_cir = true;
 
 %% -------------------- Output root --------------------
 [~, capture_stem] = fileparts(file_name);
-out_root = fullfile(pwd, 'decoded_results', [capture_stem '_qm35_gapfill_ic']);
+out_root = fullfile(pwd, 'decoded_results', [capture_stem '_qm35'], 'gapfill_ic');
 if ~isfolder(out_root)
     mkdir(out_root);
 end
@@ -86,9 +86,9 @@ fprintf('\n========== Pass 1: QM35 baseline (no IC) ==========\n');
 qm_opts = qm35Options(file_name, fs_rx, x410_center_frequency, uwb_center_frequency);
 qm_opts.blank_intervals = [];
 qm_batch = batch;
-qm_batch.output_directory = fullfile(out_root, 'pass1_qm35_baseline');
-qm_batch.mat_file = fullfile(qm_batch.output_directory, 'qm35_baseline.mat');
-qm_batch.summary_csv = fullfile(qm_batch.output_directory, 'qm35_baseline.csv');
+qm_batch.output_directory = fullfile(out_root, 'pass1_baseline');
+qm_batch.mat_file = fullfile(qm_batch.output_directory, 'baseline.mat');
+qm_batch.summary_csv = fullfile(qm_batch.output_directory, 'baseline.csv');
 
 results_base_raw = decode_uwb_all(qm_opts, qm_batch);
 results_base = filterQm35Like(results_base_raw);
@@ -103,9 +103,9 @@ dw_opts = dw1000Options(file_name, fs_rx, x410_center_frequency, uwb_center_freq
 dw_batch = batch;
 dw_batch.save_individual_cir = false;
 dw_batch.energy_threshold_sigma = 6;
-dw_batch.output_directory = fullfile(out_root, 'pass2_dw1000');
-dw_batch.mat_file = fullfile(dw_batch.output_directory, 'dw1000_map.mat');
-dw_batch.summary_csv = fullfile(dw_batch.output_directory, 'dw1000_map.csv');
+dw_batch.output_directory = fullfile(out_root, 'pass2_interferer_map');
+dw_batch.mat_file = fullfile(dw_batch.output_directory, 'interferer_map.mat');
+dw_batch.summary_csv = fullfile(dw_batch.output_directory, 'interferer_map.csv');
 
 results_dw = decode_uwb_all(dw_opts, dw_batch);
 blank_raw = buildBlankIntervals(results_dw, ic);
@@ -116,6 +116,7 @@ fprintf('Blank intervals (raw/protected): %d / %d\n', ...
     size(blank_raw, 1), size(blank_intervals, 1));
 save(fullfile(out_root, 'blank_intervals.mat'), ...
     'blank_raw', 'blank_intervals', 'ic', 'results_dw', '-v7.3');
+
 
 %% ========================================================================
 %% Pass 3: gap-fill re-search with soft blanking
@@ -207,10 +208,10 @@ results.gaps = gaps;
 results.file_name = file_name;
 results.duration_s = total_samples/fs_rx;
 
-save(fullfile(out_root, 'qm35_gapfill_ic_results.mat'), ...
+save(fullfile(out_root, 'gapfill_ic_results.mat'), ...
     'results', 'results_base', 'results_base_raw', 'results_dw', ...
     'extra_frames', 'blank_intervals', 'gaps', 'ic', '-v7.3');
-writeSimpleCsv(fullfile(out_root, 'qm35_gapfill_summary.csv'), results.frames);
+writeSimpleCsv(fullfile(out_root, 'gapfill_summary.csv'), results.frames);
 
 fprintf('\n========== Gap-fill IC summary ==========\n');
 fprintf('Capture                       : %s\n', file_name);
@@ -233,11 +234,11 @@ if results.packet_count > 0
             k, f.time_start_s*1e3, f.time_end_s*1e3, f.sfd_name, ...
             f.sfd_correlation, f.psdu_length_bytes, f.fcs_pass, tag);
     end
-    plotTimeline(results, fullfile(out_root, 'qm35_gapfill_timeline.png'));
+    plotTimeline(results, fullfile(out_root, 'gapfill_timeline.png'));
 end
 
-assignin('base', 'qm35_ic_results', results);
-assignin('base', 'qm35_baseline_results', results_base);
+assignin('base', 'uwb_ic_results', results);
+assignin('base', 'uwb_baseline_results', results_base);
 assignin('base', 'blank_intervals', blank_intervals);
 
 %% ------------------------------------------------------------------------

@@ -83,16 +83,17 @@ tx = generate_uwb_tx_from_decode(result, tx_options);
 %% -------------------- Replace every shaping pulse with measured CIR --------------------
 tx_after_cir = apply_estimated_cir_to_uwb(tx, result.cir);
 
-%% -------------------- Compare captured and regenerated signals --------------------
-output_dir = fullfile(project_dir, 'regenerated_qm35');
+%% -------------------- Output directory --------------------
+% Unified layout: decoded_results/<capture>/regenerated/
+output_dir = fullfile(pwd, 'decoded_results', 'qm35_1', 'regenerated');
 if ~isfolder(output_dir)
     mkdir(output_dir);
 end
 comparison_png = fullfile(output_dir, ...
-    'qm35_tone_cancelled_vs_regenerated.png');
-cir_png = fullfile(output_dir, 'qm35_estimated_cir_diagnostics.png');
+    'tone_cancelled_vs_regenerated.png');
+cir_png = fullfile(output_dir, 'estimated_cir_diagnostics.png');
 cancellation_png = fullfile(output_dir, ...
-    'qm35_regenerated_subtraction_cancellation.png');
+    'regenerated_subtraction_cancellation.png');
 show_comparison_figure = true;
 cir_diagnostics = plot_uwb_estimated_cir( ...
     result.cir, cir_png, show_comparison_figure);
@@ -104,10 +105,10 @@ cancellation = cancel_uwb_with_regenerated( ...
     cancellation_png, show_comparison_figure);
 
 %% -------------------- Save MATLAB and X410-ready outputs --------------------
-mat_file = fullfile(output_dir, 'qm35_decoded_and_regenerated.mat');
-iq_file = fullfile(output_dir, 'qm35_regenerated_x410_int16.dat');
+mat_file = fullfile(output_dir, 'decoded_and_regenerated.mat');
+iq_file = fullfile(output_dir, 'regenerated_x410_int16.dat');
 cir_iq_file = fullfile(output_dir, ...
-    'qm35_regenerated_after_cir_x410_int16.dat');
+    'regenerated_after_cir_x410_int16.dat');
 save(mat_file, 'result', 'tx', 'tx_after_cir', 'comparison', ...
     'cancellation', 'cir_diagnostics', 'interference', ...
     'options', 'tx_options', '-v7.3');

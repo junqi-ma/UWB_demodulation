@@ -42,7 +42,7 @@ switch upper(phy_profile)
         options.cir_skip_initial_repetitions = [];
         options.cir_repetitions = 64;
         interference_quiet_num = 1500000;
-        profile_suffix = '_dw1000';
+        profile_tag = 'dw1000';
     case 'QM35'
         phy_profile = 'QM35';
         options.preamble_repetitions = 128;
@@ -53,9 +53,21 @@ switch upper(phy_profile)
         options.cir_skip_initial_repetitions = 24;
         options.cir_repetitions = 60;
         interference_quiet_num = 262144;
-        profile_suffix = '_qm35';
+        profile_tag = 'qm35';
     otherwise
         error('phy_profile must be ''DW1000'' or ''QM35''.');
+end
+
+% Avoid redundant suffix when the capture filename already encodes the
+% profile (e.g. qm35_1.dat decoded as QM35 -> qm35_1/, not qm35_1_qm35/).
+[~, capture_stem] = fileparts(options.file_name);
+capture_lower = lower(capture_stem);
+if contains(capture_lower, 'qm35') && strcmpi(phy_profile, 'QM35')
+    profile_suffix = '';
+elseif contains(capture_lower, 'dw1000') && strcmpi(phy_profile, 'DW1000')
+    profile_suffix = '';
+else
+    profile_suffix = ['_' profile_tag];
 end
 
 %% -------------------- Interference cancellation --------------------
@@ -113,7 +125,6 @@ batch.require_fcs_pass = false;
 batch.save_individual_cir = true;
 
 %% -------------------- Output paths --------------------
-[~, capture_stem] = fileparts(options.file_name);
 batch.output_directory = fullfile(pwd, 'decoded_results', ...
     [capture_stem profile_suffix]);
 batch.mat_file = fullfile(batch.output_directory, 'all_frames_cir.mat');
