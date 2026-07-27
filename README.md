@@ -57,17 +57,23 @@
 ├── 全文件批解调（滑窗 + 粗精两级）
 │   ├── run_decode_uwb_all.m
 │   └── decode_uwb_all.m
-├── 混合场景 QM35 搜索与 CIR
-│   ├── run_find_first_uwb_in_mix.m    % 从文件头滑窗找第一个 QM35 包 + 相关诊断图
+├── 混合场景（混叠信号）搜索与 CIR
+│   ├── run_find_first_uwb_in_mix.m    % 从文件头滑窗找第一个 UWB 包 + 相关诊断图
 │   ├── run_search_uwb_periodic_cir.m  % 5 ms 网格搜多包 + pre-path SIR
 │   └── run_search_n_uwb_preamble_corr.m % N 包定长窗网格搜索 + 导出最差段
 ├── 波形再生与对比
 │   ├── run_decode_and_regenerate_uwb.m            % 端到端驱动
-│   ├── generate_uwb_tx_from_decode.m              % PSDU → 标准 QM35 波形
+│   ├── generate_uwb_tx_from_decode.m              % PSDU → 标准 UWB 波形
 │   ├── apply_estimated_cir_to_uwb.m               % 用测量 CIR 替代脉冲成形
 │   ├── compare_uwb_original_and_generated.m       % 对齐/增益拟合/相减
 │   ├── plot_uwb_estimated_cir.m                   % CIR 可视化
 │   └── write_x410_iq_int16.m                       % 写 interleaved int16 IQ
+├── 抵消工作流
+│   ├── run_cancel_all_uwb_packets.m   % 全文件 UWB 帧再生与消除
+│   ├── run_cancel_uwb_segment.m       % 单段 UWB 帧抵消
+│   ├── run_analyze_uwb_cancellation_steps.m % 逐步再生信号消除分析
+│   ├── visualize_uwb_cancellation.m   % 单包抵消效果可视化
+│   └── visualize_uwb_cancellation_10ms.m % 10 ms 窗口抵消对比
 ├── 干扰与可视化辅助
 │   ├── analyze_worst_uwb_raw_signal.m   % 最差段原始 IQ 可视化
 │   ├── analyze_x410_interference.m       % 时钟相关干扰 / 镜像 / 功率分析
@@ -77,12 +83,12 @@
 │   ├── run_decode_uwb_with_ic.m     % 带干扰抵消的多包解调
 │   └── cancel_uwb_with_regenerated.m    % 再生波形相减抵消
 └── 输出目录（运行生成，已 gitignore）
-    ├── decoded_results/        % 全文件批解调结果
-    └── regenerated_qm35/       % 再生/对比结果
+    └── decoded_results/        % 全文件批解调 / 抵消结果（按 <capture>_<profile>/ 组织）
 ```
 
 数据文件（位于 `F:\UWB基带数据\`）：
-- `dw1000_*.dat`、`qm35_*.dat`、`qm35_dw1000_*.dat` 等，int16 交错 I/Q。
+- `DW1000_*.dat`、`qm35_*.dat`、`qm35_dw1000_*.dat` 等，int16 交错 I/Q。
+- PHY profile（数据格式）通过 `options.phy_profile` 指定：`'DW1000'` 或 `'QM35'`。
 
 ---
 
@@ -217,8 +223,8 @@ run_decode_and_regenerate_uwb
 - `result.sfd`：选中 SFD 名、起止码片、相关系数、极性、搜索窗。
 - `result.phr`：SECDED 状态、PSDU 字节数。
 - `result.payload`：PSDU 字节、接收/计算 FCS、校验结果。
-- 批解调：`decoded_results/<文件名>/all_frames_cir.mat` + `frame_summary.csv`。
-- 干扰分析：`qm35_prepath_sir.csv`、最差段 `.dat` + 元数据 `.mat`。
+- 批解调：`decoded_results/<capture>_<profile>/all_frames_cir.mat` + `frame_summary.csv`（如 `qm35_1_qm35/`）。
+- 干扰分析：`uwb_prepath_sir.csv`、最差段 `.dat` + 元数据 `.mat`。
 
 ---
 

@@ -109,7 +109,7 @@ results = decode_uwb_all(options, batch);
 | `use_coarse_correlation` | `true` | 能量区再做前导相关 |
 | `window_samples` | `0.8e6` | 候选处精解窗长 |
 
-全文件结果默认写到 `decoded_results/<数据文件名>/`：
+全文件结果默认写到 `decoded_results/<capture>_<profile>/`（如 `qm35_1_qm35/`）：
 
 - `all_frames_cir.mat`：所有帧摘要 + `cir_values` 矩阵 + 粗检候选
 - `frame_summary.csv`：每帧时间、SFD、FCS、payload 摘要
