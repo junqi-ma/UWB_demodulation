@@ -1,11 +1,11 @@
-function results = decode_x410_dw1000_all(options, batch)
+function results = decode_uwb_all(options, batch)
 %DECODE_X410_DW1000_ALL Decode every packet in an X410 capture file.
 %   RESULTS = DECODE_X410_DW1000_ALL(OPTIONS, BATCH) uses three stages:
 %   (1) strided energy-envelope scanning over the full .dat, (2) decimated
 %   preamble correlation only inside energetic intervals, and (3) full-rate
 %   decoding only around the surviving packet candidates.
 %
-%   OPTIONS uses the same fields as decode_x410_dw1000 / run_decode_*.
+%   OPTIONS uses the same fields as decode_uwb / run_decode_*.
 %   BATCH controls coarse scan, fine decode, and output paths.
 %
 %   See also DECODE_X410_DW1000, DW1000DECODER.
@@ -27,7 +27,7 @@ end
 
 totalSamples = countCaptureSamples(baseParams);
 if totalSamples < batch.min_window_samples
-    error('decode_x410_dw1000_all:CaptureTooShort', ...
+    error('decode_uwb_all:CaptureTooShort', ...
         'Capture has only %d complex samples; need at least %d.', ...
         totalSamples, batch.min_window_samples);
 end
@@ -137,7 +137,7 @@ parfor c = 1:numCandidates
         baseParams.interference_coefficient;
 
     try
-        result = decode_x410_dw1000(windowOptions);
+        result = decode_uwb(windowOptions);
     catch decodeError
         fprintf('  [candidate %d] Decode failed: %s\n', ...
             c, decodeError.message);
@@ -373,19 +373,19 @@ batch.require_fcs_pass = logical(batch.require_fcs_pass);
 batch.save_individual_cir = logical(batch.save_individual_cir);
 
 if batch.energy_threshold_sigma_low > batch.energy_threshold_sigma_high
-    warning('decode_x410_dw1000_all:EnergyThresholdOrder', ...
+    warning('decode_uwb_all:EnergyThresholdOrder', ...
         'Clamping the low energy threshold to the high threshold.');
     batch.energy_threshold_sigma_low = ...
         batch.energy_threshold_sigma_high;
 end
 if batch.energy_step_samples > batch.energy_chunk_samples
-    warning('decode_x410_dw1000_all:StepExceedsChunk', ...
+    warning('decode_uwb_all:StepExceedsChunk', ...
         ['energy_step_samples > energy_chunk_samples; ', ...
          'clamping step to chunk size.']);
     batch.energy_step_samples = batch.energy_chunk_samples;
 end
 if batch.correlation_overlap_samples >= batch.correlation_chunk_samples
-    warning('decode_x410_dw1000_all:CorrelationOverlapTooLarge', ...
+    warning('decode_uwb_all:CorrelationOverlapTooLarge', ...
         'Clamping correlation overlap below the correlation chunk size.');
     batch.correlation_overlap_samples = ...
         max(1, floor(batch.correlation_chunk_samples/4));
@@ -395,7 +395,7 @@ end
 function totalSamples = countCaptureSamples(params)
 info = dir(params.file_name);
 if isempty(info)
-    error('decode_x410_dw1000_all:FileNotFound', ...
+    error('decode_uwb_all:FileNotFound', ...
         'Cannot find capture file: %s', params.file_name);
 end
 c = uwbdecoder.constants();
@@ -406,12 +406,12 @@ function coefficient = estimateInterferenceCoefficient(params, totalSamples)
 quietOffset = params.interference_quiet_offset;
 quietNum = params.interference_quiet_num;
 if quietOffset < 0 || quietOffset >= totalSamples
-    error('decode_x410_dw1000_all:QuietOffsetOutOfRange', ...
+    error('decode_uwb_all:QuietOffsetOutOfRange', ...
         'interference_quiet_offset is outside the capture.');
 end
 quietNum = min(quietNum, totalSamples - quietOffset);
 if quietNum < params.interference_period_samples
-    error('decode_x410_dw1000_all:NotEnoughQuietSamples', ...
+    error('decode_uwb_all:NotEnoughQuietSamples', ...
         'Not enough samples available for interference estimation.');
 end
 
@@ -761,7 +761,7 @@ if ~params.enable_interference_cancellation
     return;
 end
 if isempty(params.interference_coefficient)
-    error('decode_x410_dw1000_all:MissingInterferenceCoefficient', ...
+    error('decode_uwb_all:MissingInterferenceCoefficient', ...
         'The energy scanner requires a precomputed interference coefficient.');
 end
 basis = uwbdecoder.synchronousTone(sampleIndices(:), ...
@@ -776,7 +776,7 @@ rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 
 if params.enable_interference_cancellation
     if isempty(params.interference_coefficient)
-        error('decode_x410_dw1000_all:MissingInterferenceCoefficient', ...
+        error('decode_uwb_all:MissingInterferenceCoefficient', ...
             'Silent chunk reader requires a precomputed interference coefficient.');
     end
     coefficient = params.interference_coefficient(1);
@@ -961,7 +961,7 @@ end
 function writeSummaryCsv(csvFile, frames)
 fid = fopen(csvFile, 'w');
 if fid < 0
-    warning('decode_x410_dw1000_all:CsvWriteError', ...
+    warning('decode_uwb_all:CsvWriteError', ...
         'Could not write summary CSV: %s', csvFile);
     return;
 end

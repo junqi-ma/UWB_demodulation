@@ -1,5 +1,5 @@
 %% Cancel every reliably decoded DW1000 or QM35 packet in a capture.
-% Reuses the full-file scan produced by decode_x410_dw1000_all, reconstructs
+% Reuses the full-file scan produced by decode_uwb_all, reconstructs
 % every FCS-valid frame, applies stable-SYNC CFO/global-gain fitting plus
 % field-specific PHR/Payload complex fitting, and patches one output copy.
 clear;
@@ -11,7 +11,7 @@ cd(project_dir);
 addpath(project_dir);
 
 %% 0. User configuration
-% Keep signal_type consistent with run_decode_x410_dw1000_all.m.
+% Keep signal_type consistent with run_decode_uwb_all.m.
 signal_type = 'QM35';  % 'DW1000' or 'QM35'
 input_file = 'F:\UWB基带数据\qm35_1.dat';
 final_cancellation_mode = 'optimal_complex';
@@ -43,7 +43,7 @@ end
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit below unless your decode output layout
-% differs from the decode_x410_dw1000_all defaults.
+% differs from the decode_uwb_all defaults.
 % -------------------------------------------------------------------------
 [~, capture_stem] = fileparts(input_file);
 result_stem = [capture_stem result_suffix];
@@ -118,7 +118,7 @@ if params.code_index ~= expected_code_index || ...
         params.preamble_repetitions ~= expected_preamble_repetitions
     error('run_cancel_all_dw1000_packets:DecodeProfileMismatch', ...
         ['Selected %s, but decode results use code %d / %d SYNC. ', ...
-        'Rerun run_decode_x410_dw1000_all.m with the same signal_type.'], ...
+        'Rerun run_decode_uwb_all.m with the same signal_type.'], ...
         signal_type, params.code_index, params.preamble_repetitions);
 end
 if ~isfield(params, 'sfd_mode') || ...

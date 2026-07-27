@@ -122,7 +122,7 @@ while offset + search.window_samples <= search_limit
         100*offset/max(search_limit, 1));
 
     try
-        result = decode_x410_dw1000(window_opts);
+        result = decode_uwb(window_opts);
     catch ME
         fprintf('  decode failed: %s\n', ME.message);
         offset = offset + search.step_samples;
@@ -172,7 +172,7 @@ if ~found
 end
 
 %% -------------------- Re-run window with correlation diagnostics --------------------
-% decode_x410_dw1000 does not export intermediate correlations; reprocess the
+% decode_uwb does not export intermediate correlations; reprocess the
 % accepted window and keep preamble / code-matched outputs before CIR average.
 fprintf('\nReprocessing accepted window for correlation plots...\n');
 diag_opts = options;
@@ -424,7 +424,7 @@ fprintf('Saved: %s\n', out_dir);
 
 %% ========================================================================
 function [result, diag] = decodeQm35WithCorrelationDiag(options)
-%DECODEQM35WITHCORRELATIONDIAG Same pipeline as decode_x410_dw1000, but keeps
+%DECODEQM35WITHCORRELATIONDIAG Same pipeline as decode_uwb, but keeps
 %preamble score and pre-average code-correlation slices for plotting.
 
 params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), options);

@@ -1,7 +1,7 @@
 function tx = generate_qm35_tx_from_decode(decoded, options)
 %GENERATE_QM35_TX_FROM_DECODE Rebuild a QM35 frame from decoded PSDU bits.
 %   TX = GENERATE_QM35_TX_FROM_DECODE(DECODED) accepts the DECODED result
-%   returned by decode_x410_dw1000. The decoded PSDU is reused bit-for-bit,
+%   returned by decode_uwb. The decoded PSDU is reused bit-for-bit,
 %   including its two FCS bytes, and an IEEE 802.15.4z BPRF/SFD #2 waveform
 %   is generated.
 %

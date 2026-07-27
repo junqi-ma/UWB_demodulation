@@ -90,7 +90,7 @@ qm_batch.output_directory = fullfile(out_root, 'pass1_qm35_baseline');
 qm_batch.mat_file = fullfile(qm_batch.output_directory, 'qm35_baseline.mat');
 qm_batch.summary_csv = fullfile(qm_batch.output_directory, 'qm35_baseline.csv');
 
-results_base_raw = decode_x410_dw1000_all(qm_opts, qm_batch);
+results_base_raw = decode_uwb_all(qm_opts, qm_batch);
 results_base = filterQm35Like(results_base_raw);
 fprintf('QM35 baseline kept            : %d (raw decoded %d)\n', ...
     results_base.packet_count, results_base_raw.packet_count);
@@ -107,7 +107,7 @@ dw_batch.output_directory = fullfile(out_root, 'pass2_dw1000');
 dw_batch.mat_file = fullfile(dw_batch.output_directory, 'dw1000_map.mat');
 dw_batch.summary_csv = fullfile(dw_batch.output_directory, 'dw1000_map.csv');
 
-results_dw = decode_x410_dw1000_all(dw_opts, dw_batch);
+results_dw = decode_uwb_all(dw_opts, dw_batch);
 blank_raw = buildBlankIntervals(results_dw, ic);
 % Never blank over already-found QM35 packets.
 blank_intervals = protectQm35Intervals(blank_raw, results_base, ic);
@@ -158,7 +158,7 @@ for g = 1:size(gaps, 1)
         wopts.verbose = false;
 
         try
-            result = decode_x410_dw1000(wopts);
+            result = decode_uwb(wopts);
         catch
             offset = offset + ic.gap_step_samples;
             continue;

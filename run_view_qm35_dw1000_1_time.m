@@ -133,7 +133,7 @@ if enable_tone_cancel
     suppression_db = 20*log10(amp_before / max(amp_after, eps));
     rx = rx - mean(rx);
 
-    % Reuse coefficient in decode_x410_dw1000 (same absolute phase model).
+    % Reuse coefficient in decode_uwb (same absolute phase model).
     options.interference_coefficient = tone_coeff;
 
     fprintf('\n========== Clock-synchronous tone cancel ==========\n');
@@ -240,7 +240,7 @@ fprintf('\n========== QM35 CIR estimate (code=9, SYNC=128) ==========\n');
 qm35_result = [];
 qm35_ok = false;
 try
-    qm35_result = decode_x410_dw1000(options);
+    qm35_result = decode_uwb(options);
     qm35_ok = true;
 catch ME
     fprintf('QM35 decode/CIR failed: %s\n', ME.message);

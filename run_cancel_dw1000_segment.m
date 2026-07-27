@@ -95,7 +95,7 @@ fprintf('Tone suppress : %.3f dB\n', interference.suppression_db);
 
 %% 2. Decode the packet in this interval
 try
-    result = decode_x410_dw1000(params, rx_tone_cancelled, interference);
+    result = decode_uwb(params, rx_tone_cancelled, interference);
 catch ME
     fprintf('Decode failed: %s\n', ME.message);
     fprintf(['No output was written because no UWB packet could be ', ...

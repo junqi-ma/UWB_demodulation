@@ -1,12 +1,12 @@
 %% Decode all QM35 packets from a DW1000+QM35 mixed capture
 % Branch: feature/two-packet-cir
 %
-% Same P0 pipeline as run_decode_x410_dw1000_all.m:
+% Same P0 pipeline as run_decode_uwb_all.m:
 %   1) coarse energy + decimated preamble pre-screen over the full .dat
 %   2) fine decode only at candidates (QM35 PHY profile)
 %   3) keep QM35-like frames, save CIR / timeline
 %
-% QM35 profile matches run_decode_x410_dw1000_all / README:
+% QM35 profile matches run_decode_uwb_all / README:
 %   code_index=9, preamble_repetitions=128, data_rate=6.81, sfd_mode=auto
 %   (QM35 typically locks IEEE 802.15.4z SFD #2)
 clear;
@@ -101,7 +101,7 @@ batch.timeline_png = fullfile(batch.output_directory, 'qm35_packet_timeline.png'
 %% -------------------- Full-file decode with QM35 profile --------------------
 fprintf('Scanning mixed capture for QM35 packets (code=%d, SYNC=%d)...\n', ...
     options.code_index, options.preamble_repetitions);
-results_raw = decode_x410_dw1000_all(options, batch);
+results_raw = decode_uwb_all(options, batch);
 
 %% -------------------- Keep only QM35-like frames --------------------
 results = filterQm35Results(results_raw, qm35_gate);

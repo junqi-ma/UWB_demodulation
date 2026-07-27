@@ -57,8 +57,8 @@
 
 | 文件 | 行数 | 功能 | 输入 |
 |------|------|------|------|
-| `decode_x410_dw1000.m` | 72 | 单包解码入口，串联所有解码阶段 | `options` 结构体 |
-| `decode_x410_dw1000_all.m` | 637 | 全文件扫描：粗筛 + 细解码所有包 | `options` + `batch` 结构体 |
+| `decode_uwb.m` | 72 | 单包解码入口，串联所有解码阶段 | `options` 结构体 |
+| `decode_uwb_all.m` | 637 | 全文件扫描：粗筛 + 细解码所有包 | `options` + `batch` 结构体 |
 | `generate_qm35_tx_from_decode.m` | 257 | 从解码 PSDU 重建 QM35 发射波形 | `decoded` 结构体 |
 | `apply_estimated_cir_to_qm35.m` | 62 | 用测量 CIR 替换 QM35 成形脉冲 | `tx` + `cir` 结构体 |
 
@@ -79,7 +79,7 @@
 | 文件 | 行数 | 功能 | 数据文件 |
 |------|------|------|----------|
 | `run_decode_smoke_test.m` | 83 | 无交互烟雾测试，输出 pass/fail | `DW1000_1.dat` |
-| `run_decode_x410_dw1000.m` | 379 | 单包解码 + 各阶段计时分析 | `DW1000_1.dat` |
+| `run_decode_uwb.m` | 379 | 单包解码 + 各阶段计时分析 | `DW1000_1.dat` |
 | `run_decode_and_regenerate_qm35.m` | 161 | 解码一帧 QM35 并重建其发射波形 | `QM35_1.dat` |
 | `run_analyze_dw1000_preamble_phase.m` | 176 | DW1000 前导码原始相关与相位稳定分析 | `DW1000_1.dat` |
 
@@ -89,7 +89,7 @@
 
 | 文件 | 行数 | 功能 | 数据文件 |
 |------|------|------|----------|
-| `run_decode_x410_dw1000_all.m` | 208 | 全文件 UWB 包扫描，保存所有 CIR | `QM35_1.dat` |
+| `run_decode_uwb_all.m` | 208 | 全文件 UWB 包扫描，保存所有 CIR | `QM35_1.dat` |
 | `run_decode_all_qm35_in_mix.m` | 338 | 混合捕获中解码所有 QM35 包 | `qm35_dw1000_1.dat` |
 | `run_decode_all_qm35_with_ic.m` | 615 | QM35 解码 + 间隙填充干扰抑制 | `qm35_dw1000_1.dat` |
 | `run_find_first_qm35_in_mix.m` | 557 | 在混合捕获中找到第一个 QM35 包 | `qm35_dw1000_1.dat` |
@@ -137,8 +137,8 @@
                ▼
 ┌─────────────────────────────────────────────┐
 │  顶层解码函数                                │
-│  decode_x410_dw1000                         │
-│  decode_x410_dw1000_all                     │
+│  decode_uwb                         │
+│  decode_uwb_all                     │
 │  generate_qm35_tx_from_decode               │
 │  apply_estimated_cir_to_qm35                │
 └──────────────┬──────────────────────────────┘
@@ -168,8 +168,8 @@
 |------|------|
 | 验证解码器是否正常工作 | `run_decode_smoke_test` |
 | 查看某个捕获文件的时域/频谱 | 修改 `read_x410.m` 中的 `file_name`，运行 |
-| 解码单个 DW1000 包并看各阶段耗时 | `run_decode_x410_dw1000` |
-| 全文件扫描所有 DW1000 包 | `run_decode_x410_dw1000_all` |
+| 解码单个 DW1000 包并看各阶段耗时 | `run_decode_uwb` |
+| 全文件扫描所有 DW1000 包 | `run_decode_uwb_all` |
 | 消除全文件 DW1000 帧（先验证） | `run_cancel_all_dw1000_in_capture`（默认 validation.enabled=true） |
 | 解码混合捕获中的 QM35 包 | `run_decode_all_qm35_in_mix` |
 | 对比消除前后效果 | `read_dw1000_cancelled_dat` |

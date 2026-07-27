@@ -405,7 +405,7 @@ result = struct();
 completed = false;
 message = '';
 try
-    result = decode_x410_dw1000(options);
+    result = decode_uwb(options);
     completed = true;
     message = 'decoder completed';
 catch ME

@@ -122,7 +122,7 @@ batch.timeline_png = fullfile(batch.output_directory, 'packet_timeline.png');
 
 %% -------------------- Run one full-file decode --------------------
 fprintf('\n========== Selected signal type: %s ==========\n', signal_type);
-results = decode_x410_dw1000_all(options, batch);
+results = decode_uwb_all(options, batch);
 
 %% -------------------- Compact console summary --------------------
 fprintf('\n========== Full-file %s decode summary ==========\n', signal_type);

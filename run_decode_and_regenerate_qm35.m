@@ -54,7 +54,7 @@ fprintf('Reading QM35 capture and cancelling the single tone first: %s\n', ...
 
 %% -------------------- Decode the tone-cancelled signal --------------------
 fprintf('Decoding the tone-cancelled QM35 signal...\n');
-result = decode_x410_dw1000(options, rx_tone_cancelled, interference);
+result = decode_uwb(options, rx_tone_cancelled, interference);
 if ~result.phr.secded_pass
     error('QM35 PHR SECDED failed; transmit waveform was not generated.');
 end

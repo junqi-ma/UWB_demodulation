@@ -4,7 +4,7 @@ function result = packageResult(params, reference, interference, ...
 %   RESULT = PACKAGERESULT(PARAMS, REFERENCE, INTERFERENCE, PREAMBLE,
 %   SFDSYMBOLS, CIR, CHIPS, SFD, FRAME) flattens every decoder stage
 %   output into the single structure returned to callers of
-%   decode_x410_dw1000.
+%   decode_uwb.
 %
 %   See also DECODE_X410_DW1000.
 

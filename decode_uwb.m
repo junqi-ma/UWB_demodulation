@@ -1,4 +1,4 @@
-function result = decode_x410_dw1000(options, preprocessedRx, interference)
+function result = decode_uwb(options, preprocessedRx, interference)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -23,7 +23,7 @@ if nargin < 2 || isempty(preprocessedRx)
     [rx, interference] = uwbdecoder.readAndCancelInterference(params);
 else
     if ~isnumeric(preprocessedRx) || ~isvector(preprocessedRx)
-        error('decode_x410_dw1000:InvalidPreprocessedRx', ...
+        error('decode_uwb:InvalidPreprocessedRx', ...
             'Preprocessed RX must be a numeric vector.');
     end
     rx = preprocessedRx(:);

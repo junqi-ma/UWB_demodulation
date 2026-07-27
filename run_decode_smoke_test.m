@@ -44,10 +44,10 @@ options.enable_frame_crop = true;
 options.verbose = true;
 options.show_plots = false;
 
-fprintf('Smoke test: decode_x410_dw1000 on %s\n', options.file_name);
+fprintf('Smoke test: decode_uwb on %s\n', options.file_name);
 t0 = tic;
 try
-    result = decode_x410_dw1000(options);
+    result = decode_uwb(options);
     elapsed = toc(t0);
     fprintf('\n========== SMOKE TEST PASS ==========\n');
     fprintf('Elapsed                      : %.3f s\n', elapsed);

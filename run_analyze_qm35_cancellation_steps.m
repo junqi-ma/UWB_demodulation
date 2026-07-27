@@ -129,7 +129,7 @@ fprintf('Tone suppression : %.3f dB\n', interference.suppression_db);
 % Both DW1000 and QM35 follow the same decode -> generate -> apply-CIR
 % sequence. The decoder returns one packet result; the per-profile tx_options
 % below map that result back to a waveform that matches the captured signal.
-result = decode_x410_dw1000(options, rx_tone_cancelled, interference);
+result = decode_uwb(options, rx_tone_cancelled, interference);
 
 switch lower(device_profile)
     case 'dw1000'

@@ -51,12 +51,12 @@
 
 顶层脚本（面向实验的入口）
 ├── 单包解调
-│   ├── run_decode_x410_dw1000.m        % 分步运行，保留中间变量（调试用）
-│   ├── decode_x410_dw1000.m            % 函数式入口，返回 result 结构
+│   ├── run_decode_uwb.m        % 分步运行，保留中间变量（调试用）
+│   ├── decode_uwb.m            % 函数式入口，返回 result 结构
 │   └── run_decode_smoke_test.m         % 最小冒烟测试
 ├── 全文件批解调（滑窗 + 粗精两级）
-│   ├── run_decode_x410_dw1000_all.m
-│   └── decode_x410_dw1000_all.m
+│   ├── run_decode_uwb_all.m
+│   └── decode_uwb_all.m
 ├── 混合场景 QM35 搜索与 CIR
 │   ├── run_find_first_qm35_in_mix.m    % 从文件头滑窗找第一个 QM35 包 + 相关诊断图
 │   ├── run_search_qm35_periodic_cir.m  % 5 ms 网格搜多包 + pre-path SIR
@@ -131,10 +131,10 @@ X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_f
 - `locateNsSfd`：在软判决流中，以 `preamble_repetitions * chips_per_symbol` 为基准 ±8 片滑动，用展宽 SFD 模板做归一化相关，取绝对值最大点。
 - `decodePhrAndPayload`：先按 SFD 极性翻转，再用 Communications Toolbox 的 `helperUWBBPRFDemod` / `helperUWBPHRDecode` / `helperUWBPayloadDecode` 解 PHR 和 PSDU；最后用 `ieee802154CRC16`（反射多项式 0x8408）做 FCS-16 校验。
 
-### 3.11 全文件批解调（`decode_x410_dw1000_all`）
+### 3.11 全文件批解调（`decode_uwb_all`）
 粗精两级：
 1. **粗检**：4e6 点/块、3e6 步进，32 倍降采样能量门限（median + 6·MAD）+ 可选降采样前导相关，筛出候选起点；
-2. **精解**：仅对候选调用 `decode_x410_dw1000`，成功后跳过该包覆盖区间；
+2. **精解**：仅对候选调用 `decode_uwb`，成功后跳过该包覆盖区间；
 3. **存盘**：CIR 矩阵 + `frame_summary.csv` + 可选单帧 CIR。
 
 ### 3.12 波形再生与对比
@@ -184,16 +184,16 @@ options.interference_coefficient = [];   % 留空则自动估计，可缓存复�
 
 ```matlab
 % 1) 单包分步调试
-run_decode_x410_dw1000
+run_decode_uwb
 
 % 2) 函数式调用
 options.file_name = 'F:\UWB基带数据\qm35_1.dat';
 options.preamble_repetitions = 128;
 options.sfd_mode = 'auto';
-result = decode_x410_dw1000(options);
+result = decode_uwb(options);
 
 % 3) 全文件批解调
-run_decode_x410_dw1000_all
+run_decode_uwb_all
 
 % 4) 混合场景：找第一个 QM35 + 相关诊断
 run_find_first_qm35_in_mix

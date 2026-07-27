@@ -4,10 +4,10 @@
 
 ## 入口文件
 
-- `run_decode_x410_dw1000.m`：分步骤运行，保留各阶段变量，便于调试。
-- `decode_x410_dw1000.m`：函数式入口，返回完整 `result` 结构体。
-- `run_decode_x410_dw1000_all.m`：滑窗扫描整段 `.dat`，解调全部报文并保存 CIR。
-- `decode_x410_dw1000_all.m`：全文件解调函数入口。
+- `run_decode_uwb.m`：分步骤运行，保留各阶段变量，便于调试。
+- `decode_uwb.m`：函数式入口，返回完整 `result` 结构体。
+- `run_decode_uwb_all.m`：滑窗扫描整段 `.dat`，解调全部报文并保存 CIR。
+- `decode_uwb_all.m`：全文件解调函数入口。
 - `+uwbdecoder/`：各解调模块的具体实现。
 
 ## 解调流程
@@ -65,7 +65,7 @@ options.sfd_mode = 'auto';
 需要逐步观察中间结果时，直接运行：
 
 ```matlab
-run_decode_x410_dw1000
+run_decode_uwb
 ```
 
 需要通过函数调用时：
@@ -77,25 +77,25 @@ options.preamble_repetitions = 128;
 options.cir_repetitions = 128;
 options.sfd_mode = 'auto';
 
-result = decode_x410_dw1000(options);
+result = decode_uwb(options);
 ```
 
 需要扫完整段采集文件时，直接运行：
 
 ```matlab
-run_decode_x410_dw1000_all
+run_decode_uwb_all
 ```
 
 或：
 
 ```matlab
-results = decode_x410_dw1000_all(options, batch);
+results = decode_uwb_all(options, batch);
 ```
 
 全文件流程（P0）：
 
 1. **粗检**：大块读取（默认 4e6 点，步进 3e6），降采样能量门限 + 可选降采样前导相关，只保留候选起点。
-2. **精解**：仅对候选调用 `decode_x410_dw1000`，成功后跳过该包覆盖区间。
+2. **精解**：仅对候选调用 `decode_uwb`，成功后跳过该包覆盖区间。
 3. **存盘**：CIR 与帧摘要。
 
 常用加速参数（`batch`）：

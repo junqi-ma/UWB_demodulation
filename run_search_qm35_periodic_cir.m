@@ -349,7 +349,7 @@ while offset + search.first_window_samples <= search_limit
     fprintf('  first-search attempt %d | offset=%d (%.3f ms)\n', ...
         attempt, offset, offset/options.fs_rx*1e3);
     try
-        result = decode_x410_dw1000(wopts);
+        result = decode_uwb(wopts);
     catch ME
         fprintf('    fail: %s\n', ME.message);
         offset = offset + search.first_step_samples;
@@ -400,7 +400,7 @@ for k = 1:numel(search.slot_retry_offsets)
     wopts.sample_offset = off;
     wopts.sample_num = win;
     try
-        result = decode_x410_dw1000(wopts);
+        result = decode_uwb(wopts);
     catch ME
         if strlength(string(best_reject)) == 0
             best_reject = sprintf('decode-error: %s', ME.message);
