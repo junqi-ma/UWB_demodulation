@@ -11,15 +11,15 @@ cd(project_dir);
 addpath(project_dir);
 
 %% 0. User configuration
-% Keep signal_type consistent with run_decode_uwb_all.m.
-signal_type = 'QM35';  % 'DW1000' or 'QM35'
+% Keep phy_profile consistent with run_decode_uwb_all.m.
+phy_profile = 'QM35';  % 'DW1000' or 'QM35'
 input_file = 'F:\UWB基带数据\qm35_1.dat';
 final_cancellation_mode = 'optimal_complex';
 
-switch upper(signal_type)
+switch upper(phy_profile)
     case 'DW1000'
-        signal_type = 'DW1000';
-        result_suffix = '';
+        phy_profile = 'DW1000';
+        profile_suffix = '_dw1000';
         expected_code_index = 10;
         expected_preamble_repetitions = 256;
         expected_sfd_mode = 'decawave';
@@ -28,8 +28,8 @@ switch upper(signal_type)
         tx_sfd_number = 0;
         tx_sfd_sequence = [-1; -1; -1; -1; 1; -1; 0; 0];
     case 'QM35'
-        signal_type = 'QM35';
-        result_suffix = '_qm35';
+        phy_profile = 'QM35';
+        profile_suffix = '_qm35';
         expected_code_index = 9;
         expected_preamble_repetitions = 128;
         expected_sfd_mode = '4z2';
@@ -38,7 +38,7 @@ switch upper(signal_type)
         tx_sfd_number = 2;
         tx_sfd_sequence = [];
     otherwise
-        error('signal_type must be ''DW1000'' or ''QM35''.');
+        error('phy_profile must be ''DW1000'' or ''QM35''.');
 end
 
 % -------------------------------------------------------------------------
@@ -46,7 +46,7 @@ end
 % differs from the decode_uwb_all defaults.
 % -------------------------------------------------------------------------
 [~, capture_stem] = fileparts(input_file);
-result_stem = [capture_stem result_suffix];
+result_stem = [capture_stem profile_suffix];
 packet_result_dir = fullfile(project_dir, 'decoded_results', result_stem);
 packet_summary_file = fullfile(packet_result_dir, 'frame_summary.csv');
 scan_file = fullfile(packet_result_dir, 'all_frames_cir.mat');
@@ -83,22 +83,22 @@ max_abs_cfo_hz = 100e3;
 
 %% 1. Load and validate the existing full-file scan
 if ~isfile(input_file)
-    error('run_cancel_all_dw1000_packets:InputNotFound', ...
+    error('run_cancel_all_uwb_packets:InputNotFound', ...
         'Input capture does not exist: %s', input_file);
 end
 if ~isfile(scan_file)
-    error('run_cancel_all_dw1000_packets:ScanNotFound', ...
+    error('run_cancel_all_uwb_packets:ScanNotFound', ...
         'Packet/CIR result does not exist: %s', scan_file);
 end
 if ~isfile(packet_summary_file)
-    error('run_cancel_all_dw1000_packets:SummaryNotFound', ...
+    error('run_cancel_all_uwb_packets:SummaryNotFound', ...
         'Packet summary does not exist: %s', packet_summary_file);
 end
 
 saved_scan = load(scan_file, 'results');
 if ~isfield(saved_scan, 'results') || ...
         ~isfield(saved_scan.results, 'frames')
-    error('run_cancel_all_dw1000_packets:InvalidScan', ...
+    error('run_cancel_all_uwb_packets:InvalidScan', ...
         'The scan MAT file does not contain results.frames.');
 end
 results = saved_scan.results;
@@ -110,23 +110,23 @@ params.max_psdu_bytes = max_psdu_bytes;
 required_params = {'code_index', 'preamble_repetitions'};
 missing_params = required_params(~isfield(params, required_params));
 if ~isempty(missing_params)
-    error('run_cancel_all_dw1000_packets:MissingDecodeParameters', ...
+    error('run_cancel_all_uwb_packets:MissingDecodeParameters', ...
         'Decode results.params is missing: %s', ...
         strjoin(missing_params, ', '));
 end
 if params.code_index ~= expected_code_index || ...
         params.preamble_repetitions ~= expected_preamble_repetitions
-    error('run_cancel_all_dw1000_packets:DecodeProfileMismatch', ...
+    error('run_cancel_all_uwb_packets:DecodeProfileMismatch', ...
         ['Selected %s, but decode results use code %d / %d SYNC. ', ...
-        'Rerun run_decode_uwb_all.m with the same signal_type.'], ...
-        signal_type, params.code_index, params.preamble_repetitions);
+        'Rerun run_decode_uwb_all.m with the same phy_profile.'], ...
+        phy_profile, params.code_index, params.preamble_repetitions);
 end
 if ~isfield(params, 'sfd_mode') || ...
         ~strcmpi(params.sfd_mode, expected_sfd_mode)
-    error('run_cancel_all_dw1000_packets:SfdProfileMismatch', ...
+    error('run_cancel_all_uwb_packets:SfdProfileMismatch', ...
         ['Selected %s requires sfd_mode=''%s''. Rerun the decoder ', ...
         'to regenerate matching frame and CIR information.'], ...
-        signal_type, expected_sfd_mode);
+        phy_profile, expected_sfd_mode);
 end
 cfo_fit_last_sync = params.preamble_repetitions;
 gain_fit_last_sync = params.preamble_repetitions;
@@ -140,14 +140,14 @@ required_columns = {'index', 'abs_start_sample', 'time_start_ms', ...
 missing_columns = setdiff(required_columns, ...
     packet_summary.Properties.VariableNames);
 if ~isempty(missing_columns)
-    error('run_cancel_all_dw1000_packets:MissingSummaryColumns', ...
+    error('run_cancel_all_uwb_packets:MissingSummaryColumns', ...
         'frame_summary.csv is missing: %s', ...
         strjoin(missing_columns, ', '));
 end
 
 if isfield(results, 'sample_index_base') && ...
         results.sample_index_base ~= 0
-    error('run_cancel_all_dw1000_packets:UnsupportedIndexBase', ...
+    error('run_cancel_all_uwb_packets:UnsupportedIndexBase', ...
         ['Packet starts must be zero-based capture sample offsets; ', ...
         'the result declares sample_index_base=%g.'], ...
         results.sample_index_base);
@@ -156,12 +156,12 @@ end
 frame_indices = [frames.index].';
 [matched, summary_rows] = ismember(frame_indices, packet_summary.index);
 if ~all(matched)
-    error('run_cancel_all_dw1000_packets:UnmatchedPacketIndex', ...
+    error('run_cancel_all_uwb_packets:UnmatchedPacketIndex', ...
         '%d MAT packet(s) have no matching CSV summary row.', ...
         nnz(~matched));
 end
 if numel(unique(packet_summary.index)) ~= height(packet_summary)
-    error('run_cancel_all_dw1000_packets:DuplicatePacketIndex', ...
+    error('run_cancel_all_uwb_packets:DuplicatePacketIndex', ...
         'frame_summary.csv contains duplicate packet indices.');
 end
 
@@ -171,7 +171,7 @@ summary_start_ms = packet_summary.time_start_ms(summary_rows);
 time_derived_samples = round(summary_start_ms * 1e-3 * params.fs_rx);
 time_sample_error = time_derived_samples - summary_start_samples;
 if any(abs(time_sample_error) > 1)
-    error('run_cancel_all_dw1000_packets:StartTimeMismatch', ...
+    error('run_cancel_all_uwb_packets:StartTimeMismatch', ...
         ['CSV time_start_ms and abs_start_sample disagree by up to ', ...
         '%d samples.'], max(abs(time_sample_error)));
 end
@@ -182,7 +182,7 @@ for k = 1:numel(frames)
 end
 
 if isempty(frames)
-    error('run_cancel_all_dw1000_packets:NoFrames', ...
+    error('run_cancel_all_uwb_packets:NoFrames', ...
         'The scan contains no decoded frames.');
 end
 
@@ -198,7 +198,7 @@ frames = frames(selected);
 [~, order] = sort([frames.abs_start_sample]);
 frames = frames(order);
 
-fprintf('\n=== All-%s cancellation ===\n', signal_type);
+fprintf('\n=== All-%s cancellation ===\n', phy_profile);
 fprintf('Packet directory   : %s\n', packet_result_dir);
 fprintf('Start-time source  : %s\n', packet_summary_file);
 fprintf('Reconstruction PHY : %s / SFD #%d\n', ...
@@ -210,7 +210,7 @@ fprintf('Cancellation mode  : %s\n', final_cancellation_mode);
 
 %% 2. Create the full output capture once
 if strcmpi(input_file, output_file)
-    error('run_cancel_all_dw1000_packets:SameInputOutput', ...
+    error('run_cancel_all_uwb_packets:SameInputOutput', ...
         'Input and output files must be different.');
 end
 output_dir = fileparts(output_file);
@@ -221,7 +221,7 @@ end
 fprintf('Copying complete capture to:\n  %s\n', output_file);
 [copy_ok, copy_message] = copyfile(input_file, output_file, 'f');
 if ~copy_ok
-    error('run_cancel_all_dw1000_packets:CopyFailed', ...
+    error('run_cancel_all_uwb_packets:CopyFailed', ...
         'Cannot create output capture: %s', copy_message);
 end
 
@@ -318,7 +318,7 @@ save(metadata_file, 'reports', 'success_count', 'frames', 'params', ...
 
 output_info = dir(output_file);
 if output_info.bytes ~= input_info.bytes
-    error('run_cancel_all_dw1000_packets:OutputLengthMismatch', ...
+    error('run_cancel_all_uwb_packets:OutputLengthMismatch', ...
         'Output has %d bytes; expected %d.', ...
         output_info.bytes, input_info.bytes);
 end
@@ -366,8 +366,8 @@ tx_options = struct( ...
     'peak_amplitude', 1, ...
     'guard_samples', 0, ...
     'require_fcs_pass', true);
-tx = generate_qm35_tx_from_decode(decoded, tx_options);
-channel = apply_estimated_cir_to_qm35(tx, decoded.cir);
+tx = generate_uwb_tx_from_decode(decoded, tx_options);
+channel = apply_estimated_cir_to_uwb(tx, decoded.cir);
 replica = channel.waveform_x410(:);
 
 nominal_start = frame.abs_start_sample;

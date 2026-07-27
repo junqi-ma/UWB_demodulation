@@ -9,7 +9,7 @@ clc;
 
 %% -------------------- Signal type --------------------
 % Select exactly one signal type: 'DW1000' or 'QM35'.
-signal_type = 'QM35';
+phy_profile = 'QM35';
 
 %% -------------------- Input capture --------------------
 options = struct();
@@ -33,18 +33,18 @@ options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
     -1; -1; 1; -1; -1; 1; -1; 1; -1; 1; -1; -1; ...
     -1; 1; 1; -1; -1; -1; 1; -1; 1; 1; -1; -1];
 
-switch upper(signal_type)
+switch upper(phy_profile)
     case 'DW1000'
-        signal_type = 'DW1000';
+        phy_profile = 'DW1000';
         options.preamble_repetitions = 256;
         options.code_index = 10;
         options.sfd_mode = 'decawave';
         options.cir_skip_initial_repetitions = [];
         options.cir_repetitions = 64;
         interference_quiet_num = 1500000;
-        output_suffix = '';
+        profile_suffix = '_dw1000';
     case 'QM35'
-        signal_type = 'QM35';
+        phy_profile = 'QM35';
         options.preamble_repetitions = 128;
         options.code_index = 9;
         % QM35 uses IEEE 802.15.4z SFD #2. Its first 24 SYNCs have a
@@ -53,9 +53,9 @@ switch upper(signal_type)
         options.cir_skip_initial_repetitions = 24;
         options.cir_repetitions = 60;
         interference_quiet_num = 262144;
-        output_suffix = '_qm35';
+        profile_suffix = '_qm35';
     otherwise
-        error('signal_type must be ''DW1000'' or ''QM35''.');
+        error('phy_profile must be ''DW1000'' or ''QM35''.');
 end
 
 %% -------------------- Interference cancellation --------------------
@@ -115,21 +115,21 @@ batch.save_individual_cir = true;
 %% -------------------- Output paths --------------------
 [~, capture_stem] = fileparts(options.file_name);
 batch.output_directory = fullfile(pwd, 'decoded_results', ...
-    [capture_stem output_suffix]);
+    [capture_stem profile_suffix]);
 batch.mat_file = fullfile(batch.output_directory, 'all_frames_cir.mat');
 batch.summary_csv = fullfile(batch.output_directory, 'frame_summary.csv');
 batch.timeline_png = fullfile(batch.output_directory, 'packet_timeline.png');
 
 %% -------------------- Run one full-file decode --------------------
-fprintf('\n========== Selected signal type: %s ==========\n', signal_type);
+fprintf('\n========== Selected signal type: %s ==========\n', phy_profile);
 results = decode_uwb_all(options, batch);
 
 %% -------------------- Compact console summary --------------------
-fprintf('\n========== Full-file %s decode summary ==========\n', signal_type);
+fprintf('\n========== Full-file %s decode summary ==========\n', phy_profile);
 fprintf('Capture file                 : %s\n', options.file_name);
 fprintf('Total complex samples        : %d\n', results.total_samples);
 fprintf('Capture duration             : %.3f ms\n', results.duration_s*1e3);
-fprintf('%-30s: %d\n', [signal_type ' packets'], results.packet_count);
+fprintf('%-30s: %d\n', [phy_profile ' packets'], results.packet_count);
 fprintf('FCS-pass packets            : %d\n', results.fcs_pass_count);
 fprintf('Precisely bounded packets   : %d\n', ...
     sum(results.precise_interval_mask));
@@ -144,7 +144,7 @@ fprintf('=============================================================\n');
 if results.packet_count > 0
     for k = 1:results.packet_count
         frame = results.frames(k);
-        profile = signal_type;
+        profile = phy_profile;
         if isfield(frame, 'profile') && ~isempty(frame.profile)
             profile = frame.profile;
         end

@@ -1,4 +1,4 @@
-function diagnostics = plot_qm35_estimated_cir(cir, output_png, show_figure)
+function diagnostics = plot_uwb_estimated_cir(cir, output_png, show_figure)
 %PLOT_QM35_ESTIMATED_CIR Plot averaged and per-repetition QM35 CIR details.
 
 if nargin < 2
@@ -9,7 +9,7 @@ if nargin < 3
 end
 if ~isstruct(cir) || ~isfield(cir, 'values') || ...
         ~isfield(cir, 'delay_ns')
-    error('plot_qm35_estimated_cir:InvalidCir', ...
+    error('plot_uwb_estimated_cir:InvalidCir', ...
         'CIR must contain values and delay_ns.');
 end
 

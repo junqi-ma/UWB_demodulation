@@ -19,7 +19,7 @@ window_offset = 4272165;
 % the input file name via fileparts, so switching captures only needs a
 % change here.
 input_file = 'F:\UWB基带数据\qm35_1.dat';
-cancellation_mode = 'optimal_complex';   % must match run_cancel_all_dw1000_packets
+cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit unless your cancel script naming differs.
@@ -42,7 +42,7 @@ figure_resolution_dpi = 140;
 
 %% 1. Load parameters and read the 10 ms window
 if ~isfile(metadata_file)
-    error('visualize_cancellation_10ms:MetadataNotFound', ...
+    error('visualize_uwb_cancellation_10ms:MetadataNotFound', ...
         'Metadata file not found: %s', metadata_file);
 end
 meta = load(metadata_file, 'params');

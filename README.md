@@ -53,29 +53,29 @@
 ├── 单包解调
 │   ├── run_decode_uwb.m        % 分步运行，保留中间变量（调试用）
 │   ├── decode_uwb.m            % 函数式入口，返回 result 结构
-│   └── run_decode_smoke_test.m         % 最小冒烟测试
+│   └── run_decode_uwb_smoke_test.m         % 最小冒烟测试
 ├── 全文件批解调（滑窗 + 粗精两级）
 │   ├── run_decode_uwb_all.m
 │   └── decode_uwb_all.m
 ├── 混合场景 QM35 搜索与 CIR
-│   ├── run_find_first_qm35_in_mix.m    % 从文件头滑窗找第一个 QM35 包 + 相关诊断图
-│   ├── run_search_qm35_periodic_cir.m  % 5 ms 网格搜多包 + pre-path SIR
-│   └── run_search_n_qm35_preamble_corr.m % N 包定长窗网格搜索 + 导出最差段
+│   ├── run_find_first_uwb_in_mix.m    % 从文件头滑窗找第一个 QM35 包 + 相关诊断图
+│   ├── run_search_uwb_periodic_cir.m  % 5 ms 网格搜多包 + pre-path SIR
+│   └── run_search_n_uwb_preamble_corr.m % N 包定长窗网格搜索 + 导出最差段
 ├── 波形再生与对比
-│   ├── run_decode_and_regenerate_qm35.m            % 端到端驱动
-│   ├── generate_qm35_tx_from_decode.m              % PSDU → 标准 QM35 波形
-│   ├── apply_estimated_cir_to_qm35.m               % 用测量 CIR 替代脉冲成形
-│   ├── compare_qm35_original_and_generated.m       % 对齐/增益拟合/相减
-│   ├── plot_qm35_estimated_cir.m                   % CIR 可视化
+│   ├── run_decode_and_regenerate_uwb.m            % 端到端驱动
+│   ├── generate_uwb_tx_from_decode.m              % PSDU → 标准 QM35 波形
+│   ├── apply_estimated_cir_to_uwb.m               % 用测量 CIR 替代脉冲成形
+│   ├── compare_uwb_original_and_generated.m       % 对齐/增益拟合/相减
+│   ├── plot_uwb_estimated_cir.m                   % CIR 可视化
 │   └── write_x410_iq_int16.m                       % 写 interleaved int16 IQ
 ├── 干扰与可视化辅助
-│   ├── analyze_worst_qm35_raw_signal.m   % 最差段原始 IQ 可视化
+│   ├── analyze_worst_uwb_raw_signal.m   % 最差段原始 IQ 可视化
 │   ├── analyze_x410_interference.m       % 时钟相关干扰 / 镜像 / 功率分析
 │   ├── visualize_x410_tone_cancellation.m % 抵消前后时域/频域对比
-│   ├── run_view_qm35_dw1000_1_time.m     % 冲突窗时域视图
-│   ├── run_decode_all_qm35_in_mix.m      % 混合场景多包解调
-│   ├── run_decode_all_qm35_with_ic.m     % 带干扰抵消的多包解调
-│   └── cancel_qm35_with_regenerated.m    % 再生波形相减抵消
+│   ├── run_view_uwb_mix_time.m     % 冲突窗时域视图
+│   ├── run_decode_uwb_in_mix.m      % 混合场景多包解调
+│   ├── run_decode_uwb_with_ic.m     % 带干扰抵消的多包解调
+│   └── cancel_uwb_with_regenerated.m    % 再生波形相减抵消
 └── 输出目录（运行生成，已 gitignore）
     ├── decoded_results/        % 全文件批解调结果
     └── regenerated_qm35/       % 再生/对比结果
@@ -138,11 +138,11 @@ X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_f
 3. **存盘**：CIR 矩阵 + `frame_summary.csv` + 可选单帧 CIR。
 
 ### 3.12 波形再生与对比
-- `generate_qm35_tx_from_decode`：复用解码得到的 PSDU 比特（含 FCS），用 `lrwpanWaveformGenerator` 生成标准 64-SYNC BPRF 帧，再显式扩展到 128-SYNC 以匹配 QM35 实际配置；输出工作采样率波形和重采样/频移到 X410 的波形。
-- `apply_estimated_cir_to_qm35`：用测量 CIR 替代 Butterworth 成形，把未成形的 {-1,0,+1} 脉冲序列通过 CIR，避免重复成形。
-- `compare_qm35_original_and_generated`：真实信号走相同预处理（抵消 → 变频 → 重采样 → CFO → 定时细化），再对生成波形做单复数增益拟合，对比波形差异并保留信道/接收机失真特征。
+- `generate_uwb_tx_from_decode`：复用解码得到的 PSDU 比特（含 FCS），用 `lrwpanWaveformGenerator` 生成标准 64-SYNC BPRF 帧，再显式扩展到 128-SYNC 以匹配 QM35 实际配置；输出工作采样率波形和重采样/频移到 X410 的波形。
+- `apply_estimated_cir_to_uwb`：用测量 CIR 替代 Butterworth 成形，把未成形的 {-1,0,+1} 脉冲序列通过 CIR，避免重复成形。
+- `compare_uwb_original_and_generated`：真实信号走相同预处理（抵消 → 变频 → 重采样 → CFO → 定时细化），再对生成波形做单复数增益拟合，对比波形差异并保留信道/接收机失真特征。
 
-### 3.13 Pre-first-path SIR 分析（`run_search_qm35_periodic_cir`）
+### 3.13 Pre-first-path SIR 分析（`run_search_uwb_periodic_cir`）
 - 在 5 ms 周期网格上逐包锁定 QM35，估计 CIR；
 - 取首径（delay≈0）附近 ±1 bin 的最大功率为 `P_signal`；
 - 取首径之前、留 2 bin 保护间隔之外的 pre-path bin 平均功率作为 DW1000 干扰 + 噪声的代理 `P_interf`；
@@ -196,16 +196,16 @@ result = decode_uwb(options);
 run_decode_uwb_all
 
 % 4) 混合场景：找第一个 QM35 + 相关诊断
-run_find_first_qm35_in_mix
+run_find_first_uwb_in_mix
 
 % 5) 5 ms 网格多包 + pre-path SIR
-run_search_qm35_periodic_cir
+run_search_uwb_periodic_cir
 
 % 6) N 包定长窗搜索 + 导出最差段
-run_search_n_qm35_preamble_corr
+run_search_n_uwb_preamble_corr
 
 % 7) 解码 → 再生 → 对比
-run_decode_and_regenerate_qm35
+run_decode_and_regenerate_uwb
 ```
 
 ---

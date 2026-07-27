@@ -4,7 +4,7 @@
 % subtracted (removed) signal, and the spectrum. The packet index parameter
 % selects which packet to inspect from the cancellation run.
 %
-% Requires the run_cancel_all_dw1000_packets output: the cancelled capture,
+% Requires the run_cancel_all_uwb_packets output: the cancelled capture,
 % its metadata MAT (carries params + per-packet reports), and optionally the
 % decoded_results/<scan>/all_frames_cir.mat for PHR/Payload boundaries.
 clear;
@@ -23,7 +23,7 @@ packet_index = 1;
 % these two via fileparts + the mode tag, so switching captures only needs
 % a change here.
 input_file = 'F:\UWB基带数据\qm35_1.dat';
-cancellation_mode = 'optimal_complex';   % must match run_cancel_all_dw1000_packets
+cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit unless your cancel script naming differs.
@@ -123,7 +123,7 @@ if ~isempty(summary_table) && ismember('frame_suppression_db', ...
 end
 
 if ~isfile(metadata_file)
-    error('visualize_dw1000_cancellation:MetadataNotFound', ...
+    error('visualize_uwb_cancellation:MetadataNotFound', ...
         'Metadata file not found: %s', metadata_file);
 end
 meta = load(metadata_file, 'reports', 'params', 'success_count', 'frames');
@@ -131,7 +131,7 @@ reports = meta.reports;
 params = meta.params;
 
 if isempty(reports)
-    error('visualize_dw1000_cancellation:NoReports', ...
+    error('visualize_uwb_cancellation:NoReports', ...
         'The metadata contains no packet reports.');
 end
 validateattributes(packet_index, {'numeric'}, ...
@@ -140,7 +140,7 @@ validateattributes(packet_index, {'numeric'}, ...
 
 report = reports(packet_index);
 if ~report.success
-    error('visualize_dw1000_cancellation:PacketFailed', ...
+    error('visualize_uwb_cancellation:PacketFailed', ...
         'Packet %d (list position %d) was not cancelled successfully: %s', ...
         report.index, packet_index, report.message);
 end
@@ -532,7 +532,7 @@ sgtitle(sprintf('DW1000 packet %d (#%d) | stride %d | Fs %.3f MHz', ...
 
 %% 4. Figure 4: strong peak phase difference (zero-IF, CFO-removed)
 % Reproduce the strong-sample phase-error diagnostic from
-% run_analyze_qm35_cancellation_steps.m. The regenerated waveform contains
+% run_analyze_uwb_cancellation_steps.m. The regenerated waveform contains
 % the intentional digital offset between the X410 tuning frequency and the
 % DW1000 center frequency. Remove that offset AND the fitted CFO from both
 % signals before plotting. Keep only strong samples where both amplitudes

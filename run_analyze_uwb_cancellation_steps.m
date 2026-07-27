@@ -11,9 +11,9 @@ addpath(project_dir);
 
 %% 0. Analysis knobs -- edit these first
 % Use 'dw1000' for the original DW1000 transmitter or 'qm35' for QM35.
-device_profile = 'qm35';
+phy_profile = 'qm35';
 
-switch lower(device_profile)
+switch lower(phy_profile)
     case 'dw1000'
         device_label = 'DW1000';
         capture_file = 'F:\UWB基带数据\DW1000_2.dat';
@@ -70,7 +70,7 @@ switch lower(device_profile)
             'interference_period_samples', 512, ...
             'show_plots', false, 'verbose', true);
     otherwise
-        error('Unknown device_profile: %s', device_profile);
+        error('Unknown phy_profile: %s', phy_profile);
 end
 if ~isfolder(output_dir)
     mkdir(output_dir);
@@ -131,7 +131,7 @@ fprintf('Tone suppression : %.3f dB\n', interference.suppression_db);
 % below map that result back to a waveform that matches the captured signal.
 result = decode_uwb(options, rx_tone_cancelled, interference);
 
-switch lower(device_profile)
+switch lower(phy_profile)
     case 'dw1000'
         tx_options = struct( ...
             'fs_tx', options.fs_rx, ...
@@ -159,11 +159,11 @@ switch lower(device_profile)
             'peak_amplitude', 1, 'guard_samples', 4096, ...
             'require_fcs_pass', true);
     otherwise
-        error('Unknown device_profile: %s', device_profile);
+        error('Unknown phy_profile: %s', phy_profile);
 end
 
-tx = generate_qm35_tx_from_decode(result, tx_options);
-tx_after_cir = apply_estimated_cir_to_qm35(tx, result.cir);
+tx = generate_uwb_tx_from_decode(result, tx_options);
+tx_after_cir = apply_estimated_cir_to_uwb(tx, result.cir);
 save(saved_result_file, 'result', 'tx', 'tx_after_cir', ...
     'options', 'tx_options', '-v7.3');
 fprintf('%s reconstructed result: %s\n', device_label, saved_result_file);

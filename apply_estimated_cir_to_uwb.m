@@ -1,4 +1,4 @@
-function channel = apply_estimated_cir_to_qm35(tx, cir)
+function channel = apply_estimated_cir_to_uwb(tx, cir)
 %APPLY_ESTIMATED_CIR_TO_QM35 Replace each UWB shaping pulse with measured CIR.
 %   CHANNEL = APPLY_ESTIMATED_CIR_TO_QM35(TX, CIR) filters the unshaped
 %   {-1,0,+1} pulse impulse train with the CIR. It does not convolve the
@@ -9,12 +9,12 @@ function channel = apply_estimated_cir_to_qm35(tx, cir)
 
 if ~isstruct(tx) || ~isfield(tx, 'pulse_impulses_work') || ...
         ~isfield(tx, 'sample_rate_work')
-    error('apply_estimated_cir_to_qm35:InvalidTx', ...
+    error('apply_estimated_cir_to_uwb:InvalidTx', ...
         ['TX must contain the unshaped pulse impulse train returned by ', ...
-         'generate_qm35_tx_from_decode.']);
+         'generate_uwb_tx_from_decode.']);
 end
 if ~isstruct(cir) || ~isfield(cir, 'values') || isempty(cir.values)
-    error('apply_estimated_cir_to_qm35:InvalidCir', ...
+    error('apply_estimated_cir_to_uwb:InvalidCir', ...
         'CIR must contain a nonempty complex values vector.');
 end
 

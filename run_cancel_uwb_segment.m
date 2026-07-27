@@ -34,7 +34,7 @@ channel_index = 1;
 cfo_mode = 'fitted';
 manual_cfo_hz = 0;
 
-% Match run_analyze_qm35_cancellation_steps.m:
+% Match run_analyze_uwb_cancellation_steps.m:
 %   'baseline'        - one global complex gain fitted on stable SYNC
 %   'fixed_scale'     - additionally scale PHR and Payload by the value below
 %   'optimal_real'    - separately fit a real scale for PHR and Payload
@@ -130,8 +130,8 @@ tx_options = struct( ...
     'guard_samples', 4096, ...
     'require_fcs_pass', true);
 
-tx = generate_qm35_tx_from_decode(result, tx_options);
-tx_after_cir = apply_estimated_cir_to_qm35(tx, result.cir);
+tx = generate_uwb_tx_from_decode(result, tx_options);
+tx_after_cir = apply_estimated_cir_to_uwb(tx, result.cir);
 
 replica_no_cfo = tx_after_cir.waveform_work(:);
 fs_work = tx_after_cir.sample_rate_work;
@@ -379,7 +379,7 @@ fprintf('Frame suppress   : %.3f dB (decoded packet only)\n', ...
 function writePatchedCapture(inputFile, outputFile, rawSegment, waveform, ...
         sampleOffset, channelIndex)
 if strcmpi(inputFile, outputFile)
-    error('run_cancel_dw1000_segment:SameInputOutput', ...
+    error('run_cancel_uwb_segment:SameInputOutput', ...
         'Input and output files must be different.');
 end
 
@@ -389,7 +389,7 @@ if ~isfolder(output_dir)
 end
 
 if size(rawSegment, 2) ~= numel(waveform)
-    error('run_cancel_dw1000_segment:PatchLengthMismatch', ...
+    error('run_cancel_uwb_segment:PatchLengthMismatch', ...
         'Patch waveform and raw segment lengths differ.');
 end
 
@@ -403,13 +403,13 @@ temporary_file = [tempname(output_dir), '.dat'];
 temporary_guard = onCleanup(@() deleteIfExists(temporary_file));
 [copy_ok, copy_message] = copyfile(inputFile, temporary_file, 'f');
 if ~copy_ok
-    error('run_cancel_dw1000_segment:CopyFailed', ...
+    error('run_cancel_uwb_segment:CopyFailed', ...
         'Cannot copy input capture: %s', copy_message);
 end
 
 fid = fopen(temporary_file, 'r+b', 'ieee-le');
 if fid < 0
-    error('run_cancel_dw1000_segment:OpenFailed', ...
+    error('run_cancel_uwb_segment:OpenFailed', ...
         'Cannot open temporary output file: %s', temporary_file);
 end
 file_guard = onCleanup(@() fclose(fid));
@@ -417,19 +417,19 @@ bytes_per_iq = uwbdecoder.constants().BYTES_PER_IQ_SAMPLE;
 status = fseek(fid, sampleOffset * bytes_per_iq * ...
     (size(rawSegment, 1) / 2), 'bof');
 if status ~= 0
-    error('run_cancel_dw1000_segment:SeekFailed', ...
+    error('run_cancel_uwb_segment:SeekFailed', ...
         'Cannot seek to output sample offset %d.', sampleOffset);
 end
 count = fwrite(fid, iq, 'int16');
 if count ~= numel(iq)
-    error('run_cancel_dw1000_segment:ShortWrite', ...
+    error('run_cancel_uwb_segment:ShortWrite', ...
         'Only %d of %d int16 values were written.', count, numel(iq));
 end
 clear file_guard;
 
 [move_ok, move_message] = movefile(temporary_file, outputFile, 'f');
 if ~move_ok
-    error('run_cancel_dw1000_segment:MoveFailed', ...
+    error('run_cancel_uwb_segment:MoveFailed', ...
         'Cannot finalize output capture: %s', move_message);
 end
 clear temporary_guard;

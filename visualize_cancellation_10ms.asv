@@ -15,7 +15,7 @@ addpath(project_dir);
 % Start of the 10 ms window (zero-based complex-sample offset).
 window_offset = 4272165;
 
-% Files produced by run_cancel_all_dw1000_packets.
+% Files produced by run_cancel_all_uwb_packets.
 input_file = 'F:\UWB基带数据\DW1000_2.dat';
 output_file = fullfile(project_dir, 'decoded_results', ...
     'DW1000_2_all_cancelled_optimal_complex.dat');
@@ -25,12 +25,12 @@ metadata_file = fullfile(project_dir, 'decoded_results', ...
 % Save figures to disk when true. Set to false to only display on screen.
 save_figures = false;
 output_dir = fullfile(project_dir, 'decoded_results', ...
-    'visualize_cancellation_10ms');
+    'visualize_uwb_cancellation_10ms');
 figure_resolution_dpi = 140;
 
 %% 1. Load parameters and read the 10 ms window
 if ~isfile(metadata_file)
-    error('visualize_cancellation_10ms:MetadataNotFound', ...
+    error('visualize_uwb_cancellation_10ms:MetadataNotFound', ...
         'Metadata file not found: %s', metadata_file);
 end
 meta = load(metadata_file, 'params');
