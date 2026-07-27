@@ -8,7 +8,7 @@
 - `decode_x410_dw1000.m`：函数式入口，返回完整 `result` 结构体。
 - `run_decode_x410_dw1000_all.m`：滑窗扫描整段 `.dat`，解调全部报文并保存 CIR。
 - `decode_x410_dw1000_all.m`：全文件解调函数入口。
-- `+dw1000decoder/`：各解调模块的具体实现。
+- `+uwbdecoder/`：各解调模块的具体实现。
 
 ## 解调流程
 

@@ -145,7 +145,7 @@ if ~report.success
         report.index, packet_index, report.message);
 end
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 fs_rx = params.fs_rx;
 ant_num = params.ant_num;
 channel_index = params.channel_index;
@@ -173,10 +173,10 @@ fprintf('Read window          : %d .. %d (%d samples)\n', ...
     read_first, read_last, read_num);
 
 % Read the same window from both captures.
-raw_original = dw1000decoder.readIqRaw(input_file, read_first, read_num, ant_num);
-rx_original = dw1000decoder.selectIqChannel(raw_original, channel_index);
-raw_cancelled = dw1000decoder.readIqRaw(output_file, read_first, read_num, ant_num);
-rx_cancelled = dw1000decoder.selectIqChannel(raw_cancelled, channel_index);
+raw_original = uwbdecoder.readIqRaw(input_file, read_first, read_num, ant_num);
+rx_original = uwbdecoder.selectIqChannel(raw_original, channel_index);
+raw_cancelled = uwbdecoder.readIqRaw(output_file, read_first, read_num, ant_num);
+rx_cancelled = uwbdecoder.selectIqChannel(raw_cancelled, channel_index);
 
 % Everything outside the subtracted region should be byte-for-byte equal.
 % The difference signal is therefore exactly the removed UWB model.
@@ -207,17 +207,17 @@ if params.enable_interference_cancellation && ...
     quiet_num = min(params.interference_quiet_num, ...
         max(0, total_samples - quiet_offset));
     if quiet_num >= tone_period
-        raw_quiet = dw1000decoder.readIqRaw(input_file, ...
+        raw_quiet = uwbdecoder.readIqRaw(input_file, ...
             quiet_offset, quiet_num, ant_num);
-        rx_quiet = dw1000decoder.selectIqChannel(raw_quiet, channel_index);
+        rx_quiet = uwbdecoder.selectIqChannel(raw_quiet, channel_index);
         quiet_n = quiet_offset + (0:numel(rx_quiet) - 1).';
-        quiet_basis = dw1000decoder.synchronousTone( ...
+        quiet_basis = uwbdecoder.synchronousTone( ...
             quiet_n, tone_bin, tone_period);
         tone_coeff = mean(rx_quiet .* conj(quiet_basis));
 
         % Subtract the tone from each signal using its absolute sample grid.
         original_n = read_first + (0:read_num - 1).';
-        original_basis = dw1000decoder.synchronousTone( ...
+        original_basis = uwbdecoder.synchronousTone( ...
             original_n, tone_bin, tone_period);
         rx_original = rx_original - tone_coeff .* original_basis;
         rx_cancelled = rx_cancelled - tone_coeff .* original_basis;
@@ -251,9 +251,9 @@ noise_ref_offset = min(noise_ref_offset, total_samples - 1);
 noise_ref_num = min(noise_ref_num, total_samples - noise_ref_offset);
 env_noise = [];
 if noise_ref_num >= 256
-    raw_noise = dw1000decoder.readIqRaw(input_file, ...
+    raw_noise = uwbdecoder.readIqRaw(input_file, ...
         noise_ref_offset, noise_ref_num, ant_num);
-    rx_noise = dw1000decoder.selectIqChannel(raw_noise, channel_index);
+    rx_noise = uwbdecoder.selectIqChannel(raw_noise, channel_index);
     env_noise = sqrt(movmean(abs(rx_noise).^2, envelope_samples));
     noise_rms = sqrt(mean(abs(rx_noise).^2));
     fprintf('Noise reference: offset=%d, %d samples, RMS=%.2f ADC\n', ...
@@ -434,9 +434,9 @@ end
 noise_ref_offset = min(noise_ref_offset, total_samples - 1);
 noise_ref_num = min(noise_ref_num, total_samples - noise_ref_offset);
 if noise_ref_num >= nfft
-    raw_noise = dw1000decoder.readIqRaw(input_file, ...
+    raw_noise = uwbdecoder.readIqRaw(input_file, ...
         noise_ref_offset, noise_ref_num, ant_num);
-    rx_noise = dw1000decoder.selectIqChannel(raw_noise, channel_index);
+    rx_noise = uwbdecoder.selectIqChannel(raw_noise, channel_index);
     spec_noise = fftshift(fft(rx_noise(1:nfft) .* win));
     mag_noise = 20 * log10(abs(spec_noise) + eps);
 end

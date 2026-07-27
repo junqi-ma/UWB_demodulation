@@ -8,7 +8,7 @@ function raw = readIqRaw(fileName, sampleOffset, sampleNum, antNum)
 %
 %   See also SELECTIQCHANNEL, READANDCANCELINTERFERENCE.
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 fid = fopen(fileName, 'rb', 'ieee-le');
 if fid < 0

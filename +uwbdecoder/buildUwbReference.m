@@ -1,4 +1,4 @@
-function reference = buildDw1000Reference(params)
+function reference = buildUwbReference(params)
 %BUILDDW1000REFERENCE Build waveform and sparse spreading-code references.
 %   REFERENCE = BUILDDW1000REFERENCE(PARAMS) constructs the HRP reference
 %   structure used throughout the decoder: the preamble waveform, the

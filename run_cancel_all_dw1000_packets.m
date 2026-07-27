@@ -225,7 +225,7 @@ if ~copy_ok
         'Cannot create output capture: %s', copy_message);
 end
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 input_info = dir(input_file);
 bytes_per_time_sample = c.BYTES_PER_IQ_SAMPLE * params.ant_num;
 total_samples = input_info.bytes / bytes_per_time_sample;
@@ -384,7 +384,7 @@ if params.enable_interference_cancellation && ...
         isfield(params, 'interference_coefficient') && ...
         ~isempty(params.interference_coefficient)
     absolute_n = read_first + (0:numel(fit_received) - 1).';
-    tone = dw1000decoder.synchronousTone(absolute_n, ...
+    tone = uwbdecoder.synchronousTone(absolute_n, ...
         params.interference_tone_bin, params.interference_period_samples);
     fit_received = fit_received - ...
         params.interference_coefficient(1) .* tone;
@@ -660,9 +660,9 @@ end
 
 function [raw, rx] = readIqSegment( ...
         fileName, sampleOffset, sampleNum, antNum, channelIndex)
-raw = dw1000decoder.readIqRaw( ...
+raw = uwbdecoder.readIqRaw( ...
     fileName, sampleOffset, sampleNum, antNum);
-rx = dw1000decoder.selectIqChannel(raw, channelIndex);
+rx = uwbdecoder.selectIqChannel(raw, channelIndex);
 end
 
 function [raw, clippedCount] = replaceIqChannel( ...

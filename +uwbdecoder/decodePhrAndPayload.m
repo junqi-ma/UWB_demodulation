@@ -30,7 +30,7 @@ if secdedPass && psduLength >= 0 && psduLength <= maxPsduBytes
     fprintf('First decoded PSDU bytes (hex):\n');
     fprintf('%02X ', bytes(1:min(32, end))); fprintf('\n');
     if byteCount >= 2
-        calculatedFcs = dw1000decoder.ieee802154CRC16(bytes(1:end-2));
+        calculatedFcs = uwbdecoder.ieee802154CRC16(bytes(1:end-2));
         receivedFcs = uint16(bytes(end-1)) + bitshift(uint16(bytes(end)), 8);
         fcsPass = calculatedFcs == receivedFcs;
         fprintf('FCS received: 0x%04X, calculated: 0x%04X, pass: %d.\n', ...

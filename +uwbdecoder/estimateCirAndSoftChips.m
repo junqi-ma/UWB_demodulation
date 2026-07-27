@@ -11,7 +11,7 @@ function [cir, chips] = estimateCirAndSoftChips(rx, preamble, reference, params)
 %
 %   See also ESTIMATEFRAMESAMPLESPAN, LOCATENSSFD.
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 code = reference.sampled_code(:);
 codeMf = flipud(conj(code));
@@ -79,7 +79,7 @@ values = values / (norm(values) + eps);
 cirMf = conj(flipud(values));
 samplesPerChip = preamble.measured_period / reference.chips_per_symbol;
 chipStart = preamble.start_sample + length(values) - preSamples - 1;
-frameSpan = dw1000decoder.estimateFrameSampleSpan(preamble, reference, params);
+frameSpan = uwbdecoder.estimateFrameSampleSpan(preamble, reference, params);
 
 % End sample for the Nth soft chip (1-based): chip_start + (N-1)*spc.
 lastByBudget = chipStart + (frameSpan.n_chips - 1)*samplesPerChip;
@@ -147,7 +147,7 @@ end
 
 % -------------------------------------------------------------------------
 function [preSamples, postSamples] = resolveCirWindow(params, preamble, reference)
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 if ~isempty(params.cir_pre_samples)
     preSamples = params.cir_pre_samples;

@@ -5,7 +5,7 @@ clear;
 close all;
 clc;
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 %% -------------------- User configuration --------------------
 originalFileName = 'F:\UWB基带数据\DW1000_2.dat';
@@ -166,6 +166,6 @@ assignin('base', 'rx_cancelled_time_s', timeS);
 % -------------------------------------------------------------------------
 function [raw, rx] = readIqSegment(fileName, sampleOffset, sampleNum, ...
         antNum, channelIdx, c)
-raw = dw1000decoder.readIqRaw(fileName, sampleOffset, sampleNum, antNum);
-rx = dw1000decoder.selectIqChannel(raw, channelIdx);
+raw = uwbdecoder.readIqRaw(fileName, sampleOffset, sampleNum, antNum);
+rx = uwbdecoder.selectIqChannel(raw, channelIdx);
 end

@@ -17,8 +17,8 @@ if nargin < 2 || isempty(batch)
     batch = struct();
 end
 
-baseParams = dw1000decoder.mergeOptions( ...
-    dw1000decoder.defaultOptions(), options);
+baseParams = uwbdecoder.mergeOptions( ...
+    uwbdecoder.defaultOptions(), options);
 batch = mergeBatchOptions(batch, baseParams);
 
 if ~isfolder(batch.output_directory)
@@ -40,7 +40,7 @@ if baseParams.enable_interference_cancellation && ...
 end
 
 % Build the reference once for refined correlation and sample coordinates.
-reference = dw1000decoder.buildDw1000Reference(baseParams);
+reference = uwbdecoder.buildUwbReference(baseParams);
 addpath(baseParams.helper_path);
 coarseTemplate = buildCoarseTemplate(baseParams, reference, batch);
 
@@ -398,7 +398,7 @@ if isempty(info)
     error('decode_x410_dw1000_all:FileNotFound', ...
         'Cannot find capture file: %s', params.file_name);
 end
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 totalSamples = floor(info.bytes / (c.BYTES_PER_IQ_SAMPLE*params.ant_num));
 end
 
@@ -415,10 +415,10 @@ if quietNum < params.interference_period_samples
         'Not enough samples available for interference estimation.');
 end
 
-rawQuiet = dw1000decoder.readIqRaw(params.file_name, quietOffset, quietNum, params.ant_num);
-rxQuiet = dw1000decoder.selectIqChannel(rawQuiet, params.channel_index);
+rawQuiet = uwbdecoder.readIqRaw(params.file_name, quietOffset, quietNum, params.ant_num);
+rxQuiet = uwbdecoder.selectIqChannel(rawQuiet, params.channel_index);
 quietN = quietOffset + (0:length(rxQuiet)-1).';
-quietBasis = dw1000decoder.synchronousTone(quietN, ...
+quietBasis = uwbdecoder.synchronousTone(quietN, ...
     params.interference_tone_bin, params.interference_period_samples);
 coefficient = mean(rxQuiet .* conj(quietBasis));
 
@@ -458,10 +458,10 @@ fprintf('Stage 1/3: %dx strided energy-envelope scan...\n', ...
 while offset < totalSamples
     chunkSamples = min(batch.energy_chunk_samples, totalSamples - offset);
     chunkCount = chunkCount + 1;
-    [raw, sampleIndices] = dw1000decoder.readIqRawStrided( ...
+    [raw, sampleIndices] = uwbdecoder.readIqRawStrided( ...
         params.file_name, offset, chunkSamples, params.ant_num, ...
         batch.energy_read_stride);
-    rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
+    rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
     rx = cancelToneAtIndices(rx, sampleIndices, params);
     rx = rx - mean(rx);
 
@@ -764,15 +764,15 @@ if isempty(params.interference_coefficient)
     error('decode_x410_dw1000_all:MissingInterferenceCoefficient', ...
         'The energy scanner requires a precomputed interference coefficient.');
 end
-basis = dw1000decoder.synchronousTone(sampleIndices(:), ...
+basis = uwbdecoder.synchronousTone(sampleIndices(:), ...
     params.interference_tone_bin, params.interference_period_samples);
 rx = rx - params.interference_coefficient(1).*basis;
 end
 
 function rx = readProcessedChunkSilent(params, sampleOffset, sampleNum)
 %READPROCESSEDCHUNKSILENT Cheap read + tone cancel + CF shift (no logging).
-raw = dw1000decoder.readIqRaw(params.file_name, sampleOffset, sampleNum, params.ant_num);
-rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
+raw = uwbdecoder.readIqRaw(params.file_name, sampleOffset, sampleNum, params.ant_num);
+rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 
 if params.enable_interference_cancellation
     if isempty(params.interference_coefficient)
@@ -781,7 +781,7 @@ if params.enable_interference_cancellation
     end
     coefficient = params.interference_coefficient(1);
     n = sampleOffset + (0:length(rx)-1).';
-    basis = dw1000decoder.synchronousTone(n, ...
+    basis = uwbdecoder.synchronousTone(n, ...
         params.interference_tone_bin, params.interference_period_samples);
     rx = rx - coefficient .* basis;
 end

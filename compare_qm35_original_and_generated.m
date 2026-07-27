@@ -23,26 +23,26 @@ if nargin < 7
     channel_simulation = struct();
 end
 
-params = dw1000decoder.mergeOptions( ...
-    dw1000decoder.defaultOptions(), decode_options);
+params = uwbdecoder.mergeOptions( ...
+    uwbdecoder.defaultOptions(), decode_options);
 addpath(params.helper_path);
 
 if isempty(tone_cancelled_rx)
     [rx_capture, interference] = ...
-        dw1000decoder.readAndCancelInterference(params);
+        uwbdecoder.readAndCancelInterference(params);
 else
     rx_capture = tone_cancelled_rx(:);
 end
-rx_baseband = dw1000decoder.compensateCenterFrequency(rx_capture, params);
-reference = dw1000decoder.buildDw1000Reference(params);
-rx_work = dw1000decoder.resampleCapture( ...
+rx_baseband = uwbdecoder.compensateCenterFrequency(rx_capture, params);
+reference = uwbdecoder.buildUwbReference(params);
+rx_work = uwbdecoder.resampleCapture( ...
     rx_baseband, params.fs_rx, reference.fs);
-preamble = dw1000decoder.detectRepeatedPreamble( ...
+preamble = uwbdecoder.detectRepeatedPreamble( ...
     rx_work, reference, params);
-dw1000decoder.validateCaptureLength(rx_work, preamble, reference, params);
-[rx_corrected, preamble] = dw1000decoder.compensateCarrierOffset( ...
+uwbdecoder.validateCaptureLength(rx_work, preamble, reference, params);
+[rx_corrected, preamble] = uwbdecoder.compensateCarrierOffset( ...
     rx_work, preamble, reference, params);
-preamble = dw1000decoder.refineTimingWithNsSfd( ...
+preamble = uwbdecoder.refineTimingWithNsSfd( ...
     rx_corrected, preamble, reference, params);
 
 generated = tx.waveform_work(:);

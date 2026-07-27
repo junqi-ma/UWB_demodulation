@@ -4,7 +4,7 @@
 clear;
 clc;
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 %% Parameters
 fileName = 'F:\UWB基带数据\qm35_1.dat';
@@ -15,7 +15,7 @@ sampleOffset = 0;     % Starting sample index
 
 %% Read interleaved int16 IQ data
 % File order: I1, Q1, I2, Q2, I1, Q1, I2, Q2, ...
-raw = dw1000decoder.readIqRaw(fileName, sampleOffset, sampleNum, antNum);
+raw = uwbdecoder.readIqRaw(fileName, sampleOffset, sampleNum, antNum);
 
 % Remove an incomplete sample frame at the end, if present.
 sampleCount = floor(numel(raw) / (2*antNum));

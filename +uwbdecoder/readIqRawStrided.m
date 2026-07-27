@@ -25,7 +25,7 @@ arguments
     stride (1, 1) double {mustBeInteger, mustBePositive}
 end
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 recordValueCount = 2*antNum;
 recordBytes = c.BYTES_PER_IQ_SAMPLE*antNum;
 outputCount = floor((sampleNum - 1)/stride) + 1;

@@ -21,7 +21,7 @@ written = fwrite(fid, int16(expectedRaw), 'int16');
 testCase.verifyEqual(written, numel(expectedRaw));
 clear closeGuard;
 
-[actualRaw, sampleIndices] = dw1000decoder.readIqRawStrided( ...
+[actualRaw, sampleIndices] = uwbdecoder.readIqRawStrided( ...
     fileName, 3, 12, antennaCount, 4);
 testCase.verifyEqual(sampleIndices, [3; 7; 11]);
 testCase.verifyEqual(actualRaw, double(expectedRaw(:, [4, 8, 12])));
@@ -42,8 +42,8 @@ closeGuard = onCleanup(@() fclose(fid));
 fwrite(fid, int16(expectedRaw), 'int16');
 clear closeGuard;
 
-contiguous = dw1000decoder.readIqRaw(fileName, 5, 10, 1);
-[strided, sampleIndices] = dw1000decoder.readIqRawStrided( ...
+contiguous = uwbdecoder.readIqRaw(fileName, 5, 10, 1);
+[strided, sampleIndices] = uwbdecoder.readIqRawStrided( ...
     fileName, 5, 10, 1, 1);
 testCase.verifyEqual(strided, contiguous);
 testCase.verifyEqual(sampleIndices, (5:14).');

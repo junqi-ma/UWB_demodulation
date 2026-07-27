@@ -327,8 +327,8 @@ probe = options;
 probe.sample_offset = 0;
 probe.sample_num = min(0.5e6, total_samples);
 probe.interference_coefficient = [];
-[~, interf] = dw1000decoder.readAndCancelInterference( ...
-    dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), probe));
+[~, interf] = uwbdecoder.readAndCancelInterference( ...
+    uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), probe));
 if interf.enabled && isfield(interf, 'coefficient') && ...
         ~isnan(real(interf.coefficient))
     options.interference_coefficient = interf.coefficient;

@@ -13,7 +13,7 @@ arguments
     waveform (:,1) {mustBeNumeric}
 end
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
 waveform = waveform(:);
 peak = max(abs([real(waveform); imag(waveform)]));

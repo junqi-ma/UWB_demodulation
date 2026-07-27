@@ -76,13 +76,13 @@ end
 total_samples = floor(info.bytes/(options.ant_num*4));
 search_limit = min(total_samples, search.max_search_samples);
 
-base_params = dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), options);
+base_params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), options);
 if base_params.enable_interference_cancellation && ...
         isempty(base_params.interference_coefficient)
     probe = base_params;
     probe.sample_offset = 0;
     probe.sample_num = min(0.5e6, total_samples);
-    [~, interf] = dw1000decoder.readAndCancelInterference(probe);
+    [~, interf] = uwbdecoder.readAndCancelInterference(probe);
     if interf.enabled && ~isnan(interf.coefficient)
         options.interference_coefficient = interf.coefficient;
         fprintf('Reusing interference coefficient: |A|=%.3f  ang=%.1f deg\n', ...
@@ -427,27 +427,27 @@ function [result, diag] = decodeQm35WithCorrelationDiag(options)
 %DECODEQM35WITHCORRELATIONDIAG Same pipeline as decode_x410_dw1000, but keeps
 %preamble score and pre-average code-correlation slices for plotting.
 
-params = dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), options);
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), options);
 addpath(params.helper_path);
 
-[rx, interference] = dw1000decoder.readAndCancelInterference(params);
-rx = dw1000decoder.compensateCenterFrequency(rx, params);
-reference = dw1000decoder.buildDw1000Reference(params);
-rx_work = dw1000decoder.resampleCapture(rx, params.fs_rx, reference.fs);
+[rx, interference] = uwbdecoder.readAndCancelInterference(params);
+rx = uwbdecoder.compensateCenterFrequency(rx, params);
+reference = uwbdecoder.buildUwbReference(params);
+rx_work = uwbdecoder.resampleCapture(rx, params.fs_rx, reference.fs);
 
-preamble = dw1000decoder.detectRepeatedPreamble(rx_work, reference, params);
-dw1000decoder.validateCaptureLength(rx_work, preamble, reference, params);
+preamble = uwbdecoder.detectRepeatedPreamble(rx_work, reference, params);
+uwbdecoder.validateCaptureLength(rx_work, preamble, reference, params);
 
 if params.enable_frame_crop
-    [rx_work, preamble] = dw1000decoder.cropToFrame( ...
+    [rx_work, preamble] = uwbdecoder.cropToFrame( ...
         rx_work, preamble, reference, params);
 end
 
-[rx_work, preamble] = dw1000decoder.compensateCarrierOffset( ...
+[rx_work, preamble] = uwbdecoder.compensateCarrierOffset( ...
     rx_work, preamble, reference, params);
-preamble = dw1000decoder.refineTimingWithNsSfd( ...
+preamble = uwbdecoder.refineTimingWithNsSfd( ...
     rx_work, preamble, reference, params);
-sfd_symbols = dw1000decoder.analyzeNsSfdSymbols( ...
+sfd_symbols = uwbdecoder.analyzeNsSfdSymbols( ...
     rx_work, preamble, reference, params);
 
 % --- Code correlation before CIR accumulation (local MF over CIR region) ---
@@ -507,11 +507,11 @@ individual_raw = individual_raw(:, 1:valid_count);
 rep_nominal_ends = rep_nominal_ends(1:valid_count);
 
 % Finish normal CIR / decode path via package functions.
-[cir, chips] = dw1000decoder.estimateCirAndSoftChips( ...
+[cir, chips] = uwbdecoder.estimateCirAndSoftChips( ...
     rx_work, preamble, reference, params);
-sfd = dw1000decoder.locateNsSfd(chips.soft, reference, params, preamble);
-frame = dw1000decoder.decodePhrAndPayload(chips.soft, sfd, reference.cfg);
-result = dw1000decoder.packageResult(params, reference, interference, ...
+sfd = uwbdecoder.locateNsSfd(chips.soft, reference, params, preamble);
+frame = uwbdecoder.decodePhrAndPayload(chips.soft, sfd, reference.cfg);
+result = uwbdecoder.packageResult(params, reference, interference, ...
     preamble, sfd_symbols, cir, chips, sfd, frame);
 
 % Preamble score may be ROI-relative.

@@ -28,11 +28,11 @@
 ## 二、项目结构
 
 ```
-+dw1000decoder/           % 解调算法包（核心，纯函数，可被批量脚本调用）
++uwbdecoder/           % 解调算法包（核心，纯函数，可被批量脚本调用）
 ├── readAndCancelInterference.m   % 读 IQ + 同步音调抵消 + 时域空白
 ├── selectIqChannel.m             % 抽取指定通道的复基带
 ├── compensateCenterFrequency.m   % X410 中心频点 → 载波 DC
-├── buildDw1000Reference.m        % 利用 lrwpan 生成前导/扩频码模板
+├── buildUwbReference.m        % 利用 lrwpan 生成前导/扩频码模板
 ├── resampleCapture.m             % 重采样到 HRP 工作采样率 (998.4 MHz)
 ├── detectRepeatedPreamble.m      % 粗检 + ROI 内 16-symbol 累加度量 + 峰值跟踪
 ├── validateCaptureLength.m       % 长度门限检查
@@ -99,7 +99,7 @@
 ### 3.2 中心频率补偿（`compensateCenterFrequency`）
 X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_frequency`（6489.6 MHz）之差（+10.4 MHz）通过复指数搬移到 DC，再按 RMS 归一化。
 
-### 3.3 参考波形生成（`buildDw1000Reference`）
+### 3.3 参考波形生成（`buildUwbReference`）
 调用 Communications Toolbox 的 `lrwpanHRPConfig`（802.15.4a, MeanPRF=62.4, 支持 6.81 Mbps）+ `lrwpanWaveformGenerator` 生成 1 个前导符号的成形波形；再用 `lrwpan.internal.HRPCodes(code_index)` 得到扩频码，按扩频因子（16）和 SamplesPerPulse（2）插入零并采样，得到 `sampled_code`。参考结构还保存 `fs`（998.4 MHz）、`samples_per_symbol`、`chips_per_symbol`、`code_energy`。
 
 ### 3.4 重采样（`resampleCapture`）

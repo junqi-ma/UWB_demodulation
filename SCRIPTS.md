@@ -1,7 +1,7 @@
 # 脚本与函数索引
 
 > 本文件记录 `F:\USRP数据解调` 下每个 `.m` 文件的用途、输入输出和依赖关系。
-> 核心解码函数位于 `+dw1000decoder/` 包内，顶层脚本调用它们完成具体实验。
+> 核心解码函数位于 `+uwbdecoder/` 包内，顶层脚本调用它们完成具体实验。
 
 ---
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 1. 核心解码函数（`+dw1000decoder/` 包）
+## 1. 核心解码函数（`+uwbdecoder/` 包）
 
 这些是纯函数，不直接运行，由顶层脚本调用。
 
@@ -33,7 +33,7 @@
 | `ieee802154CRC16.m` | 计算 IEEE 802.15.4 反射 CRC-16 |
 | `readAndCancelInterference.m` | 读取捕获并消除已知窄带音调 |
 | `compensateCenterFrequency.m` | 将 DW1000 载波搬移到基带 DC |
-| `buildDw1000Reference.m` | 构建 HRP 波形和稀疏扩频码参考 |
+| `buildUwbReference.m` | 构建 HRP 波形和稀疏扩频码参考 |
 | `resampleCapture.m` | 将 X410 采样率转换到 HRP 工作速率 |
 | `detectRepeatedPreamble.m` | 检测并跟踪重复的 SYNC 符号 |
 | `validateCaptureLength.m` | 校验捕获是否包含完整 SHR |
@@ -145,11 +145,11 @@
                │ 调用
                ▼
 ┌─────────────────────────────────────────────┐
-│  +dw1000decoder 包（26 个函数）              │
+│  +uwbdecoder 包（26 个函数）              │
 │  constants / defaultOptions / mergeOptions  │
 │  readIqRaw / selectIqChannel / synchronousTone │
 │  readAndCancelInterference / compensateCenterFrequency │
-│  buildDw1000Reference / resampleCapture     │
+│  buildUwbReference / resampleCapture     │
 │  detectRepeatedPreamble / validateCaptureLength │
 │  cropToFrame / estimateFrameSampleSpan      │
 │  compensateCarrierOffset / refineTimingWithNsSfd │

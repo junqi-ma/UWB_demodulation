@@ -7,11 +7,11 @@ function [rx, info] = readAndCancelInterference(params)
 %
 %   See also DECODE_X410_DW1000, APPLYBLANKINTERVALS.
 
-c = dw1000decoder.constants();
+c = uwbdecoder.constants();
 
-raw = dw1000decoder.readIqRaw(params.file_name, params.sample_offset, ...
+raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
     params.sample_num, params.ant_num);
-rx = dw1000decoder.selectIqChannel(raw, params.channel_index);
+rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 
 toneFrequency = params.interference_tone_bin / ...
     params.interference_period_samples * params.fs_rx;
@@ -24,19 +24,19 @@ if params.enable_interference_cancellation
         coefficient = params.interference_coefficient(1);
         estimatedFromQuiet = false;
     else
-        quietRaw = dw1000decoder.readIqRaw(params.file_name, ...
+        quietRaw = uwbdecoder.readIqRaw(params.file_name, ...
             params.interference_quiet_offset, params.interference_quiet_num, ...
             params.ant_num);
-        rxQuiet = dw1000decoder.selectIqChannel(quietRaw, params.channel_index);
+        rxQuiet = uwbdecoder.selectIqChannel(quietRaw, params.channel_index);
         quietN = params.interference_quiet_offset + (0:length(rxQuiet)-1).';
-        quietBasis = dw1000decoder.synchronousTone(quietN, ...
+        quietBasis = uwbdecoder.synchronousTone(quietN, ...
             params.interference_tone_bin, params.interference_period_samples);
         coefficient = mean(rxQuiet .* conj(quietBasis));
         estimatedFromQuiet = true;
     end
 
     rxN = params.sample_offset + (0:length(rx)-1).';
-    rxBasis = dw1000decoder.synchronousTone(rxN, ...
+    rxBasis = uwbdecoder.synchronousTone(rxN, ...
         params.interference_tone_bin, params.interference_period_samples);
 
     % Optional suppression diagnostic (disabled by default for speed).
@@ -74,7 +74,7 @@ end
 % Optional time-domain blanking of known interferer intervals (e.g. DW1000
 % bursts before QM35 decoding in a mixed capture).
 if ~isempty(params.blank_intervals)
-    [rx, blankInfo] = dw1000decoder.applyBlankIntervals(rx, ...
+    [rx, blankInfo] = uwbdecoder.applyBlankIntervals(rx, ...
         params.sample_offset, params.blank_intervals, ...
         params.blank_taper_samples, params.blank_weight);
     info.blank = blankInfo;

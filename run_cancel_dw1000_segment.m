@@ -77,13 +77,13 @@ options = struct( ...
     'verbose', true);
 
 %% 1. Read the requested interval and cancel the tone
-params = dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), options);
-raw_original = dw1000decoder.readIqRaw(params.file_name, ...
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), options);
+raw_original = uwbdecoder.readIqRaw(params.file_name, ...
     params.sample_offset, params.sample_num, params.ant_num);
-rx_original = dw1000decoder.selectIqChannel(raw_original, ...
+rx_original = uwbdecoder.selectIqChannel(raw_original, ...
     params.channel_index);
 [rx_tone_cancelled, interference] = ...
-    dw1000decoder.readAndCancelInterference(params);
+    uwbdecoder.readAndCancelInterference(params);
 
 fprintf('\n=== DW1000 segment cancellation ===\n');
 fprintf('Input file    : %s\n', input_file);
@@ -138,17 +138,17 @@ fs_work = tx_after_cir.sample_rate_work;
 samples_per_sync = round(result.preamble.samples_per_repetition);
 
 %% 4. Resample received segment to work rate and refine frame start
-reference = dw1000decoder.buildDw1000Reference(params);
-rx_baseband = dw1000decoder.compensateCenterFrequency(rx_tone_cancelled, params);
-rx_work = dw1000decoder.resampleCapture(rx_baseband, params.fs_rx, reference.fs);
+reference = uwbdecoder.buildUwbReference(params);
+rx_baseband = uwbdecoder.compensateCenterFrequency(rx_tone_cancelled, params);
+rx_work = uwbdecoder.resampleCapture(rx_baseband, params.fs_rx, reference.fs);
 
-preamble_detected = dw1000decoder.detectRepeatedPreamble(rx_work, reference, params);
-dw1000decoder.validateCaptureLength(rx_work, preamble_detected, reference, params);
+preamble_detected = uwbdecoder.detectRepeatedPreamble(rx_work, reference, params);
+uwbdecoder.validateCaptureLength(rx_work, preamble_detected, reference, params);
 
 [rx_work_cfo_corrected, preamble_corrected] = ...
-    dw1000decoder.compensateCarrierOffset( ...
+    uwbdecoder.compensateCarrierOffset( ...
     rx_work, preamble_detected, reference, params);
-preamble_corrected = dw1000decoder.refineTimingWithNsSfd( ...
+preamble_corrected = uwbdecoder.refineTimingWithNsSfd( ...
     rx_work_cfo_corrected, preamble_corrected, reference, params);
 
 [frame_start_work, timing_correlation] = refineFrameStartLocal( ...
@@ -413,7 +413,7 @@ if fid < 0
         'Cannot open temporary output file: %s', temporary_file);
 end
 file_guard = onCleanup(@() fclose(fid));
-bytes_per_iq = dw1000decoder.constants().BYTES_PER_IQ_SAMPLE;
+bytes_per_iq = uwbdecoder.constants().BYTES_PER_IQ_SAMPLE;
 status = fseek(fid, sampleOffset * bytes_per_iq * ...
     (size(rawSegment, 1) / 2), 'bof');
 if status ~= 0

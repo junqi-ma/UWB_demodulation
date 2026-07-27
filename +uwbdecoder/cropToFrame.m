@@ -11,7 +11,7 @@ rx = rx(:);
 period = preamble.measured_period;
 startSample = preamble.start_sample;
 
-frameSpan = dw1000decoder.estimateFrameSampleSpan(preamble, reference, params);
+frameSpan = uwbdecoder.estimateFrameSampleSpan(preamble, reference, params);
 preMargin = ceil(3*period);
 postSpan = frameSpan.post_samples;
 

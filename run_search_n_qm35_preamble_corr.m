@@ -283,8 +283,8 @@ probe = options;
 probe.sample_offset = 0;
 probe.sample_num = min(0.5e6, total_samples);
 probe.interference_coefficient = [];
-params = dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), probe);
-[~, interf] = dw1000decoder.readAndCancelInterference(params);
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), probe);
+[~, interf] = uwbdecoder.readAndCancelInterference(params);
 if interf.enabled && isfield(interf, 'coefficient')
     options.interference_coefficient = interf.coefficient;
     fprintf('Tone |A|=%.3f  phase=%.1f deg\n', ...
@@ -448,25 +448,25 @@ wopts.sample_num = win;
 end
 
 function [result, diag] = decodeWithPreambleDiag(options)
-params = dw1000decoder.mergeOptions(dw1000decoder.defaultOptions(), options);
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), options);
 addpath(params.helper_path);
-[rx, interference] = dw1000decoder.readAndCancelInterference(params);
-rx = dw1000decoder.compensateCenterFrequency(rx, params);
-reference = dw1000decoder.buildDw1000Reference(params);
-rx_work = dw1000decoder.resampleCapture(rx, params.fs_rx, reference.fs);
-preamble = dw1000decoder.detectRepeatedPreamble(rx_work, reference, params);
-dw1000decoder.validateCaptureLength(rx_work, preamble, reference, params);
+[rx, interference] = uwbdecoder.readAndCancelInterference(params);
+rx = uwbdecoder.compensateCenterFrequency(rx, params);
+reference = uwbdecoder.buildUwbReference(params);
+rx_work = uwbdecoder.resampleCapture(rx, params.fs_rx, reference.fs);
+preamble = uwbdecoder.detectRepeatedPreamble(rx_work, reference, params);
+uwbdecoder.validateCaptureLength(rx_work, preamble, reference, params);
 if params.enable_frame_crop
-    [rx_work, preamble] = dw1000decoder.cropToFrame(rx_work, preamble, reference, params);
+    [rx_work, preamble] = uwbdecoder.cropToFrame(rx_work, preamble, reference, params);
 end
-[rx_work, preamble] = dw1000decoder.compensateCarrierOffset( ...
+[rx_work, preamble] = uwbdecoder.compensateCarrierOffset( ...
     rx_work, preamble, reference, params);
-preamble = dw1000decoder.refineTimingWithNsSfd(rx_work, preamble, reference, params);
-sfd_symbols = dw1000decoder.analyzeNsSfdSymbols(rx_work, preamble, reference, params);
-[cir, chips] = dw1000decoder.estimateCirAndSoftChips(rx_work, preamble, reference, params);
-sfd = dw1000decoder.locateNsSfd(chips.soft, reference, params, preamble);
-frame = dw1000decoder.decodePhrAndPayload(chips.soft, sfd, reference.cfg);
-result = dw1000decoder.packageResult(params, reference, interference, ...
+preamble = uwbdecoder.refineTimingWithNsSfd(rx_work, preamble, reference, params);
+sfd_symbols = uwbdecoder.analyzeNsSfdSymbols(rx_work, preamble, reference, params);
+[cir, chips] = uwbdecoder.estimateCirAndSoftChips(rx_work, preamble, reference, params);
+sfd = uwbdecoder.locateNsSfd(chips.soft, reference, params, preamble);
+frame = uwbdecoder.decodePhrAndPayload(chips.soft, sfd, reference.cfg);
+result = uwbdecoder.packageResult(params, reference, interference, ...
     preamble, sfd_symbols, cir, chips, sfd, frame);
 
 if isfield(preamble, 'matched_is_roi') && preamble.matched_is_roi

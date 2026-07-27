@@ -44,13 +44,13 @@ options.interference_period_samples = 512;
 %% -------------------- Cancel the single-tone interference first --------------------
 % This is deliberately outside the decoder: the same tone-cancelled IQ is
 % reused for both decoding and the original/generated waveform comparison.
-params = dw1000decoder.mergeOptions( ...
-    dw1000decoder.defaultOptions(), options);
+params = uwbdecoder.mergeOptions( ...
+    uwbdecoder.defaultOptions(), options);
 addpath(params.helper_path);
 fprintf('Reading QM35 capture and cancelling the single tone first: %s\n', ...
     options.file_name);
 [rx_tone_cancelled, interference] = ...
-    dw1000decoder.readAndCancelInterference(params);
+    uwbdecoder.readAndCancelInterference(params);
 
 %% -------------------- Decode the tone-cancelled signal --------------------
 fprintf('Decoding the tone-cancelled QM35 signal...\n');
