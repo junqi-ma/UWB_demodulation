@@ -19,7 +19,7 @@ addpath(project_dir);
 %% 0. User configuration
 % Keep phy_profile consistent with run_decode_uwb_all.m.
 phy_profile = 'QM35';  % 'DW1000' or 'QM35'
-input_file = 'F:\UWB基带数据\qm35_dw1000_1.dat';
+input_file = 'F:\UWB基带数据\qm35_new_3.dat';
 fitting_file = input_file;
 output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
@@ -39,8 +39,8 @@ switch upper(phy_profile)
     case 'DW1000'
         phy_profile = 'DW1000';
         profile_tag = 'dw1000';
-        expected_code_index = 10;
-        expected_preamble_repetitions = 256;
+        expected_code_index = 11;
+        expected_preamble_repetitions = 128;
         expected_sfd_mode = 'decawave';
         tx_phy_mode = '802.15.4a';
         tx_ranging = true;
@@ -50,7 +50,7 @@ switch upper(phy_profile)
         phy_profile = 'QM35';
         profile_tag = 'qm35';
         expected_code_index = 9;
-        expected_preamble_repetitions = 128;
+        expected_preamble_repetitions = 64;
         expected_sfd_mode = '4z2';
         tx_phy_mode = 'BPRF';
         tx_ranging = false;
@@ -95,7 +95,7 @@ if sic_managed_run
     summary_file = sic_stage_config.summary_file;
 end
 
-max_psdu_bytes = 32;
+max_psdu_bytes = 128;
 require_fcs_pass = true;
 fixed_phr_payload_scale = 0.88;
 
@@ -109,7 +109,7 @@ alignment_template_syncs = 32;
 % Fractional-alignment knobs (shared across profiles).
 fractional_alignment_max_samples = 0.75;
 fractional_alignment_coarse_step = 0.10;
-fractional_alignment_fine_step = 0.01;
+fractional_alignment_fine_step = 0.003;
 fractional_alignment_min_improvement = 5e-4;
 
 % Reject unsafe fits instead of modifying the output.

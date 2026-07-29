@@ -119,6 +119,7 @@
 | `plot_uwb_estimated_cir.m` | 110 | 绘制平均/逐次 UWB CIR 细节 | 通用 |
 | `run_view_uwb_mix_time.m` | 394 | 冲突对齐窗口的时域 IQ + UWB CIR 查看 | `qm35_dw1000_1.dat` |
 | `UWB_decoding_despread.m` | 462 | 扩频解扩与解码实验（早期探索代码） | 通用 |
+| `visualize_uwb_segment.m` | — | 可视化任意长度的信号段（时域 + 频谱 + 时频图） | 通用 |
 
 ---
 

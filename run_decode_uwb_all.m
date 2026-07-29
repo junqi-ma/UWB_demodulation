@@ -15,14 +15,14 @@ clc;
 
 %% -------------------- Signal type --------------------
 % Select exactly one signal type: 'DW1000' or 'QM35'.
-phy_profile = 'DW1000';
+phy_profile = 'QM35';
 if sic_managed_run
     phy_profile = sic_stage_config.phy_profile;
 end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\dw1000_new_1.dat';
+options.file_name = 'F:\UWB基带数据\qm35_new_3.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -49,7 +49,7 @@ options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
 switch upper(phy_profile)
     case 'DW1000'
         phy_profile = 'DW1000';
-        options.preamble_repetitions = 256;
+        options.preamble_repetitions = 128;
         options.code_index = 11;
         options.sfd_mode = 'decawave';
         options.cir_skip_initial_repetitions = [];
@@ -59,7 +59,7 @@ switch upper(phy_profile)
         profile_tag = 'dw1000';
     case 'QM35'
         phy_profile = 'QM35';
-        options.preamble_repetitions = 128;
+        options.preamble_repetitions = 64;
         options.code_index = 9;
         % QM35 uses IEEE 802.15.4z SFD #2. Its first 24 SYNCs have a
         % visible phase transient, so estimate CIR from stable SYNC 25..128.

@@ -22,7 +22,7 @@ packet_index = 1;
 % Source capture and cancellation mode. Every path below is derived from
 % these two via fileparts + the mode tag, so switching captures only needs
 % a change here.
-input_file = 'F:\UWB基带数据\qm35_dw1000_1.dat';
+input_file = 'F:\UWB基带数据\qm35_new_2.dat';
 cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
@@ -612,8 +612,8 @@ else
     xlim(strong_t_us([1 end]));
 
     subplot(3, 1, 2);
-    plot(strong_t_us, phase_error_deg, '.', ...
-        'Color', [0.55 0.20 0.75], 'MarkerSize', 5);
+    plot(strong_t_us, smooth(phase_error_deg,1), '.', ...
+        'Color', [0.55 0.20 0.75], 'MarkerSize', 10);
     hold on;
     yline(0, 'k--');
     grid on;
@@ -691,16 +691,16 @@ if ~isempty(strong_idx)
         iq_limit = 1;
     end
 
-    %plot(real(orig_scatter), imag(orig_scatter), '.', ...
-        % 'Color', [0.10 0.45 0.85], 'MarkerSize', 4);
-    plot(abs(orig_scatter), ...
+    plot(real(orig_scatter), imag(orig_scatter), '.', ...
         'Color', [0.10 0.45 0.85], 'MarkerSize', 4);
+
     hold on;
-    %plot(real(model_scatter), imag(model_scatter), '.', ...
-        % 'Color', [0.85 0.30 0.12], 'MarkerSize', 4);
-    plot(abs(model_scatter), ...
+    plot(real(model_scatter), imag(model_scatter), '.', ...
         'Color', [0.85 0.30 0.12], 'MarkerSize', 4);
-    grid on; %axis equal;
+
+    plot(real(local_resid),imag(local_resid), '.', 'MarkerSize', 4);
+
+    grid on; axis equal;
     %xlim([-iq_limit iq_limit]);
     %ylim([-iq_limit iq_limit]);
     xlabel('In-phase (ADC)');
@@ -708,9 +708,183 @@ if ~isempty(strong_idx)
     legend('Original', 'Reconstructed', 'Location', 'best');
     title(sprintf('Zero-IF I-Q overlay | %d paired samples', ...
         numel(scatter_idx)));
+
 end
 
-%% 6. Console summary
+%% 6. Figure 6: CIR of the selected packet
+% The cancellation metadata retains the decoder frame records, including
+% the spreading-code-despread CIR. Plot both the coherent average and the
+% individual preamble-repetition estimates when they are available.
+if ~isempty(packet_table_row) && isfield(packet_table_row, 'cir') && ...
+        isstruct(packet_table_row.cir) && ...
+        isfield(packet_table_row.cir, 'values') && ...
+        isfield(packet_table_row.cir, 'delay_ns') && ...
+        ~isempty(packet_table_row.cir.values)
+    packet_cir = packet_table_row.cir;
+    cir_values = packet_cir.values(:);
+    cir_delay_ns = packet_cir.delay_ns(:);
+    cir_count = min(numel(cir_values), numel(cir_delay_ns));
+    cir_values = cir_values(1:cir_count);
+    cir_delay_ns = cir_delay_ns(1:cir_count);
+
+    cir_magnitude = abs(cir_values);
+    cir_magnitude_normalized = cir_magnitude / ...
+        (max(cir_magnitude) + eps);
+    cir_magnitude_db = 20 * log10(max(cir_magnitude_normalized, 1e-4));
+    [~, cir_peak_index] = max(cir_magnitude);
+    cir_peak_delay_ns = cir_delay_ns(cir_peak_index);
+
+    cir_power = cir_magnitude .^ 2;
+    cir_power = cir_power / (sum(cir_power) + eps);
+    cir_mean_delay_ns = sum(cir_power .* cir_delay_ns);
+    cir_rms_delay_ns = sqrt(sum(cir_power .* ...
+        (cir_delay_ns - cir_mean_delay_ns) .^ 2));
+
+    % Track the complex coefficient at the nominal first-path tap for up to
+    % 64 preamble repetitions. The CIR delay axis is referenced to the
+    % detected first path, so the tap nearest 0 ns is used instead of the
+    % strongest tap (which could be a later multipath component).
+    cir_individual = [];
+    first_path_repetition = [];
+    first_path_phase_change_deg = [];
+    [~, cir_first_path_index] = min(abs(cir_delay_ns));
+    cir_first_path_delay_ns = cir_delay_ns(cir_first_path_index);
+    if isfield(packet_cir, 'individual_values') && ...
+            ~isempty(packet_cir.individual_values)
+        cir_individual = packet_cir.individual_values;
+        cir_individual = cir_individual(1:min(cir_count, ...
+            size(cir_individual, 1)), :);
+        preamble_count = min(64, size(cir_individual, 2));
+        if cir_first_path_index <= size(cir_individual, 1) && ...
+                preamble_count > 0
+            first_path_values = cir_individual(cir_first_path_index, ...
+                1:preamble_count);
+            first_path_phase_unwrapped_deg = rad2deg( ...
+                unwrap(angle(first_path_values)));
+            first_path_phase_change_deg = ...
+                first_path_phase_unwrapped_deg - ...
+                first_path_phase_unwrapped_deg(1);
+            if isfield(packet_cir, 'first_repetition') && ...
+                    ~isempty(packet_cir.first_repetition)
+                first_path_repetition = packet_cir.first_repetition + ...
+                    (0:preamble_count - 1);
+            else
+                first_path_repetition = 1:preamble_count;
+            end
+        end
+    end
+
+    figure('Name', sprintf('DW1000 packet %d (#%d) CIR', ...
+        report.index, packet_index), 'Color', 'w', ...
+        'Position', [140 40 1200 960]);
+
+    subplot(3, 2, 1);
+    if ~isempty(cir_individual)
+        cir_individual_magnitude = abs(cir_individual);
+        cir_individual_magnitude = cir_individual_magnitude ./ ...
+            (max(cir_individual_magnitude, [], 1) + eps);
+        imagesc(cir_delay_ns(1:size(cir_individual, 1)), ...
+            1:size(cir_individual, 2), cir_individual_magnitude.');
+        axis xy;
+        colorbar;
+        colormap(gca, parula);
+        xline(0, 'w--', '0 ns', 'LineWidth', 1.0);
+        xlabel('Relative delay (ns)');
+        ylabel('Preamble repetition');
+        title('Per-repetition normalized CIR magnitude');
+    else
+        text(0.5, 0.5, 'Individual CIR estimates unavailable', ...
+            'HorizontalAlignment', 'center');
+        axis off;
+        title('Per-repetition CIR');
+    end
+
+    subplot(3, 2, 2);
+    stem(cir_delay_ns, cir_magnitude_normalized, 'filled', ...
+        'Color', [0.10 0.45 0.85], 'MarkerSize', 4);
+    hold on;
+    xline(0, 'k--', 'Nominal zero delay');
+    plot(cir_peak_delay_ns, cir_magnitude_normalized(cir_peak_index), ...
+        'ro', 'MarkerFaceColor', 'r');
+    grid on;
+    ylim([0 1.12]);
+    xlabel('Relative delay (ns)');
+    ylabel('Normalized |CIR|');
+    title(sprintf('Coherent average | peak %.3f ns', ...
+        cir_peak_delay_ns));
+
+    subplot(3, 2, 3);
+    plot(cir_delay_ns, real(cir_values), '-o', ...
+        'Color', [0.10 0.45 0.85], 'MarkerSize', 3);
+    hold on;
+    plot(cir_delay_ns, imag(cir_values), '-s', ...
+        'Color', [0.90 0.30 0.12], 'MarkerSize', 3);
+    xline(0, 'k--');
+    grid on;
+    xlabel('Relative delay (ns)');
+    ylabel('Complex coefficient');
+    title('Complex CIR coefficients');
+    legend('Real', 'Imaginary', 'Location', 'best');
+
+    subplot(3, 2, 4);
+    yyaxis left;
+    stem(cir_delay_ns, cir_magnitude_db, 'filled', ...
+        'Color', [0.10 0.45 0.85], 'MarkerSize', 3);
+    ylabel('Normalized |CIR| (dB)');
+    ylim([-80 5]);
+    yyaxis right;
+    cir_phase_valid = cir_magnitude_db >= -30;
+    plot(cir_delay_ns(cir_phase_valid), ...
+        rad2deg(angle(cir_values(cir_phase_valid))), 'o-', ...
+        'Color', [0.90 0.30 0.12], 'MarkerSize', 4);
+    ylabel('Phase above -30 dB (deg)');
+    ylim([-190 190]);
+    xline(0, 'k--');
+    grid on;
+    xlabel('Relative delay (ns)');
+    title(sprintf('Log magnitude and phase | RMS delay %.3f ns', ...
+        cir_rms_delay_ns));
+
+    subplot(3, 2, [5 6]);
+    if ~isempty(first_path_phase_change_deg)
+        plot(first_path_repetition, first_path_phase_change_deg, 'o-', ...
+            'Color', [0.55 0.20 0.75], 'LineWidth', 1.2, ...
+            'MarkerSize', 4, 'MarkerFaceColor', [0.55 0.20 0.75]);
+        hold on;
+        yline(0, 'k--');
+        grid on;
+        xlim(first_path_repetition([1 end]));
+        xlabel('Preamble repetition');
+        ylabel('Unwrapped phase change (deg)');
+        title(sprintf(['First-path phase evolution at %.3f ns | ', ...
+            '%d preambles'], cir_first_path_delay_ns, ...
+            numel(first_path_repetition)));
+    else
+        text(0.5, 0.5, 'First-path phase data unavailable', ...
+            'HorizontalAlignment', 'center');
+        axis off;
+        title('First-path phase evolution');
+    end
+
+    sgtitle(sprintf('DW1000 packet %d (#%d) CIR | %d taps', ...
+        report.index, packet_index, cir_count), 'Interpreter', 'none');
+
+    fprintf('\n=== CIR analysis ===\n');
+    fprintf('CIR taps          : %d\n', cir_count);
+    fprintf('Peak delay        : %.3f ns\n', cir_peak_delay_ns);
+    fprintf('Mean delay        : %.3f ns\n', cir_mean_delay_ns);
+    fprintf('RMS delay spread  : %.3f ns\n', cir_rms_delay_ns);
+    if ~isempty(first_path_phase_change_deg)
+        fprintf('First-path phase  : %d preambles, %+.3f deg total change\n', ...
+            numel(first_path_phase_change_deg), ...
+            first_path_phase_change_deg(end));
+    end
+else
+    warning('visualize_uwb_cancellation:CirUnavailable', ...
+        'CIR data is unavailable for packet %d.', report.index);
+end
+
+%% 7. Console summary
 fprintf('\n=== Packet %d (#%d) summary ===\n', report.index, packet_index);
 fprintf('Fitted start     : %d (%.3f ms)\n', ...
     packet_first, packet_first / fs_rx * 1e3);
@@ -737,7 +911,7 @@ fprintf('Window measured  : %.2f dB\n', region_suppression_db);
 fprintf('Clipped comp.    : %d\n', report.clipped_component_count);
 fprintf('FCS pass         : %d\n', report.fcs_pass);
 
-%% 7. Save figures to disk
+%% 8. Save figures to disk
 if save_figures && ~isempty(output_dir)
     if ~isfolder(output_dir)
         mkdir(output_dir);

@@ -18,7 +18,7 @@ window_offset = 4272165;
 % Source capture and cancellation mode. Every path below is derived from
 % the input file name via fileparts, so switching captures only needs a
 % change here.
-input_file = 'F:\UWB基带数据\qm35_dw1000_1.dat';
+input_file = 'F:\UWB基带数据\dw1000_new_1.dat';
 cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 
 % -------------------------------------------------------------------------
@@ -58,7 +58,7 @@ channel_index = params.channel_index;
 bytes_per_sample = c.BYTES_PER_IQ_SAMPLE * ant_num;
 
 % 10 ms window length in samples.
-window_duration_s = 20e-3;
+window_duration_s = 5e-3;
 window_num = round(window_duration_s * fs_rx);
 
 % Clamp to file bounds.
