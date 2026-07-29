@@ -43,7 +43,7 @@ minimum_repetition_coherence = 0.20;
 % The final part of the preamble defines the stable phase/CFO line. The
 % packet-start window is used for repeatability and cancellation tests.
 stable_fit_start_fraction = 0.50;
-early_repetition_limit = 24;
+early_repetition_limit = 10;
 
 % Resolve the fast phase transient inside each early SYNC repetition.
 % 32 bins/SYNC gives about 31.8 ns per bin for HRP UWB. The repetition

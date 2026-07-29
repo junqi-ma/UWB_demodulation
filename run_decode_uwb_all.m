@@ -35,6 +35,7 @@ options.fs_rx = 737.28e6;
 options.x410_center_frequency = 6500e6;
 options.dw1000_center_frequency = 6489.6e6;
 options.data_rate = 6.81;
+pll_phase_compensation_repetitions = 10;
 
 options.decawave_sfd = [-1; -1; -1; -1; 1; -1; 0; 0];
 options.ieee_sfd = [0; 1; 0; -1; 1; 0; 0; -1];
@@ -52,8 +53,12 @@ switch upper(phy_profile)
         options.preamble_repetitions = 128;
         options.code_index = 11;
         options.sfd_mode = 'decawave';
-        options.cir_skip_initial_repetitions = [];
-        options.cir_repetitions = 64;
+        % PLL compensation owns SYNC 1..10; save per-repetition CIR from
+        % SYNC 11 onward so slow phase compensation takes over seamlessly.
+        options.cir_skip_initial_repetitions = ...
+            pll_phase_compensation_repetitions;
+        options.cir_repetitions = options.preamble_repetitions - ...
+            options.cir_skip_initial_repetitions;
         interference_quiet_num = 1500000;
         fine_window_min_samples = 2.9e5;
         profile_tag = 'dw1000';
@@ -61,11 +66,13 @@ switch upper(phy_profile)
         phy_profile = 'QM35';
         options.preamble_repetitions = 64;
         options.code_index = 9;
-        % QM35 uses IEEE 802.15.4z SFD #2. Its first 24 SYNCs have a
-        % visible phase transient, so estimate CIR from stable SYNC 25..128.
+        % QM35 uses IEEE 802.15.4z SFD #2. PLL compensation owns SYNC
+        % 1..10; save per-repetition CIR from SYNC 11 onward.
         options.sfd_mode = '4z2';
-        options.cir_skip_initial_repetitions = 24;
-        options.cir_repetitions = 60;
+        options.cir_skip_initial_repetitions = ...
+            pll_phase_compensation_repetitions;
+        options.cir_repetitions = options.preamble_repetitions - ...
+            options.cir_skip_initial_repetitions;
         interference_quiet_num = 262144;
         fine_window_min_samples = 2.0e5;
         profile_tag = 'qm35';
