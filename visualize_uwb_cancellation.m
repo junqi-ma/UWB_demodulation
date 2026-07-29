@@ -1,4 +1,4 @@
-%% Visualize the cancellation effect of a single DW1000 packet.
+%% Visualize the cancellation effect of a single DW1000 or QM35 packet.
 % Reads both the original capture and the cancelled capture, compares them
 % around one user-selected packet, and plots the envelope before/after, the
 % subtracted (removed) signal, and the spectrum. The packet index parameter
@@ -22,8 +22,12 @@ packet_index = 1;
 % Source capture and cancellation mode. Every path below is derived from
 % these two via fileparts + the mode tag, so switching captures only needs
 % a change here.
-input_file = 'F:\UWB基带数据\qm35_new_2.dat';
+input_file = 'F:\UWB基带数据\qm35_new_3.dat';
 cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
+use_pll_phase_compensation = true;
+show_pll_phase_curve = true;
+pll_phase_template_file = '';
+pll_phase_curve_repetitions = 24;
 
 % -------------------------------------------------------------------------
 % Auto-generated paths. Do not edit unless your cancel script naming differs.
@@ -31,7 +35,11 @@ cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 % run_cancel_all_uwb_packets (decoded_results/<capture>/<cancelled_mode>.dat).
 % -------------------------------------------------------------------------
 [~, capture_stem] = fileparts(input_file);
-cancelled_tag = sprintf('cancelled_%s', cancellation_mode);
+if use_pll_phase_compensation
+    cancelled_tag = sprintf('cancelled_%s_pll_subsync', cancellation_mode);
+else
+    cancelled_tag = sprintf('cancelled_%s', cancellation_mode);
+end
 output_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
     [cancelled_tag '.dat']);
 metadata_file = fullfile(project_dir, 'decoded_results', capture_stem, ...
@@ -51,7 +59,7 @@ noise_ref_region = [];   % e.g. [400000, 227565]
 save_figures = false;
 pause_on_suppression_preview = false;
 output_dir = fullfile(project_dir, 'decoded_results', ...
-    capture_stem, 'visualize');
+    capture_stem, ['visualize_' cancelled_tag]);
 figure_resolution_dpi = 140;
 
 % -------------------------------------------------------------------------
@@ -69,13 +77,25 @@ end
 % -------------------------------------------------------------------------
 if ~isempty(summary_table) && ismember('frame_suppression_db', ...
         summary_table.Properties.VariableNames)
-    fig_preview = figure('Name', 'DW1000 cancellation: suppression preview', ...
+    fig_preview = figure('Name', sprintf( ...
+        '%s cancellation: suppression preview', capture_stem), ...
         'Color', 'w', 'Position', [80 80 1200 420]);
 
     packet_list_index = (1:height(summary_table)).';
     success_mask = summary_table.success == 1;
     suppression_db = summary_table.frame_suppression_db;
 
+    has_pll_comparison = ismember( ...
+        'frame_suppression_without_pll_db', ...
+        summary_table.Properties.VariableNames);
+    if has_pll_comparison
+        suppression_without_pll_db = ...
+            summary_table.frame_suppression_without_pll_db;
+        plot(packet_list_index(success_mask), ...
+            suppression_without_pll_db(success_mask), ...
+            '-', 'Color', [0.60 0.60 0.60], 'LineWidth', 0.9);
+        hold on;
+    end
     plot(packet_list_index(success_mask), suppression_db(success_mask), ...
         'o-', 'Color', [0.10 0.45 0.85], 'MarkerSize', 4, ...
         'MarkerFaceColor', [0.10 0.45 0.85], 'LineWidth', 0.8);
@@ -88,12 +108,25 @@ if ~isempty(summary_table) && ismember('frame_suppression_db', ...
     grid on;
     xlabel('Packet list index');
     ylabel('Frame suppression (dB)');
-    title(sprintf(['Cancellation summary: %d packets (%d successful) | ', ...
-        'median %.2f dB | mean %.2f dB'], ...
-        height(summary_table), nnz(success_mask), ...
-        median(suppression_db(success_mask)), ...
-        mean(suppression_db(success_mask))));
-    if any(~success_mask)
+    if has_pll_comparison
+        pll_gain_db = suppression_db - suppression_without_pll_db;
+        title(sprintf([ ...
+            'PLL cancellation: %d packets (%d successful) | ', ...
+            'median %.2f dB | PLL gain %+.3f dB'], ...
+            height(summary_table), nnz(success_mask), ...
+            median(suppression_db(success_mask)), ...
+            median(pll_gain_db(success_mask))));
+        legend('Without PLL template', 'With PLL template', ...
+            'Location', 'best');
+    else
+        title(sprintf([ ...
+            'Cancellation summary: %d packets (%d successful) | ', ...
+            'median %.2f dB | mean %.2f dB'], ...
+            height(summary_table), nnz(success_mask), ...
+            median(suppression_db(success_mask)), ...
+            mean(suppression_db(success_mask))));
+    end
+    if any(~success_mask) && ~has_pll_comparison
         legend('Successful', 'Skipped', 'Location', 'best');
     end
 
@@ -118,6 +151,14 @@ if ~isempty(summary_table) && ismember('frame_suppression_db', ...
         min(suppression_db(success_mask)), ...
         median(suppression_db(success_mask)), ...
         max(suppression_db(success_mask)));
+    if has_pll_comparison
+        fprintf(['PLL improvement: min %+.3f dB | median %+.3f dB | ', ...
+            'max %+.3f dB | improved %.1f%%\n'], ...
+            min(pll_gain_db(success_mask)), ...
+            median(pll_gain_db(success_mask)), ...
+            max(pll_gain_db(success_mask)), ...
+            100 * mean(pll_gain_db(success_mask) > 0));
+    end
     if pause_on_suppression_preview
         fprintf(['Close the preview figure to continue, or Ctrl+C to ', ...
             'pick another packet_index.\n']);
@@ -129,9 +170,142 @@ if ~isfile(metadata_file)
     error('visualize_uwb_cancellation:MetadataNotFound', ...
         'Metadata file not found: %s', metadata_file);
 end
-meta = load(metadata_file, 'reports', 'params', 'success_count', 'frames');
+meta = load(metadata_file);
 reports = meta.reports;
 params = meta.params;
+if params.preamble_repetitions <= 72
+    phy_label = 'QM35';
+    default_pll_template_result = 'qm35_new_3';
+else
+    phy_label = 'DW1000';
+    default_pll_template_result = 'dw1000_new_3';
+end
+
+% Load the phase curve independently of which cancellation file is shown.
+% A PLL result carries the exact applied template in metadata. For a
+% non-PLL result, load the analysis CSV so measured and candidate template
+% phase can still be compared on the same plot.
+pll_template_available = false;
+pll_template_phase_by_repetition_rad = ...
+    zeros(params.preamble_repetitions, 1);
+pll_template_phase_by_bin_rad = ...
+    zeros(params.preamble_repetitions, 1);
+pll_template_bins_per_repetition = 1;
+pll_sync_count = 0;
+if isfield(meta, 'pll_phase_compensation') && ...
+        meta.pll_phase_compensation.enabled
+    saved_phase = meta.pll_phase_compensation.phase_by_repetition_rad(:);
+    pll_sync_count = min([ ...
+        meta.pll_phase_compensation.apply_repetitions, ...
+        numel(saved_phase), params.preamble_repetitions]);
+    pll_template_phase_by_repetition_rad(1:pll_sync_count) = ...
+        saved_phase(1:pll_sync_count);
+    if isfield(meta.pll_phase_compensation, 'phase_by_bin_rad') && ...
+            ~isempty(meta.pll_phase_compensation.phase_by_bin_rad)
+        saved_phase_by_bin = ...
+            meta.pll_phase_compensation.phase_by_bin_rad;
+        pll_template_bins_per_repetition = size(saved_phase_by_bin, 2);
+        pll_template_phase_by_bin_rad = zeros( ...
+            params.preamble_repetitions, ...
+            pll_template_bins_per_repetition);
+        saved_sync_count = min(pll_sync_count, ...
+            size(saved_phase_by_bin, 1));
+        pll_template_phase_by_bin_rad(1:saved_sync_count, :) = ...
+            saved_phase_by_bin(1:saved_sync_count, :);
+    else
+        pll_template_phase_by_bin_rad = ...
+            pll_template_phase_by_repetition_rad;
+    end
+    pll_phase_template_file = ...
+        meta.pll_phase_compensation.template_file;
+    pll_template_available = true;
+elseif show_pll_phase_curve
+    if isempty(pll_phase_template_file)
+        capture_template_file = fullfile(project_dir, ...
+            'decoded_results', 'pll_phase_drift_analysis', ...
+            capture_stem, 'subsync_phase_template.csv');
+        if isfile(capture_template_file)
+            pll_phase_template_file = capture_template_file;
+        else
+            pll_phase_template_file = fullfile(project_dir, ...
+                'decoded_results', 'pll_phase_drift_analysis', ...
+                default_pll_template_result, ...
+                'subsync_phase_template.csv');
+        end
+    end
+    if isfile(pll_phase_template_file)
+        pll_table = readtable(pll_phase_template_file);
+        subsync_columns = {'repetition', 'bin_in_repetition', ...
+            'applied_template_phase_deg'};
+        required_pll_columns = {'repetition', 'template_phase_deg'};
+        if all(ismember(subsync_columns, ...
+                pll_table.Properties.VariableNames))
+            repetitions = double(pll_table.repetition);
+            bins = double(pll_table.bin_in_repetition);
+            phase_deg = double(pll_table.applied_template_phase_deg);
+            valid = isfinite(repetitions) & isfinite(bins) & ...
+                isfinite(phase_deg) & repetitions >= 1 & ...
+                repetitions <= params.preamble_repetitions & ...
+                repetitions == round(repetitions) & bins >= 1 & ...
+                bins == round(bins);
+            repetitions = repetitions(valid);
+            bins = bins(valid);
+            phase_deg = phase_deg(valid);
+            if ~isempty(repetitions)
+                pll_sync_count = min([pll_phase_curve_repetitions, ...
+                    params.preamble_repetitions, max(repetitions)]);
+                pll_template_bins_per_repetition = max(bins);
+                phase_by_bin_deg = NaN(pll_sync_count, ...
+                    pll_template_bins_per_repetition);
+                for row = 1:numel(phase_deg)
+                    if repetitions(row) <= pll_sync_count && ...
+                            bins(row) <= pll_template_bins_per_repetition
+                        phase_by_bin_deg(repetitions(row), bins(row)) = ...
+                            phase_deg(row);
+                    end
+                end
+                if all(isfinite(phase_by_bin_deg), 'all')
+                    pll_template_phase_by_bin_rad = zeros( ...
+                        params.preamble_repetitions, ...
+                        pll_template_bins_per_repetition);
+                    pll_template_phase_by_bin_rad(1:pll_sync_count, :) = ...
+                        deg2rad(phase_by_bin_deg);
+                    pll_template_phase_by_repetition_rad( ...
+                        1:pll_sync_count) = angle(mean(exp( ...
+                        1j * deg2rad(phase_by_bin_deg)), 2));
+                    pll_template_available = true;
+                end
+            end
+        elseif all(ismember(required_pll_columns, ...
+                pll_table.Properties.VariableNames))
+            repetitions = double(pll_table.repetition);
+            phase_deg = double(pll_table.template_phase_deg);
+            valid = isfinite(repetitions) & isfinite(phase_deg) & ...
+                repetitions >= 1 & ...
+                repetitions <= params.preamble_repetitions & ...
+                repetitions == round(repetitions);
+            repetitions = repetitions(valid);
+            phase_deg = phase_deg(valid);
+            if ~isempty(repetitions)
+                pll_sync_count = min([pll_phase_curve_repetitions, ...
+                    params.preamble_repetitions, max(repetitions)]);
+                needed = (1:pll_sync_count).';
+                [complete, rows] = ismember(needed, repetitions);
+                if all(complete)
+                    pll_template_phase_by_repetition_rad(needed) = ...
+                        deg2rad(phase_deg(rows));
+                    pll_template_phase_by_bin_rad = ...
+                        pll_template_phase_by_repetition_rad;
+                    pll_template_available = true;
+                end
+            end
+        end
+    end
+end
+if show_pll_phase_curve && ~pll_template_available
+    warning('visualize_uwb_cancellation:PllTemplateUnavailable', ...
+        'No valid PLL phase template is available for plotting.');
+end
 
 if isempty(reports)
     error('visualize_uwb_cancellation:NoReports', ...
@@ -146,6 +320,22 @@ if ~report.success
     error('visualize_uwb_cancellation:PacketFailed', ...
         'Packet %d (list position %d) was not cancelled successfully: %s', ...
         report.index, packet_index, report.message);
+end
+pll_compensated = isfield(report, 'pll_compensation_applied') && ...
+    report.pll_compensation_applied;
+pll_title_suffix = '';
+if pll_compensated && isfield(report, 'pll_improvement_db')
+    pll_title_suffix = sprintf(' | PLL gain %+.2f dB', ...
+        report.pll_improvement_db);
+end
+if use_pll_phase_compensation && ~pll_compensated
+    warning('visualize_uwb_cancellation:PllMetadataMismatch', ...
+        ['A PLL result was requested, but the selected report does not ', ...
+        'declare PLL compensation.']);
+end
+if ~isfile(output_file)
+    error('visualize_uwb_cancellation:OutputNotFound', ...
+        'Cancelled capture not found: %s', output_file);
 end
 
 c = uwbdecoder.constants();
@@ -174,6 +364,11 @@ fprintf('Fitted start (sample): %d (%.3f ms)\n', ...
 fprintf('Samples subtracted   : %d\n', packet_samples);
 fprintf('Read window          : %d .. %d (%d samples)\n', ...
     read_first, read_last, read_num);
+fprintf('PLL compensation     : %d\n', pll_compensated);
+if pll_compensated && isfield(report, 'pll_improvement_db')
+    fprintf('PLL frame improvement: %+.3f dB\n', ...
+        report.pll_improvement_db);
+end
 
 % Read the same window from both captures.
 raw_original = uwbdecoder.readIqRaw(input_file, read_first, read_num, ant_num);
@@ -269,6 +464,43 @@ local_packet_last = packet_last_absolute - read_first + 1;
 field_markers = struct( ...
     'name', {'Packet start'; 'Packet end'}, ...
     'sample', [local_packet_first; local_packet_last]);
+pll_template_end_us = NaN;
+pll_applied_phase_rad = zeros(read_num, 1);
+pll_template_sample_phase_rad = zeros(read_num, 1);
+pll_phase_by_repetition_rad = ...
+    pll_template_phase_by_repetition_rad;
+if pll_template_available
+    pll_period_samples = c.PREAMBLE_PERIOD_S * fs_rx;
+    for repetition = 1:pll_sync_count
+        for bin = 1:pll_template_bins_per_repetition
+            first_boundary = (repetition - 1) + ...
+                (bin - 1) / pll_template_bins_per_repetition;
+            last_boundary = (repetition - 1) + ...
+                bin / pll_template_bins_per_repetition;
+            phase_first = local_packet_first + ...
+                round(first_boundary * pll_period_samples);
+            phase_last = min(read_num, local_packet_first + ...
+                round(last_boundary * pll_period_samples) - 1);
+            phase_first = max(1, phase_first);
+            if phase_first <= phase_last
+                pll_template_sample_phase_rad(phase_first:phase_last) = ...
+                    pll_template_phase_by_bin_rad(repetition, bin);
+            end
+        end
+    end
+    if pll_compensated
+        pll_applied_phase_rad = pll_template_sample_phase_rad;
+    end
+    pll_end_sample = local_packet_first + ...
+        round(pll_sync_count * pll_period_samples) - 1;
+    pll_template_end_us = ...
+        (pll_end_sample - local_packet_first) / fs_rx * 1e6;
+    if pll_end_sample <= local_packet_last
+        field_markers(end + 1) = struct( ...
+            'name', sprintf('PLL template end (%d SYNC)', pll_sync_count), ...
+            'sample', pll_end_sample); %#ok<SAGROW>
+    end
+end
 
 % Add PHR / Payload boundaries when available from the frame table.
 packet_table_row = [];
@@ -292,8 +524,8 @@ if ~isempty(packet_table_row)
 end
 
 %% 1. Figure 1: envelope comparison across the read window
-figure('Name', sprintf('DW1000 cancellation: packet %d (#%d)', ...
-    report.index, packet_index), 'Color', 'w', ...
+figure('Name', sprintf('%s cancellation: packet %d (#%d)', ...
+    phy_label, report.index, packet_index), 'Color', 'w', ...
     'Position', [60 50 1200 820]);
 
 % Constant noise-floor level (RMS) for reference horizontal lines.
@@ -358,17 +590,18 @@ ylabel('RMS amplitude');
 title('Removed signal (original - cancelled)');
 set(gca, 'XLim', t_ms([1 end]));
 
-sgtitle(sprintf(['DW1000 packet %d (#%d) | suppression %.2f dB | ', ...
-    'CFO %+.3f kHz | corr %.3f'], report.index, packet_index, ...
+sgtitle(sprintf(['%s packet %d (#%d) | suppression %.2f dB | ', ...
+    'CFO %+.3f kHz | corr %.3f%s'], phy_label, report.index, packet_index, ...
     report.frame_suppression_db, report.fitted_cfo_hz / 1e3, ...
-    report.alignment_correlation), 'Interpreter', 'none');
+    report.alignment_correlation, pll_title_suffix), 'Interpreter', 'none');
 
 %% 2. Figure 2: packet-region detail + spectrum
 % Extract the packet region (with a small pad) for a zoomed view.
 detail_pad = min(512, window_pad_samples);
 detail_first = max(1, local_packet_first - detail_pad);
 detail_last = min(read_num, local_packet_last + detail_pad);
-detail_t_us = (detail_first:detail_last).' / fs_rx * 1e6;
+detail_abs_samples = read_first + (detail_first:detail_last).' - 1;
+detail_t_us = (detail_abs_samples - packet_first) / fs_rx * 1e6;
 
 % Suppression computed only inside the subtracted region.
 region_original = rx_original(local_packet_first:local_packet_last);
@@ -377,8 +610,8 @@ region_suppression_db = 10 * log10( ...
     mean(abs(region_original).^2) / ...
     (mean(abs(region_cancelled).^2) + eps));
 
-figure('Name', sprintf('DW1000 packet %d (#%d) detail', ...
-    report.index, packet_index), 'Color', 'w', ...
+figure('Name', sprintf('%s packet %d (#%d) detail', ...
+    phy_label, report.index, packet_index), 'Color', 'w', ...
     'Position', [80 60 1200 800]);
 
 subplot(2, 2, 1);
@@ -470,6 +703,16 @@ ylim([-70 5]);
 % Text summary panel.
 subplot(2, 2, 4);
 axis off;
+pll_metric_text = 'PLL template    : off';
+baseline_suppression_text = 'Without PLL     : n/a';
+if pll_compensated
+    pll_metric_text = sprintf('PLL template    : on (%+.3f dB)', ...
+        report.pll_improvement_db);
+    if isfield(report, 'frame_suppression_without_pll_db')
+        baseline_suppression_text = sprintf('Without PLL     : %.2f dB', ...
+            report.frame_suppression_without_pll_db);
+    end
+end
 summary_text = {
     sprintf('Packet index   : %d (#%d in list)', ...
         report.index, packet_index);
@@ -487,6 +730,8 @@ summary_text = {
     sprintf('Payload gain   : %.3f / %.1f deg', ...
         abs(report.payload_gain), rad2deg(angle(report.payload_gain)));
     '';
+    pll_metric_text;
+    baseline_suppression_text;
     sprintf('Reported supp  : %.2f dB', report.frame_suppression_db);
     sprintf('Window meas.   : %.2f dB', region_suppression_db);
     sprintf('Clipped comp.  : %d', report.clipped_component_count);
@@ -496,8 +741,9 @@ text(0.05, 0.95, summary_text, 'Interpreter', 'none', ...
     'VerticalAlignment', 'top', 'FontName', 'Consolas', 'FontSize', 10);
 title('Cancellation metrics');
 
-sgtitle(sprintf('DW1000 packet %d (#%d) detail', ...
-    report.index, packet_index), 'Interpreter', 'none');
+sgtitle(sprintf('%s packet %d (#%d) detail%s', ...
+    phy_label, report.index, packet_index, pll_title_suffix), ...
+    'Interpreter', 'none');
 
 %% 3. Figure 3: original / reconstructed / cancelled overlay
 % Overlay the sliding-RMS envelopes of all three complex signals on one
@@ -510,8 +756,8 @@ plot_idx = detail_first:plot_stride:detail_last;
 plot_abs_samples = read_first + plot_idx - 1;
 plot_t_us = (plot_abs_samples - packet_first) / fs_rx * 1e6;
 
-figure('Name', sprintf('DW1000 packet %d (#%d) envelope overlay', ...
-    report.index, packet_index), 'Color', 'w', ...
+figure('Name', sprintf('%s packet %d (#%d) envelope overlay', ...
+    phy_label, report.index, packet_index), 'Color', 'w', ...
     'Position', [100 120 1200 520]);
 
 plot(plot_t_us, env_original(plot_idx), ...
@@ -525,12 +771,18 @@ grid on;
 xlabel('Time from fitted packet start (us)');
 ylabel('Sliding-RMS envelope (ADC)');
 title('Envelope overlay: original / reconstructed / cancellation result');
-legend('Original', 'Reconstructed', 'After cancellation', ...
+if pll_compensated
+    reconstructed_label = 'Reconstructed + PLL template';
+else
+    reconstructed_label = 'Reconstructed';
+end
+legend('Original', reconstructed_label, 'After cancellation', ...
     'Location', 'best');
 xlim(plot_t_us([1 end]));
 
-sgtitle(sprintf('DW1000 packet %d (#%d) | stride %d | Fs %.3f MHz', ...
-    report.index, packet_index, plot_stride, fs_rx / 1e6), ...
+sgtitle(sprintf('%s packet %d (#%d) | stride %d | Fs %.3f MHz%s', ...
+    phy_label, report.index, packet_index, plot_stride, fs_rx / 1e6, ...
+    pll_title_suffix), ...
     'Interpreter', 'none');
 
 %% 4. Figure 4: strong peak phase difference (zero-IF, CFO-removed)
@@ -543,7 +795,6 @@ sgtitle(sprintf('DW1000 packet %d (#%d) | stride %d | Fs %.3f MHz', ...
 % decomposition separates amplitude and phase contributions to the residual.
 % Use time relative to the fitted packet start. The reference only fixes a
 % constant display phase, while the time slope removes both rotations.
-detail_abs_samples = read_first + (detail_first:detail_last).' - 1;
 detail_time_from_packet_start = ...
     (detail_abs_samples - packet_first) / fs_rx;
 nominal_digital_offset_hz = params.dw1000_center_frequency - ...
@@ -558,10 +809,78 @@ model_no_cfo = rx_removed(detail_first:detail_last) .* ...
     zero_if_derotation;
 residual_no_cfo = received_no_cfo - model_no_cfo;
 
-strong_threshold = 0.20 * max(abs(model_no_cfo));
+strong_threshold = 0.5 * max(abs(model_no_cfo));
 strong_idx = find(abs(model_no_cfo) > strong_threshold & ...
     abs(received_no_cfo) > strong_threshold);
-strong_t_us = (strong_idx - 1) / fs_rx * 1e6;
+strong_t_us = detail_time_from_packet_start(strong_idx) * 1e6;
+
+% Compare the applied template against the measured offset at the same
+% one-value-per-SYNC resolution used to create the PLL template.
+sync_count = params.preamble_repetitions;
+sync_time_us = ((1:sync_count).' - 0.5) * ...
+    c.PREAMBLE_PERIOD_S * 1e6;
+measured_phase_before_deg = NaN(sync_count, 1);
+measured_phase_after_deg = NaN(sync_count, 1);
+template_phase_deg = pll_phase_by_repetition_rad * 180 / pi;
+template_bin_phase_deg = reshape( ...
+    pll_template_phase_by_bin_rad(1:pll_sync_count, :).', [], 1) * ...
+    180 / pi;
+template_bin_time_us = ((1:numel(template_bin_phase_deg)).' - 0.5) / ...
+    pll_template_bins_per_repetition * c.PREAMBLE_PERIOD_S * 1e6;
+if pll_compensated
+    post_compensation_label = 'Measured residual after compensation';
+else
+    post_compensation_label = 'Predicted residual after template';
+end
+for repetition = 1:sync_count
+    sync_first = local_packet_first + ...
+        round((repetition - 1) * c.PREAMBLE_PERIOD_S * fs_rx);
+    sync_last = min(local_packet_last, local_packet_first + ...
+        round(repetition * c.PREAMBLE_PERIOD_S * fs_rx) - 1);
+    if sync_first < 1 || sync_first > sync_last
+        continue
+    end
+    received_sync = rx_original(sync_first:sync_last);
+    model_current_sync = rx_removed(sync_first:sync_last);
+    template_sync = ...
+        pll_template_sample_phase_rad(sync_first:sync_last);
+    if pll_compensated
+        model_after_sync = model_current_sync;
+        model_before_sync = ...
+            model_current_sync .* exp(-1j * template_sync);
+    else
+        model_before_sync = model_current_sync;
+        model_after_sync = ...
+            model_current_sync .* exp(1j * template_sync);
+    end
+    sync_threshold = 0.5 * max(abs(model_after_sync));
+    sync_strong = abs(model_after_sync) > sync_threshold & ...
+        abs(received_sync) > sync_threshold;
+    if nnz(sync_strong) < 4
+        continue
+    end
+    measured_phase_before_deg(repetition) = rad2deg(angle(sum( ...
+        conj(model_before_sync(sync_strong)) .* ...
+        received_sync(sync_strong))));
+    measured_phase_after_deg(repetition) = rad2deg(angle(sum( ...
+        conj(model_after_sync(sync_strong)) .* ...
+        received_sync(sync_strong))));
+end
+
+pll_phase_match_rms_deg = NaN;
+if pll_template_available
+    comparison_indices = (1:min(pll_sync_count, sync_count)).';
+    valid_comparison = isfinite( ...
+        measured_phase_before_deg(comparison_indices));
+    comparison_indices = comparison_indices(valid_comparison);
+    if ~isempty(comparison_indices)
+        phase_match_error_rad = angle(exp(1j * deg2rad( ...
+            measured_phase_before_deg(comparison_indices) - ...
+            template_phase_deg(comparison_indices))));
+        pll_phase_match_rms_deg = ...
+            rms(rad2deg(phase_match_error_rad));
+    end
+end
 
 if isempty(strong_idx)
     fprintf('No strong samples found above threshold %.2f ADC.\n', ...
@@ -591,11 +910,11 @@ else
     phase_error_rms_deg = rms(phase_error_deg);
 
     figure('Name', sprintf( ...
-        'DW1000 packet %d (#%d) strong peak phase', ...
-        report.index, packet_index), 'Color', 'w', ...
-        'Position', [120 80 1200 820]);
+        '%s packet %d (#%d) strong peak phase', ...
+        phy_label, report.index, packet_index), 'Color', 'w', ...
+        'Position', [120 40 1250 1000]);
 
-    subplot(3, 1, 1);
+    subplot(4, 1, 1);
     plot(strong_t_us, phase_received_deg, '.', ...
         'Color', [0.10 0.45 0.85], 'MarkerSize', 5);
     hold on;
@@ -611,11 +930,44 @@ else
     legend('Received phase', 'Model phase', 'Location', 'best');
     xlim(strong_t_us([1 end]));
 
-    subplot(3, 1, 2);
+    subplot(4, 1, 2);
+    h_phase_before = plot(sync_time_us, measured_phase_before_deg, 'o-', ...
+        'Color', [0.55 0.20 0.75], 'MarkerSize', 4, ...
+        'LineWidth', 1.0);
+    hold on;
+    h_phase_template = stairs(template_bin_time_us, ...
+        template_bin_phase_deg, '-', ...
+        'Color', [0.90 0.25 0.15], 'LineWidth', 1.8);
+    h_phase_after = plot(sync_time_us, measured_phase_after_deg, '.-', ...
+        'Color', [0.10 0.55 0.75], 'MarkerSize', 7, ...
+        'LineWidth', 0.8);
+    yline(0, 'k--');
+    if isfinite(pll_template_end_us)
+        xline(pll_template_end_us, 'r--', 'PLL template end');
+    end
+    grid on;
+    xlabel('Time from fitted packet start (us)');
+    ylabel('Phase (deg)');
+    if isfinite(pll_phase_match_rms_deg)
+        title(sprintf([ ...
+            'PLL phase: measured offset vs applied template | ', ...
+            'match RMS %.2f deg'], pll_phase_match_rms_deg));
+    else
+        title('PLL phase: measured offset vs applied template');
+    end
+    legend([h_phase_before, h_phase_template, h_phase_after], ...
+        'Measured before compensation', 'Applied PLL template', ...
+        post_compensation_label, 'Location', 'best');
+    xlim(sync_time_us([1 end]));
+
+    subplot(4, 1, 3);
     plot(strong_t_us, smooth(phase_error_deg,1), '.', ...
         'Color', [0.55 0.20 0.75], 'MarkerSize', 10);
     hold on;
     yline(0, 'k--');
+    if isfinite(pll_template_end_us)
+        xline(pll_template_end_us, 'r--', 'PLL template end');
+    end
     grid on;
     xlabel('Time (us)');
     ylabel('Phase error (deg)');
@@ -623,7 +975,7 @@ else
         phase_error_rms_deg));
     xlim(strong_t_us([1 end]));
 
-    subplot(3, 1, 3);
+    subplot(4, 1, 4);
     yyaxis left;
     plot(strong_t_us, radial_residual, '.', ...
         'Color', [0.20 0.65 0.45], 'MarkerSize', 5);
@@ -639,15 +991,23 @@ else
     legend('Radial', 'Tangential', 'Location', 'best');
     xlim(strong_t_us([1 end]));
 
-    sgtitle(sprintf(['DW1000 packet %d (#%d) strong peak | ', ...
-        'ampl RMS %.2f dB | phase RMS %.2f deg'], ...
-        report.index, packet_index, amplitude_error_rms_db, ...
-        phase_error_rms_deg), 'Interpreter', 'none');
+    sgtitle(sprintf(['%s packet %d (#%d) strong peak | ', ...
+        'ampl RMS %.2f dB | phase RMS %.2f deg%s'], ...
+        phy_label, report.index, packet_index, amplitude_error_rms_db, ...
+        phase_error_rms_deg, pll_title_suffix), 'Interpreter', 'none');
 
     fprintf('\n=== Strong peak phase analysis (CFO-removed) ===\n');
     fprintf('Strong peaks       : %d\n', numel(strong_idx));
     fprintf('Amplitude error RMS: %.3f dB\n', amplitude_error_rms_db);
     fprintf('Phase error RMS    : %.3f deg\n', phase_error_rms_deg);
+    if isfinite(pll_phase_match_rms_deg)
+        fprintf('PLL template match : %.3f deg RMS (first %d SYNC)\n', ...
+            pll_phase_match_rms_deg, pll_sync_count);
+        fprintf('First SYNC phase   : measured %+.3f | template %+.3f | ', ...
+            measured_phase_before_deg(1), template_phase_deg(1));
+        fprintf('%s %+.3f deg\n', lower(post_compensation_label), ...
+            measured_phase_after_deg(1));
+    end
     fprintf('Tangential/radial  : %+.3f dB\n', tangential_to_radial_db);
 end
 
@@ -691,6 +1051,9 @@ if ~isempty(strong_idx)
         iq_limit = 1;
     end
 
+    figure('Name', sprintf('%s packet %d (#%d) zero-IF I-Q', ...
+        phy_label, report.index, packet_index), 'Color', 'w', ...
+        'Position', [140 100 900 760]);
     plot(real(orig_scatter), imag(orig_scatter), '.', ...
         'Color', [0.10 0.45 0.85], 'MarkerSize', 4);
 
@@ -701,13 +1064,16 @@ if ~isempty(strong_idx)
     plot(real(local_resid),imag(local_resid), '.', 'MarkerSize', 4);
 
     grid on; axis equal;
-    %xlim([-iq_limit iq_limit]);
-    %ylim([-iq_limit iq_limit]);
+    xlim([-iq_limit iq_limit]);
+    ylim([-iq_limit iq_limit]);
     xlabel('In-phase (ADC)');
     ylabel('Quadrature (ADC)');
-    legend('Original', 'Reconstructed', 'Location', 'best');
-    title(sprintf('Zero-IF I-Q overlay | %d paired samples', ...
-        numel(scatter_idx)));
+    legend('Original', reconstructed_label, 'Residual', ...
+        'Location', 'best');
+    title(sprintf([ ...
+        'Zero-IF I-Q overlay | %d samples | radial p95 %.1f | ', ...
+        'tangential p95 %.1f ADC'], numel(scatter_idx), ...
+        radial_resid_p95, tangential_resid_p95));
 
 end
 
@@ -774,8 +1140,8 @@ if ~isempty(packet_table_row) && isfield(packet_table_row, 'cir') && ...
         end
     end
 
-    figure('Name', sprintf('DW1000 packet %d (#%d) CIR', ...
-        report.index, packet_index), 'Color', 'w', ...
+    figure('Name', sprintf('%s packet %d (#%d) CIR', ...
+        phy_label, report.index, packet_index), 'Color', 'w', ...
         'Position', [140 40 1200 960]);
 
     subplot(3, 2, 1);
@@ -866,8 +1232,9 @@ if ~isempty(packet_table_row) && isfield(packet_table_row, 'cir') && ...
         title('First-path phase evolution');
     end
 
-    sgtitle(sprintf('DW1000 packet %d (#%d) CIR | %d taps', ...
-        report.index, packet_index, cir_count), 'Interpreter', 'none');
+    sgtitle(sprintf('%s packet %d (#%d) CIR | %d taps', ...
+        phy_label, report.index, packet_index, cir_count), ...
+        'Interpreter', 'none');
 
     fprintf('\n=== CIR analysis ===\n');
     fprintf('CIR taps          : %d\n', cir_count);
@@ -906,6 +1273,13 @@ fprintf('PHR gain         : %.3f / %.1f deg\n', ...
     abs(report.phr_gain), rad2deg(angle(report.phr_gain)));
 fprintf('Payload gain     : %.3f / %.1f deg\n', ...
     abs(report.payload_gain), rad2deg(angle(report.payload_gain)));
+fprintf('PLL compensation : %d\n', pll_compensated);
+if pll_compensated
+    fprintf('Without PLL supp.: %.2f dB\n', ...
+        report.frame_suppression_without_pll_db);
+    fprintf('PLL improvement  : %+.3f dB\n', ...
+        report.pll_improvement_db);
+end
 fprintf('Reported supp.   : %.2f dB\n', report.frame_suppression_db);
 fprintf('Window measured  : %.2f dB\n', region_suppression_db);
 fprintf('Clipped comp.    : %d\n', report.clipped_component_count);

@@ -18,13 +18,22 @@ addpath(project_dir);
 
 %% 0. User configuration
 % Keep phy_profile consistent with run_decode_uwb_all.m.
-phy_profile = 'QM35';  % 'DW1000' or 'QM35'
-input_file = 'F:\UWB基带数据\qm35_new_3.dat';
+phy_profile = 'DW1000';  % 'DW1000' or 'QM35'
+input_file = 'F:\UWB基带数据\dw1000_new_3.dat';
 fitting_file = input_file;
 output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
 remove_synchronous_tone = false;
 output_tone_coefficient = [];
+
+% Compensate the repeatable nonlinear phase transient at packet start.
+% The default template uses 32 phase bins per SYNC repetition, learned by
+% analyze_uwb_pll_phase_drift.m after removing each packet's constant phase
+% and stable CFO. Keep the correction limited to the early preamble so
+% SFD/PHR/Payload are unchanged.
+enable_pll_phase_compensation = true;
+pll_phase_template_file = '';
+pll_phase_apply_repetitions = 24;
 if sic_managed_run
     phy_profile = sic_stage_config.phy_profile;
     input_file = sic_stage_config.input_file;
@@ -33,6 +42,18 @@ if sic_managed_run
     final_cancellation_mode = sic_stage_config.cancellation_mode;
     remove_synchronous_tone = sic_stage_config.remove_synchronous_tone;
     output_tone_coefficient = sic_stage_config.tone_coefficient;
+    if isfield(sic_stage_config, 'enable_pll_phase_compensation')
+        enable_pll_phase_compensation = ...
+            sic_stage_config.enable_pll_phase_compensation;
+    end
+    if isfield(sic_stage_config, 'pll_phase_template_file')
+        pll_phase_template_file = ...
+            sic_stage_config.pll_phase_template_file;
+    end
+    if isfield(sic_stage_config, 'pll_phase_apply_repetitions')
+        pll_phase_apply_repetitions = ...
+            sic_stage_config.pll_phase_apply_repetitions;
+    end
 end
 
 switch upper(phy_profile)
@@ -46,6 +67,7 @@ switch upper(phy_profile)
         tx_ranging = true;
         tx_sfd_number = 0;
         tx_sfd_sequence = [-1; -1; -1; -1; 1; -1; 0; 0];
+        default_pll_template_result = 'dw1000_new_3';
     case 'QM35'
         phy_profile = 'QM35';
         profile_tag = 'qm35';
@@ -56,8 +78,15 @@ switch upper(phy_profile)
         tx_ranging = false;
         tx_sfd_number = 2;
         tx_sfd_sequence = [];
+        default_pll_template_result = 'qm35_new_3';
     otherwise
         error('phy_profile must be ''DW1000'' or ''QM35''.');
+end
+
+if isempty(pll_phase_template_file)
+    pll_phase_template_file = fullfile(project_dir, 'decoded_results', ...
+        'pll_phase_drift_analysis', default_pll_template_result, ...
+        'subsync_phase_template.csv');
 end
 
 % Avoid redundant suffix when the capture filename already encodes the
@@ -85,7 +114,12 @@ if sic_managed_run
 end
 packet_summary_file = fullfile(packet_result_dir, 'frame_summary.csv');
 scan_file = fullfile(packet_result_dir, 'all_frames_cir.mat');
-cancelled_tag = sprintf('cancelled_%s', final_cancellation_mode);
+if enable_pll_phase_compensation
+    cancelled_tag = sprintf( ...
+        'cancelled_%s_pll_subsync', final_cancellation_mode);
+else
+    cancelled_tag = sprintf('cancelled_%s', final_cancellation_mode);
+end
 output_file = fullfile(packet_result_dir, [cancelled_tag '.dat']);
 metadata_file = fullfile(packet_result_dir, [cancelled_tag '_metadata.mat']);
 summary_file = fullfile(packet_result_dir, [cancelled_tag '_summary.csv']);
@@ -166,6 +200,9 @@ if ~isfield(params, 'sfd_mode') || ...
 end
 cfo_fit_last_sync = params.preamble_repetitions;
 gain_fit_last_sync = params.preamble_repetitions;
+pll_phase_compensation = loadPllPhaseCompensation( ...
+    enable_pll_phase_compensation, pll_phase_template_file, ...
+    pll_phase_apply_repetitions, params.preamble_repetitions);
 
 % frame_summary.csv is the authoritative source of packet start times.
 % Match rows to MAT records by packet index; the MAT file supplies payload
@@ -246,6 +283,18 @@ fprintf('Cancellation mode  : %s\n', final_cancellation_mode);
 fprintf('Fitting input      : %s\n', fitting_file);
 fprintf('Output base        : %s\n', output_base_file);
 fprintf('Remove sync tone   : %d\n', remove_synchronous_tone);
+fprintf('PLL compensation   : %d\n', pll_phase_compensation.enabled);
+if pll_phase_compensation.enabled
+    fprintf('PLL template       : %s\n', ...
+        pll_phase_compensation.template_file);
+    fprintf('PLL template grid  : %s | %d bins/SYNC\n', ...
+        pll_phase_compensation.resolution, ...
+        pll_phase_compensation.bins_per_repetition);
+    fprintf('PLL corrected SYNC : 1..%d | first %+.2f deg | peak %.2f deg\n', ...
+        pll_phase_compensation.apply_repetitions, ...
+        pll_phase_compensation.first_phase_deg, ...
+        pll_phase_compensation.peak_abs_phase_deg);
+end
 
 %% 2. Create the full output capture once
 if strcmpi(output_base_file, output_file)
@@ -322,7 +371,8 @@ parfor k = 1:numel(frames)
             min_alignment_correlation, min_frame_suppression_db, ...
             max_abs_cfo_hz, ...
             params.code_index, params.preamble_repetitions, ...
-            tx_phy_mode, tx_ranging, tx_sfd_number, tx_sfd_sequence);
+            tx_phy_mode, tx_ranging, tx_sfd_number, tx_sfd_sequence, ...
+            pll_phase_compensation);
         report.patch_raw = patch_raw;
         report.patch_offset = patch_offset;
         report.patch_samples = patch_samples;
@@ -345,12 +395,16 @@ for k = 1:numel(frames)
         k, numel(frames), report.abs_start_detected);
     if report.success
         fprintf(['OK, corr %.3f -> %.3f, frac %+.3f samp, ', ...
-            'CFO %+.3f kHz, %.2f dB\n'], ...
+            'CFO %+.3f kHz, %.2f dB'], ...
             report.integer_alignment_correlation, ...
             report.alignment_correlation, ...
             report.fractional_delay_samples, ...
             report.fitted_cfo_hz / 1e3, ...
             report.frame_suppression_db);
+        if report.pll_compensation_applied
+            fprintf(' (PLL %+.2f dB)', report.pll_improvement_db);
+        end
+        fprintf('\n');
         success_count = success_count + 1;
     else
         fprintf('SKIPPED: %s\n', report.message);
@@ -368,7 +422,8 @@ writetable(report_table, summary_file);
 save(metadata_file, 'reports', 'success_count', 'frames', 'params', ...
     'input_file', 'fitting_file', 'output_base_file', 'output_file', ...
     'scan_file', 'packet_summary_file', 'final_cancellation_mode', ...
-    'remove_synchronous_tone', 'output_tone_coefficient', '-v7.3');
+    'remove_synchronous_tone', 'output_tone_coefficient', ...
+    'pll_phase_compensation', '-v7.3');
 
 output_info = dir(output_file);
 if output_info.bytes ~= base_info.bytes
@@ -386,6 +441,13 @@ fprintf('Skipped packets  : %d\n', numel(frames) - success_count);
 fprintf('Output bytes     : %d\n', output_info.bytes);
 fprintf('Output file      : %s\n', output_file);
 fprintf('Summary CSV      : %s\n', summary_file);
+if pll_phase_compensation.enabled && success_count > 0
+    pll_improvements = [reports([reports.success]).pll_improvement_db];
+    fprintf('PLL median gain  : %+.3f dB\n', ...
+        median(pll_improvements, 'omitnan'));
+    fprintf('PLL improved pkts: %.1f %%\n', ...
+        100 * mean(pll_improvements > 0, 'omitnan'));
+end
 
 %% ------------------------------------------------------------------------
 function [report, patchRaw, patchOffset, patchSamples] = ...
@@ -395,7 +457,7 @@ function [report, patchRaw, patchOffset, patchSamples] = ...
         fractionalCoarseStep, fractionalFineStep, ...
         fractionalMinImprovement, minCorrelation, minSuppressionDb, ...
         maxAbsCfoHz, codeIndex, preambleRepetitions, phyMode, ranging, ...
-        sfdNumber, sfdSequence)
+        sfdNumber, sfdSequence, pllCompensation)
 % Compute the residual patch for one packet without writing to disk.
 % Returns the report plus the raw patch (int16 IQ rows), the capture
 % sample offset where it starts, and its length in samples. The caller is
@@ -484,8 +546,10 @@ if abs(fitted_cfo_hz) > maxAbsCfoHz
     error('Fitted CFO %+.3f kHz exceeds the safety limit.', ...
         fitted_cfo_hz / 1e3);
 end
-replica_cfo = replica .* ...
+replica_cfo_without_pll = replica .* ...
     exp(1j * 2 * pi * fitted_cfo_hz * n / params.fs_rx);
+replica_cfo = applyPllPhaseCompensation( ...
+    replica_cfo_without_pll, period_rx, pllCompensation);
 
 if alignment_correlation < minCorrelation
     error(['Fractional alignment correlation %.3f is below %.3f ', ...
@@ -500,6 +564,16 @@ global_gain = (replica_cfo(gain_indices)' * observed(gain_indices)) / ...
     (replica_cfo(gain_indices)' * replica_cfo(gain_indices) + eps);
 baseline_model = global_gain * replica_cfo;
 
+% Build the original no-PLL model in parallel for a per-packet A/B metric.
+% Its fitting procedure is otherwise identical, so pll_improvement_db
+% isolates the effect of the packet-start phase template.
+global_gain_without_pll = ...
+    (replica_cfo_without_pll(gain_indices)' * observed(gain_indices)) / ...
+    (replica_cfo_without_pll(gain_indices)' * ...
+    replica_cfo_without_pll(gain_indices) + eps);
+baseline_model_without_pll = ...
+    global_gain_without_pll * replica_cfo_without_pll;
+
 phr_indices = workFieldToRxIndices( ...
     tx.field_indices_work.PHR, tx.sample_rate_work, ...
     params.fs_rx, available);
@@ -509,10 +583,19 @@ payload_indices = workFieldToRxIndices( ...
 [selected_model, phr_gain, payload_gain] = selectFieldModel( ...
     baseline_model, observed, phr_indices, payload_indices, ...
     cancellationMode, fixedScale);
+[selected_model_without_pll, ~, ~] = selectFieldModel( ...
+    baseline_model_without_pll, observed, phr_indices, payload_indices, ...
+    cancellationMode, fixedScale);
 
 residual_fit = observed - selected_model;
 frame_suppression_db = 10 * log10( ...
     mean(abs(observed).^2) / (mean(abs(residual_fit).^2) + eps));
+residual_without_pll = observed - selected_model_without_pll;
+frame_suppression_without_pll_db = 10 * log10( ...
+    mean(abs(observed).^2) / ...
+    (mean(abs(residual_without_pll).^2) + eps));
+pll_improvement_db = ...
+    frame_suppression_db - frame_suppression_without_pll_db;
 if frame_suppression_db < minSuppressionDb
     error('Frame suppression %.3f dB is below %.3f dB.', ...
         frame_suppression_db, minSuppressionDb);
@@ -540,6 +623,10 @@ report.global_gain = global_gain;
 report.phr_gain = phr_gain;
 report.payload_gain = payload_gain;
 report.frame_suppression_db = frame_suppression_db;
+report.frame_suppression_without_pll_db = ...
+    frame_suppression_without_pll_db;
+report.pll_improvement_db = pll_improvement_db;
+report.pll_compensation_applied = pllCompensation.enabled;
 report.clipped_component_count = clipped_count;
 report.fcs_pass = frame.fcs_pass;
 report.message = '';
@@ -790,6 +877,162 @@ while offset < totalSamples
 end
 end
 
+function compensation = loadPllPhaseCompensation( ...
+        enabled, templateFile, applyRepetitions, preambleRepetitions)
+% Load and validate the nonlinear phase template produced by
+% analyze_uwb_pll_phase_drift.m. Fine sub-SYNC templates are preferred;
+% legacy repetition-level templates remain supported for reproducibility.
+% Missing/invalid templates are fatal when compensation is requested,
+% preventing a silent no-op cancellation run.
+compensation = struct( ...
+    'enabled', logical(enabled), ...
+    'template_file', char(templateFile), ...
+    'resolution', 'disabled', ...
+    'bins_per_repetition', 0, ...
+    'apply_repetitions', 0, ...
+    'phase_by_repetition_rad', zeros(preambleRepetitions, 1), ...
+    'phase_by_bin_rad', zeros(preambleRepetitions, 0), ...
+    'first_phase_deg', 0, ...
+    'peak_abs_phase_deg', 0);
+if ~compensation.enabled
+    return
+end
+if ~isfile(templateFile)
+    error('run_cancel_all_uwb_packets:PllTemplateNotFound', ...
+        'PLL phase template does not exist: %s', templateFile);
+end
+validateattributes(applyRepetitions, {'numeric'}, ...
+    {'scalar', 'integer', 'positive'}, mfilename, ...
+    'pll_phase_apply_repetitions');
+
+templateTable = readtable(templateFile);
+variableNames = templateTable.Properties.VariableNames;
+isSubsync = all(ismember( ...
+    {'repetition', 'bin_in_repetition', ...
+    'applied_template_phase_deg'}, variableNames));
+if isSubsync
+    repetitions = double(templateTable.repetition);
+    bins = double(templateTable.bin_in_repetition);
+    phaseDeg = double(templateTable.applied_template_phase_deg);
+    valid = isfinite(repetitions) & isfinite(bins) & isfinite(phaseDeg) & ...
+        repetitions >= 1 & repetitions <= preambleRepetitions & ...
+        repetitions == round(repetitions) & bins >= 1 & ...
+        bins == round(bins);
+    repetitions = repetitions(valid);
+    bins = bins(valid);
+    phaseDeg = phaseDeg(valid);
+    if isempty(repetitions)
+        error('run_cancel_all_uwb_packets:InvalidPllTemplate', ...
+            'The sub-SYNC PLL template has no valid rows.');
+    end
+
+    binsPerRepetition = max(bins);
+    applyCount = min([applyRepetitions, preambleRepetitions, ...
+        max(repetitions)]);
+    phaseByBinDeg = NaN(applyCount, binsPerRepetition);
+    for row = 1:numel(phaseDeg)
+        repetition = repetitions(row);
+        bin = bins(row);
+        if repetition <= applyCount && bin <= binsPerRepetition
+            if isfinite(phaseByBinDeg(repetition, bin))
+                error('run_cancel_all_uwb_packets:InvalidPllTemplate', ...
+                    'Sub-SYNC PLL template contains duplicated bins.');
+            end
+            phaseByBinDeg(repetition, bin) = phaseDeg(row);
+        end
+    end
+    if any(~isfinite(phaseByBinDeg), 'all')
+        error('run_cancel_all_uwb_packets:IncompletePllTemplate', ...
+            ['Sub-SYNC PLL template must contain every bin 1..%d ', ...
+            'for repetitions 1..%d.'], binsPerRepetition, applyCount);
+    end
+
+    compensation.resolution = 'subsync';
+    compensation.bins_per_repetition = binsPerRepetition;
+    compensation.phase_by_bin_rad = zeros( ...
+        preambleRepetitions, binsPerRepetition);
+    compensation.phase_by_bin_rad(1:applyCount, :) = ...
+        phaseByBinDeg * pi / 180;
+    % Retain a circular repetition average for older readers of metadata.
+    compensation.phase_by_repetition_rad(1:applyCount) = ...
+        angle(mean(exp(1j * phaseByBinDeg * pi / 180), 2));
+    compensation.apply_repetitions = applyCount;
+    compensation.first_phase_deg = phaseByBinDeg(1, 1);
+    compensation.peak_abs_phase_deg = max(abs(phaseByBinDeg), [], 'all');
+    return
+end
+
+requiredColumns = {'repetition', 'template_phase_deg'};
+missingColumns = setdiff(requiredColumns, variableNames);
+if ~isempty(missingColumns)
+    error('run_cancel_all_uwb_packets:InvalidPllTemplate', ...
+        ['PLL template must use either the sub-SYNC schema or the ', ...
+        'legacy repetition schema. Missing legacy columns: %s'], ...
+        strjoin(missingColumns, ', '));
+end
+
+repetitions = double(templateTable.repetition);
+phaseDeg = double(templateTable.template_phase_deg);
+valid = isfinite(repetitions) & isfinite(phaseDeg) & ...
+    repetitions >= 1 & repetitions <= preambleRepetitions & ...
+    repetitions == round(repetitions);
+repetitions = repetitions(valid);
+phaseDeg = phaseDeg(valid);
+if isempty(repetitions) || numel(unique(repetitions)) ~= numel(repetitions)
+    error('run_cancel_all_uwb_packets:InvalidPllTemplate', ...
+        'PLL template repetitions are empty or duplicated.');
+end
+
+applyCount = min([applyRepetitions, preambleRepetitions, ...
+    max(repetitions)]);
+requiredRepetitions = (1:applyCount).';
+if ~all(ismember(requiredRepetitions, repetitions))
+    error('run_cancel_all_uwb_packets:IncompletePllTemplate', ...
+        'PLL template must contain every repetition from 1 through %d.', ...
+        applyCount);
+end
+[~, rows] = ismember(requiredRepetitions, repetitions);
+compensation.resolution = 'repetition';
+compensation.bins_per_repetition = 1;
+compensation.phase_by_repetition_rad(requiredRepetitions) = ...
+    phaseDeg(rows) * pi / 180;
+compensation.phase_by_bin_rad = compensation.phase_by_repetition_rad;
+compensation.apply_repetitions = applyCount;
+compensation.first_phase_deg = phaseDeg(rows(1));
+compensation.peak_abs_phase_deg = max(abs(phaseDeg(rows)));
+end
+
+function corrected = applyPllPhaseCompensation( ...
+        replica, periodSamples, compensation)
+% Map the measured phase grid to the generated waveform. Rounding every bin
+% boundary independently prevents cumulative sample-index drift when a
+% SYNC period is not an integer number of receiver samples. After the
+% configured early window the correction is exactly zero.
+if ~compensation.enabled
+    corrected = replica;
+    return
+end
+
+samplePhase = zeros(numel(replica), 1);
+for repetition = 1:compensation.apply_repetitions
+    for bin = 1:compensation.bins_per_repetition
+        firstBoundary = (repetition - 1) + ...
+            (bin - 1) / compensation.bins_per_repetition;
+        lastBoundary = (repetition - 1) + ...
+            bin / compensation.bins_per_repetition;
+        firstSample = round(firstBoundary * periodSamples) + 1;
+        lastSample = min(numel(replica), ...
+            round(lastBoundary * periodSamples));
+        if firstSample > lastSample
+            continue
+        end
+        samplePhase(firstSample:lastSample) = ...
+            compensation.phase_by_bin_rad(repetition, bin);
+    end
+end
+corrected = replica .* exp(1j * samplePhase);
+end
+
 function report = emptyReport()
 report = struct( ...
     'index', 0, ...
@@ -805,6 +1048,9 @@ report = struct( ...
     'phr_gain', complex(NaN), ...
     'payload_gain', complex(NaN), ...
     'frame_suppression_db', NaN, ...
+    'frame_suppression_without_pll_db', NaN, ...
+    'pll_improvement_db', NaN, ...
+    'pll_compensation_applied', false, ...
     'clipped_component_count', 0, ...
     'fcs_pass', false, ...
     'message', '', ...
