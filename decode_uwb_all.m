@@ -84,8 +84,11 @@ candValid = false(numCandidates, 1);
 for candIdx = 1:numCandidates
     candidate = candidates(candIdx);
     candidateRegion = candidateRegions(candIdx, :);
-    offset = max(0, min(candidate - batch.pre_packet_guard_samples, ...
-        candidateRegion(1)));
+    % Anchor the full-rate window to this correlation candidate. Using
+    % MIN here made every candidate inside one merged energy region start
+    % at regionFirst and repeatedly decode only the first packet.
+    offset = max(0, max(candidateRegion(1), ...
+        candidate - batch.pre_packet_guard_samples));
     if offset + batch.min_window_samples > totalSamples
         continue;
     end
@@ -596,19 +599,21 @@ for regionIdx = 1:size(energyRegions, 1)
     targetStart = min(regionLast, regionFirst + ...
         batch.energy_region_pre_guard_samples);
     if isempty(regionCandidates)
-        % Energy already supplied the gate. Retain one candidate so a weak
+        % Energy already supplied the gate. Retain one fallback so a weak
         % or distorted preamble still gets one full-rate decode attempt.
-        selectedCandidate = targetStart;
+        selectedCandidates = targetStart;
         fallbackCount = fallbackCount + 1;
     else
-        % One energy burst normally represents one packet. Choose the
-        % correlation cluster nearest the unguarded energy onset so the
-        % fine decoder cannot jump to a stronger packet in the next burst.
-        [~, selectedIdx] = min(abs(regionCandidates - targetStart));
-        selectedCandidate = regionCandidates(selectedIdx);
+        % A merged energy interval can contain several interleaved QM35
+        % and DW1000 packets. Retain every separated correlation cluster;
+        % the full PHY decoder and absolute-start deduplication below
+        % reject false correlations and repeated detections.
+        selectedCandidates = regionCandidates;
     end
-    candidates(end + 1, 1) = selectedCandidate; %#ok<AGROW>
-    candidateRegions(end + 1, :) = [regionFirst, regionLast]; %#ok<AGROW>
+    candidateCount = numel(selectedCandidates);
+    candidates = [candidates; selectedCandidates(:)]; %#ok<AGROW>
+    candidateRegions = [candidateRegions; repmat( ...
+        [regionFirst, regionLast], candidateCount, 1)]; %#ok<AGROW>
 
     if ~isempty(progress_cb)
         progress_cb(regionIdx / size(energyRegions, 1));

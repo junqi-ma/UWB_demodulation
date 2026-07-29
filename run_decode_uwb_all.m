@@ -15,14 +15,14 @@ clc;
 
 %% -------------------- Signal type --------------------
 % Select exactly one signal type: 'DW1000' or 'QM35'.
-phy_profile = 'QM35';
+phy_profile = 'DW1000';
 if sic_managed_run
     phy_profile = sic_stage_config.phy_profile;
 end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_new_3.dat';
+options.file_name = 'F:\UWB基带数据\dw1000_new_3.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -36,6 +36,14 @@ options.x410_center_frequency = 6500e6;
 options.dw1000_center_frequency = 6489.6e6;
 options.data_rate = 6.81;
 pll_phase_compensation_repetitions = 10;
+if sic_managed_run && isfield(sic_stage_config, ...
+        'pll_phase_compensation_repetitions')
+    pll_phase_compensation_repetitions = ...
+        sic_stage_config.pll_phase_compensation_repetitions;
+end
+validateattributes(pll_phase_compensation_repetitions, {'numeric'}, ...
+    {'scalar', 'integer', 'nonnegative'}, mfilename, ...
+    'pll_phase_compensation_repetitions');
 
 options.decawave_sfd = [-1; -1; -1; -1; 1; -1; 0; 0];
 options.ieee_sfd = [0; 1; 0; -1; 1; 0; 0; -1];

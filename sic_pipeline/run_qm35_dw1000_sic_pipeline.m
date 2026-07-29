@@ -9,9 +9,10 @@ addpath(project_dir);
 addpath(pipeline_dir);
 
 cfg = struct();
-cfg.input_file = 'F:\UWB基带数据\qm35_dw1000_1.dat';
+cfg.input_file = 'F:\UWB基带数据\qm35_dw1000_new_3.dat';
+[~, capture_stem] = fileparts(cfg.input_file);
 cfg.output_root = fullfile(project_dir, 'decoded_results', ...
-    'qm35_dw1000_1', 'sic_dw1000_removed_qm35_preserved');
+    capture_stem, 'sic_dw1000_removed_qm35_preserved');
 cfg.cancellation_mode = 'optimal_complex';
 
 % Resume completed stages. Existing incomplete or inconsistent products
