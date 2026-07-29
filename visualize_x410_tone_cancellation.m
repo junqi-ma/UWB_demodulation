@@ -13,7 +13,7 @@ close all;
 %   4. Compare time waveforms and spectra before/after cancellation.
 
 %% Parameters
-file_name = 'F:\UWB基带数据\qm35_1.dat';
+file_name = 'F:\UWB基带数据\dw1000_new_1.dat';
 fs = 737.28e6;                 % Sample rate (Hz)
 center_frequency = 6489.6e6;  % RF center frequency (Hz), modify if needed
 
@@ -23,14 +23,14 @@ quiet_sample_num = 1500000;
 
 % The first 400000 samples include both a quiet part and a UWB packet.
 display_sample_offset = 0;
-display_sample_num = 400000;
+display_sample_num = 40000000;
 
 % Measured clock-synchronous tone: f/fs = -169/512.
 tone_bin = -169;
 tone_period_samples = 512;
 f_tone = tone_bin/tone_period_samples * fs;  % -243.36 MHz
 
-fft_num = 262144;
+fft_num = 262144*5;
 tone_zoom_half_width = 5e6;    % Zoom width around the tone (Hz)
 
 %% Read the no-UWB training interval
@@ -127,10 +127,10 @@ tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 % Envelope shows the UWB packet while making the quiet-region baseline clear.
 nexttile;
 %plot(time_relative_us, abs(x_before), 'LineWidth', 0.8);
-plot((x_before(1000:1e5)), 'LineWidth', 0.8);
+plot((x_before(1:end)), 'LineWidth', 0.8);
 hold on;
 %plot(time_relative_us, abs(x_after), 'LineWidth', 0.8);
-plot((x_after(1000:1e5)), 'LineWidth', 0.8);
+plot((x_after(1:end)), 'LineWidth', 0.8);
 grid on;
 axis equal
 xlabel(sprintf('Time from %.6f ms (us)', time_us(1)/1e3));

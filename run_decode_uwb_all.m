@@ -22,8 +22,8 @@ end
 
 %% -------------------- Input capture --------------------
 options = struct();
-%options.file_name = 'F:\UWB基带数据\qm35_dw1000_1.dat';
-options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
+options.file_name = 'F:\UWB基带数据\dw1000_new_1.dat';
+%options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
 end
@@ -50,7 +50,7 @@ switch upper(phy_profile)
     case 'DW1000'
         phy_profile = 'DW1000';
         options.preamble_repetitions = 256;
-        options.code_index = 10;
+        options.code_index = 11;
         options.sfd_mode = 'decawave';
         options.cir_skip_initial_repetitions = [];
         options.cir_repetitions = 64;
