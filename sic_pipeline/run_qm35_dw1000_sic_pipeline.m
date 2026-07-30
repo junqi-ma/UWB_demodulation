@@ -18,7 +18,9 @@ cfg.cancellation_mode = 'optimal_complex';
 % Resume completed stages. Existing incomplete or inconsistent products
 % still raise an error instead of being overwritten silently.
 cfg.resume = true;
-cfg.overwrite = false;
+% Rebuild results after the multi-candidate detector upgrade. Change this
+% back to false after one complete successful pipeline run.
+cfg.overwrite = true;
 cfg.make_plots = true;
 
 pipeline = uwbSicPipeline(cfg);

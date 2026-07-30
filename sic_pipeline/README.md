@@ -8,6 +8,31 @@ sic_pipeline/run_qm35_dw1000_sic_pipeline.m
 
 `uwbSicPipeline.m` 是入口调用的核心函数，不作为 `run_` 入口脚本。
 
+## SIC 本地 decode / cancel 工具（fork）
+
+SIC **不再调用根目录** 的 decode/cancel 入口。下列文件是从根目录复制到
+`sic_pipeline/` 的独立副本，后续只在此目录内修改，以免影响根目录通用流程：
+
+| 文件 | 角色 |
+|------|------|
+| `run_decode_uwb_all.m` | 全文件解调入口（被 pipeline 调用） |
+| `decode_uwb_all.m` | 能量扫描 + 多候选精解 |
+| `decode_uwb.m` | 单包解调 |
+| `run_cancel_all_uwb_packets.m` | 全文件消除入口（被 pipeline 调用） |
+| `generate_uwb_tx_from_decode.m` | 从 PSDU 再生发射波形 |
+| `apply_estimated_cir_to_uwb.m` | CIR 卷积到再生波形 |
+| `estimate_uwb_cir_slow_phase.m` | CIR 慢相位估计 |
+| `estimate_uwb_full_packet_sfo.m` | 全包 SFO 估计 |
+| `apply_uwb_full_packet_sfo.m` | 全包 SFO 应用 |
+| `+uwbdecoder/` | 解调原语包（SIC 本地 fork） |
+
+路径约定：
+
+- `addpath(sic_pipeline)` 放在 `addpath(project_root)` **之后**，使本地
+  同名函数与 `+uwbdecoder` 优先于根目录版本。
+- `helpers/` 仍共用仓库根目录（MathWorks UWB helper），不在此 fork。
+- PLL 模板、`decoded_results/` 仍写在仓库根目录下。
+
 独立可视化脚本：
 
 - `visualize_UwbSicPipeline.m`：packet 数量、逐包 suppression，以及
@@ -15,10 +40,21 @@ sic_pipeline/run_qm35_dw1000_sic_pipeline.m
 - `visualize_sic_signal_comparison.m`：对比一段可配置时长内的原始混叠
   信号与“去同步单音、去 DW1000、保留 QM35”的信号。
 
+10 ms 诊断入口：
+
+```matlab
+sic_pipeline/run_sic_diagnostic_10ms.m
+```
+
+该入口把指定的 10 ms 原始区间复制到独立目录，运行完整 SIC，并输出
+逐候选解调状态、异常信息、FCS/SFD 统计以及逐包 cancellation 失败原因。
+
 流水线固定执行：
 
-1. 从原始混叠 capture 解码 QM35。PLL 补偿固定覆盖前 10 个
-   preamble repetition，逐 repetition CIR 从第 11 个开始保存。
+1. 从原始混叠 capture 解码 QM35。合并能量区间内的全部相关候选
+   都进入独立的完整解调窗口，避免密集 QM35/DW1000 只保留一个
+   packet。PLL 补偿固定覆盖前 10 个 preamble repetition，逐
+   repetition CIR 从第 11 个开始保存。
 2. 去除同步单音并暂时消除可靠的 QM35 packet，生成
    `qm35_removed.dat`，用于暴露和解码 DW1000。
 3. 从 `qm35_removed.dat` 使用 code 11 解码、拟合 DW1000；同样采用

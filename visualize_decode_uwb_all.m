@@ -17,7 +17,7 @@ addpath(project_dir);
 
 %% 0. User configuration
 % Capture stem used by run_decode_uwb_all.m (file_name without extension).
-capture_stem = 'qm35_dw1000_1';
+capture_stem = 'qm35_new_3';
 
 % phy_profile must match what was used in run_decode_uwb_all.m.
 phy_profile = 'QM35';   % 'DW1000' or 'QM35'
