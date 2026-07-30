@@ -125,9 +125,17 @@ batch.energy_baseline_fraction = 0.30;
 % Hysteresis thresholds: quiet-floor median + k * robust sigma.
 batch.energy_threshold_sigma_high = 6;
 batch.energy_threshold_sigma_low = 3;
+% MAD can be very small for this capture. Enforce minimum power margins
+% above the quiet-floor median so the observed ~47 dB nuisance energy does
+% not connect neighboring UWB packets.
+batch.energy_threshold_margin_db_high = 6;
+batch.energy_threshold_margin_db_low = 4;
 batch.energy_min_region_samples = 3e4;
-batch.energy_region_pre_guard_samples = 5e4;
-batch.energy_region_post_guard_samples = 5e4;
+% Raw regions are merged before these guards are applied. Overlapping
+% packet guards remain separate and are clipped at the inter-packet
+% midpoint by decode_uwb_all.
+batch.energy_region_pre_guard_samples = 1.5e4;
+batch.energy_region_post_guard_samples = 2.5e4;
 batch.energy_region_merge_samples = 1e4;
 
 %% -------------------- Stage 2: correlation refinement --------------------
