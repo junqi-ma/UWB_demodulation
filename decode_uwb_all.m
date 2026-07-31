@@ -191,6 +191,11 @@ results.candidates = candidates(:);
 results.candidate_regions = candidateRegions;
 results.attempt_count = attemptCount;
 results.packet_count = packetCount;
+% Keep in lockstep with sic_pipeline/uwbSicPipeline.m
+% latestAlgorithmConfig().detection_algorithm_version. Bump both when the
+% energy + adaptive full-rate multi-packet detector changes incompatibly.
+results.detection_algorithm_version = 3;
+results.detection_algorithm = 'adaptive_fullrate_multipacket_v3';
 if packetCount == 0
     results.fcs_pass_count = 0;
 else
@@ -1043,6 +1048,10 @@ end
 function [positions, values] = extractCorrelationCandidates( ...
         delayPositions, energy, threshold, relativeLevel, minDistance)
 level = max(threshold, relativeLevel*max(energy));
+% Enforce safe MinPeakDistance (findpeaks errors if > length(energy))
+minDistance = max(1, min( ...
+    round(minDistance), ...
+    floor(length(energy)/2) - 1));
 if exist('findpeaks', 'file') == 2
     [values, locations] = findpeaks(energy, ...
         'MinPeakHeight', level, ...
