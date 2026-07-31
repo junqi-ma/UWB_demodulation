@@ -18,8 +18,8 @@ addpath(project_dir);
 
 %% 0. User configuration
 % Keep phy_profile consistent with run_decode_uwb_all.m.
-phy_profile = 'DW1000';  % 'DW1000' or 'QM35'
-input_file = 'F:\UWB基带数据\dw1000_new_3.dat';
+phy_profile = 'QM35';  % 'DW1000' or 'QM35'
+input_file = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
 fitting_file = input_file;
 output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
@@ -1179,8 +1179,9 @@ function removeToneFromCapture( ...
         fileName, totalSamples, params, coefficient, c)
 % Remove the absolute-sample synchronous tone from one complete capture.
 if isempty(coefficient)
-    error('run_cancel_all_uwb_packets:MissingToneCoefficient', ...
-        'A tone coefficient is required for output tone removal.');
+    warning('run_cancel_all_uwb_packets:NoToneCoefficient', ...
+        'No tone coefficient provided. Skipping output tone removal.');
+    return;
 end
 if ~isfield(params, 'interference_tone_bin') || ...
         ~isfield(params, 'interference_period_samples')
@@ -1211,8 +1212,10 @@ function compensation = loadPllPhaseCompensation( ...
 % Load and validate the nonlinear phase template produced by
 % analyze_uwb_pll_phase_drift.m. Fine sub-SYNC templates are preferred;
 % legacy repetition-level templates remain supported for reproducibility.
-% Missing/invalid templates are fatal when compensation is requested,
-% preventing a silent no-op cancellation run.
+% A missing template is expected during the bootstrap cancellation run:
+% analyze_uwb_pll_phase_drift.m needs an existing cancellation result before
+% it can learn the template. In that case, keep the cancellation run usable
+% and make the fallback explicit in the command-window warning.
 compensation = struct( ...
     'enabled', logical(enabled), ...
     'template_file', char(templateFile), ...
@@ -1227,8 +1230,14 @@ if ~compensation.enabled
     return
 end
 if ~isfile(templateFile)
-    error('run_cancel_all_uwb_packets:PllTemplateNotFound', ...
-        'PLL phase template does not exist: %s', templateFile);
+    warning('run_cancel_all_uwb_packets:PllTemplateNotFound', ...
+        ['PLL phase template does not exist; skipping PLL phase ', ...
+        'compensation for this run: %s\n', ...
+        'Run analyze_uwb_pll_phase_drift.m after cancellation, then ', ...
+        'rerun this script to apply the learned template.'], templateFile);
+    compensation.enabled = false;
+    compensation.resolution = 'missing_template';
+    return
 end
 validateattributes(applyRepetitions, {'numeric'}, ...
     {'scalar', 'integer', 'positive'}, mfilename, ...

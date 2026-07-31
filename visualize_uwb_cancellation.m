@@ -17,12 +17,12 @@ addpath(project_dir);
 
 %% 0. User configuration
 % Which packet to inspect (1-based index into the sorted report list).
-packet_index = 122;
+packet_index = 14;
 
 % Source capture and cancellation mode. Every path below is derived from
 % these two via fileparts + the mode tag, so switching captures only needs
 % a change here.
-input_file = 'F:\UWB基带数据\qm35_new_3.dat';
+input_file = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
 cancellation_mode = 'optimal_complex';   % must match run_cancel_all_uwb_packets
 use_pll_phase_compensation = true;
 use_cir_slow_phase_compensation = true;

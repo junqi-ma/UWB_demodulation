@@ -1,7 +1,7 @@
 %% Decode every UWB packet in an X410 capture and save all CIRs
 % Three-stage flow:
 %   1) read every 100th IQ record and form a robust energy envelope
-%   2) run 32x-decimated preamble correlation only in energetic intervals
+%   2) run adaptive full-rate preamble correlation near each energy onset
 %   3) fully decode surviving candidates and export exact sample intervals
 % When called by sic_pipeline/uwbSicPipeline.m, sic_stage_config carries
 % explicit stage paths. Direct interactive use keeps the original defaults.
@@ -22,7 +22,7 @@ end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_new_3.dat';
+options.file_name = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -139,15 +139,38 @@ batch.energy_region_post_guard_samples = 2.5e4;
 batch.energy_region_merge_samples = 1e4;
 
 %% -------------------- Stage 2: correlation refinement --------------------
-batch.correlation_decimation = 32;
+% Search the first repetition at full sample rate. Start with a narrow
+% window around the raw energy onset, widen only after a failed decision,
+% and finally fall back to the complete guarded energy interval.
+batch.correlation_decimation = 1;
 batch.correlation_repetitions = 8;
-batch.correlation_chunk_samples = 4e6;
-batch.correlation_overlap_samples = 3e5;
+batch.correlation_min_repetitions = 3;
+batch.correlation_search_level_1_pre_samples = ...
+    round(5e-6*options.fs_rx);
+batch.correlation_search_level_1_post_samples = ...
+    round(12e-6*options.fs_rx);
+batch.correlation_search_level_2_pre_samples = ...
+    round(15e-6*options.fs_rx);
+batch.correlation_search_level_2_post_samples = ...
+    round(30e-6*options.fs_rx);
+batch.correlation_expected_offset_samples = ...
+    round(5.2e-6*options.fs_rx);
+batch.correlation_baseline_fraction = 0.60;
 batch.corr_threshold_sigma = 5;
+batch.corr_min_threshold_ratio = 20;
+batch.corr_candidate_relative_level = 0.20;
+batch.corr_require_hit_every_repetition = true;
 batch.correlation_peak_min_distance_samples = 400;
-batch.correlation_cluster_gap_samples = 4000;
-batch.correlation_min_cluster_peaks = 4;
-batch.candidate_merge_samples = 5e4;
+batch.correlation_multi_packet_search = true;
+batch.correlation_single_region_baseline_fraction = 0.60;
+batch.correlation_long_region_threshold_factor = 1.50;
+batch.correlation_long_region_threshold_margin_samples = ...
+    round(20e-6*options.fs_rx);
+batch.correlation_min_packet_separation_fraction = 0.75;
+batch.correlation_packet_exclusion_repetitions = ...
+    options.preamble_repetitions;
+batch.correlation_candidate_train_gap_repetitions = 4;
+batch.correlation_tail_chunk_samples = round(100e-6*options.fs_rx);
 
 %% -------------------- Stage 3: full-rate decode --------------------
 % Start the full decoder before the refined preamble estimate.

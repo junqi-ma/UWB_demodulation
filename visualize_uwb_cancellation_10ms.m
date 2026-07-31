@@ -69,6 +69,26 @@ ant_num = params.ant_num;
 channel_index = params.channel_index;
 bytes_per_sample = c.BYTES_PER_IQ_SAMPLE * ant_num;
 
+% Prefer the exact paths recorded by run_cancel_all_uwb_packets.
+if isfield(meta, 'input_file') && isfile(meta.input_file)
+    input_file = meta.input_file;
+    [~, capture_stem] = fileparts(input_file);
+end
+if isfield(meta, 'output_file') && isfile(meta.output_file)
+    output_file = meta.output_file;
+end
+if isfield(meta, 'output_file')
+    [out_dir, out_stem] = fileparts(meta.output_file);
+    candidate_summary = fullfile(out_dir, [out_stem '_summary.csv']);
+    if isfile(candidate_summary)
+        summary_file = candidate_summary;
+    end
+end
+if ~isfile(output_file)
+    error('visualize_uwb_cancellation_10ms:CancelledNotFound', ...
+        'Cancelled capture not found: %s', output_file);
+end
+
 % Load per-packet suppression summary.
 if isfile(summary_file)
     summary_table = readtable(summary_file);
@@ -77,6 +97,12 @@ else
 end
 
 capture_info = dir(input_file);
+cancelled_info = dir(output_file);
+if capture_info.bytes ~= cancelled_info.bytes
+    warning('visualize_uwb_cancellation_10ms:LengthMismatch', ...
+        ['Original and cancelled captures differ in size ', ...
+        '(%d vs %d bytes).'], capture_info.bytes, cancelled_info.bytes);
+end
 total_samples = floor(capture_info.bytes / bytes_per_sample);
 
 % Window length.
@@ -86,6 +112,7 @@ window_num = min(window_num, total_samples - window_offset);
 
 fprintf('=== Full-implementation %d ms cancellation view ===\n', ...
     window_duration_ms);
+fprintf('Original file    : %s\n', input_file);
 fprintf('Cancellation file: %s\n', output_file);
 fprintf('Window offset     : %d (%.3f ms)\n', ...
     window_offset, window_offset / fs_rx * 1e3);
@@ -101,8 +128,26 @@ raw_cancelled = uwbdecoder.readIqRaw(output_file, ...
 rx_cancelled = uwbdecoder.selectIqChannel(raw_cancelled, channel_index);
 clear raw_original raw_cancelled;
 
-% Remove the clock-synchronous single tone.
+% Identity check before any display-only tone cleaning.
+raw_diff_power = mean(abs(rx_original - rx_cancelled).^2);
+raw_orig_power = mean(abs(rx_original).^2) + eps;
+raw_identity_db = 10 * log10(raw_diff_power / raw_orig_power);
+files_look_identical = raw_identity_db < -40;
+if files_look_identical
+    warning('visualize_uwb_cancellation_10ms:IdenticalCaptures', ...
+        ['Original and cancelled IQ are essentially identical in this ', ...
+        'window (diff %.1f dB relative to original power). Figure 2 will ', ...
+        'overlay almost perfectly. Re-run cancellation or pick a ', ...
+        'cancelled_*.dat that actually contains written patches. ', ...
+        'Current cancelled file: %s'], raw_identity_db, output_file);
+end
+
+% Display-only tone cleaning. Cancel may already have removed the tone from
+% the cancelled capture (remove_synchronous_tone). In that case only clean
+% the original so residual = packet cancellation, not double-tone removal.
 tone_removed = false;
+tone_removed_from_cancelled_file = isfield(meta, 'remove_synchronous_tone') && ...
+    logical(meta.remove_synchronous_tone);
 if params.enable_interference_cancellation && ...
         isfield(params, 'interference_tone_bin') && ...
         ~isempty(params.interference_tone_bin) && ...
@@ -116,7 +161,11 @@ if params.enable_interference_cancellation && ...
     end
     quiet_num = min(params.interference_quiet_num, ...
         max(0, total_samples - quiet_offset));
-    if quiet_num >= tone_period
+    tone_coeff = [];
+    if isfield(meta, 'output_tone_coefficient') && ...
+            ~isempty(meta.output_tone_coefficient)
+        tone_coeff = meta.output_tone_coefficient(1);
+    elseif quiet_num >= tone_period
         raw_quiet = uwbdecoder.readIqRaw(input_file, ...
             quiet_offset, quiet_num, ant_num);
         rx_quiet = uwbdecoder.selectIqChannel(raw_quiet, channel_index);
@@ -124,16 +173,22 @@ if params.enable_interference_cancellation && ...
         quiet_basis = uwbdecoder.synchronousTone( ...
             quiet_n, tone_bin, tone_period);
         tone_coeff = mean(rx_quiet .* conj(quiet_basis));
-
+    end
+    if ~isempty(tone_coeff)
         window_n = window_offset + (0:window_num - 1).';
         window_basis = uwbdecoder.synchronousTone( ...
             window_n, tone_bin, tone_period);
         rx_original = rx_original - tone_coeff .* window_basis;
-        rx_cancelled = rx_cancelled - tone_coeff .* window_basis;
-
+        if ~tone_removed_from_cancelled_file
+            % Cancelled capture still contains the tone; strip it so the
+            % overlay isolates packet cancellation rather than tone.
+            rx_cancelled = rx_cancelled - tone_coeff .* window_basis;
+        end
         tone_removed = true;
-        fprintf('Tone removed: bin=%d/%d | coeff %.1f ADC\n', ...
-            tone_bin, tone_period, abs(tone_coeff));
+        fprintf(['Tone cleaned for display: bin=%d/%d | coeff %.1f ADC', ...
+            ' | cancelled-file tone already removed: %d\n'], ...
+            tone_bin, tone_period, abs(tone_coeff), ...
+            tone_removed_from_cancelled_file);
     end
 end
 
@@ -154,19 +209,26 @@ original_power = mean(abs(rx_original).^2);
 cancelled_power = mean(abs(rx_cancelled).^2);
 suppression_db = 10 * log10(original_power / (cancelled_power + eps));
 fprintf('Window suppression: %.3f dB\n', suppression_db);
+fprintf('Raw file difference: %.1f dB (relative residual power)\n', ...
+    raw_identity_db);
 
 %% 3. Find packets inside the window.
 window_first = window_offset;
 window_last = window_offset + window_num - 1;
 packet_in_window = [];
-if ~isempty(summary_table) && ismember('abs_start_sample', ...
-        summary_table.Properties.VariableNames)
-    starts = summary_table.abs_start_sample;
+packet_starts = resolvePacketStartSamples(summary_table);
+if ~isempty(packet_starts) && ...
+        ismember('samples_subtracted', summary_table.Properties.VariableNames)
+    starts = packet_starts;
     ends = starts + summary_table.samples_subtracted - 1;
     in_window = (ends >= window_first) & (starts <= window_last);
     packet_in_window = find(in_window);
     fprintf('Packets in window: %d / %d total\n', ...
         numel(packet_in_window), height(summary_table));
+elseif ~isempty(summary_table)
+    warning('visualize_uwb_cancellation_10ms:NoPacketStartColumn', ...
+        ['Summary has no abs_start_fitted / abs_start_detected / ', ...
+        'abs_start_sample column; packet markers disabled.']);
 end
 
 %% 4. Figure 1: per-packet suppression preview.
@@ -262,8 +324,8 @@ field_names = {};
 if ~isempty(packet_in_window)
     for k = 1:numel(packet_in_window)
         idx = packet_in_window(k);
-        pkt_start_ms = summary_table.abs_start_sample(idx) / fs_rx * 1e3;
-        pkt_end_ms = (summary_table.abs_start_sample(idx) + ...
+        pkt_start_ms = packet_starts(idx) / fs_rx * 1e3;
+        pkt_end_ms = (packet_starts(idx) + ...
             summary_table.samples_subtracted(idx) - 1) / fs_rx * 1e3;
         field_xlines(end + 1) = pkt_start_ms; %#ok<SAGROW>
         field_names{end + 1} = sprintf('Pkt %d start', ...
@@ -287,8 +349,15 @@ end
 grid on;
 xlabel('Time (ms)');
 ylabel('RMS amplitude');
-title(sprintf('Original vs Cancelled (overlay) | window suppression %.2f dB', ...
-    suppression_db));
+if files_look_identical
+    title(sprintf(['Original vs Cancelled (IDENTICAL FILES) | ', ...
+        'window suppression %.2f dB | raw diff %.1f dB'], ...
+        suppression_db, raw_identity_db));
+else
+    title(sprintf( ...
+        'Original vs Cancelled (overlay) | window suppression %.2f dB', ...
+        suppression_db));
+end
 legend('Original', 'Cancelled', 'Location', 'best');
 set(gca, 'XLim', t_ms([1 end]));
 
@@ -436,7 +505,7 @@ if ~isempty(packet_in_window) && isfield(meta, 'reports')
     best_env = 0;
     for k = 1:numel(packet_in_window)
         idx = packet_in_window(k);
-        pkt_center = summary_table.abs_start_sample(idx) + ...
+        pkt_center = packet_starts(idx) + ...
             round(summary_table.samples_subtracted(idx) / 2);
         [~, center_local] = min(abs((window_offset:window_last).' - ...
             pkt_center));
@@ -468,13 +537,15 @@ if ~isempty(packet_in_window) && isfield(meta, 'reports')
             rx_cancel_pkt = uwbdecoder.selectIqChannel(raw_cancel, channel_index);
             clear raw_orig raw_cancel;
 
-            % Remove tone.
-            if tone_removed && exist('tone_coeff', 'var')
+            % Display-only tone clean (same rules as the main window).
+            if tone_removed && exist('tone_coeff', 'var') && ~isempty(tone_coeff)
                 pkt_n = read_first + (0:read_num - 1).';
                 pkt_basis = uwbdecoder.synchronousTone( ...
                     pkt_n, tone_bin, tone_period);
                 rx_orig_pkt = rx_orig_pkt - tone_coeff .* pkt_basis;
-                rx_cancel_pkt = rx_cancel_pkt - tone_coeff .* pkt_basis;
+                if ~tone_removed_from_cancelled_file
+                    rx_cancel_pkt = rx_cancel_pkt - tone_coeff .* pkt_basis;
+                end
             end
 
             rx_removed_pkt = rx_orig_pkt - rx_cancel_pkt;
@@ -609,4 +680,22 @@ if ~isempty(summary_table)
             median(summary_table.frame_suppression_db(success_mask)));
     end
 end
+fprintf('Raw file identity : %.1f dB relative residual ( < -40 => identical)\n', ...
+    raw_identity_db);
 fprintf('=======================================================\n');
+
+function starts = resolvePacketStartSamples(summaryTable)
+%RESOLVEPACKETSTARTSAMPLES Prefer fitted, then detected, then decode starts.
+starts = [];
+if isempty(summaryTable)
+    return;
+end
+names = summaryTable.Properties.VariableNames;
+if ismember('abs_start_fitted', names)
+    starts = summaryTable.abs_start_fitted;
+elseif ismember('abs_start_detected', names)
+    starts = summaryTable.abs_start_detected;
+elseif ismember('abs_start_sample', names)
+    starts = summaryTable.abs_start_sample;
+end
+end
