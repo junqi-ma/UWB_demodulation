@@ -6,7 +6,7 @@ clc;
 
 %% Input capture
 options = struct();
-options.file_name = 'F:\UWB基带数据\DW1000_1.dat';
+options.file_name = 'F:\UWB基带数据\DW1000_new_1.dat';
 options.sample_offset = 0;
 % Enough RX samples for a late-aligned 256-SYNC frame; soft chips are still
 % limited to a budgeted frame span (not the whole buffer).
@@ -32,7 +32,7 @@ options.cir_post_samples = 30;
 % Optional alternative: set cir_post_samples=[] and e.g. cir_max_path_m=20
 % to size the positive delay axis from a maximum excess path length.
 options.cir_max_path_m = [];
-options.code_index = 10;
+options.code_index = 11;
 options.data_rate = 6.81;
 
 % Automatically test the SFDs allowed by the configured PHY/code family.
@@ -215,6 +215,43 @@ result.timing = timing_table;
 result.timing_by_group = group_table;
 result.timing_total_seconds = total_seconds;
 
+%% Experimental branch: PN de-spread first, then CIR-weighted combining
+% Preamble/CIR estimation and SFD timing remain shared with the baseline.
+% Only the data-field CMF ordering changes in this controlled comparison.
+experiment_timer = tic;
+step_timer = tic;
+[cir_post, post_paths] = uwbdecoder.estimateCirAndPostDespreadPaths( ...
+    rx_corrected, preamble_refined, reference, params);
+post_prepare_seconds = toc(step_timer);
+
+step_timer = tic;
+frame_post = uwbdecoder.decodePhrAndPayloadPostCmf( ...
+    post_paths.complex_chips, post_paths.path_coefficients, sfd, ...
+    reference.cfg, params.max_psdu_bytes);
+post_decode_seconds = toc(step_timer);
+
+front_data_seconds = timing([timing.id] == 9).seconds + ...
+    timing([timing.id] == 11).seconds;
+post_data_seconds = post_prepare_seconds + post_decode_seconds;
+cmf_order_comparison = struct( ...
+    'scope', 'CIR/data-field only; SFD timing shared from front-end CMF', ...
+    'front_cmf_seconds', front_data_seconds, ...
+    'post_despread_cmf_seconds', post_data_seconds, ...
+    'post_prepare_seconds', post_prepare_seconds, ...
+    'post_decode_seconds', post_decode_seconds, ...
+    'speed_ratio', front_data_seconds/max(post_data_seconds, eps), ...
+    'saving_seconds', front_data_seconds-post_data_seconds, ...
+    'path_count', numel(post_paths.path_coefficients), ...
+    'path_offsets_samples', post_paths.path_offsets_samples, ...
+    'baseline_fcs_pass', frame.fcs_pass, ...
+    'post_despread_fcs_pass', frame_post.fcs_pass, ...
+    'baseline_bytes', frame.bytes, ...
+    'post_despread_bytes', frame_post.bytes, ...
+    'wall_seconds', toc(experiment_timer));
+result.post_despread_cmf_experiment = cmf_order_comparison;
+result.post_despread_cmf_cir = cir_post;
+printPostDespreadCmfComparison(cmf_order_comparison, frame_post);
+
 %% Print a compact decoding summary
 fprintf('\n========== DW1000 decoding summary ==========\n');
 fprintf('Preamble repetitions detected : %d\n', ...
@@ -261,6 +298,7 @@ end
 assignin('base', 'timing_table', timing_table);
 assignin('base', 'timing_by_group', group_table);
 assignin('base', 'timing_total_seconds', total_seconds);
+assignin('base', 'cmf_order_comparison', cmf_order_comparison);
 
 %% ------------------------------------------------------------------------
 function timing = appendTiming(timing, id, name, group, seconds)
@@ -270,6 +308,29 @@ timing(end).group = group;
 timing(end).seconds = seconds;
 fprintf('[timing] %04.1f %-36s %8.3f s  (%s)\n', ...
     id, name, seconds, group);
+end
+
+function printPostDespreadCmfComparison(comparison, framePost)
+fprintf('\n========== CMF-order experiment (data field) ==========\n');
+fprintf('Shared front-end SFD timing; this is not a whole-receiver swap.\n');
+fprintf('Post-despread paths           : %d\n', comparison.path_count);
+fprintf('Front-CMF data path           : %.3f s (%.1f ms)\n', ...
+    comparison.front_cmf_seconds, 1e3*comparison.front_cmf_seconds);
+fprintf('Post-despread-CMF data path   : %.3f s (%.1f ms)\n', ...
+    comparison.post_despread_cmf_seconds, 1e3*comparison.post_despread_cmf_seconds);
+fprintf('  CIR/raw-path preparation    : %.1f ms; PN-first decode: %.1f ms\n', ...
+    1e3*comparison.post_prepare_seconds, 1e3*comparison.post_decode_seconds);
+fprintf('Front / post speed ratio      : %.2fx\n', comparison.speed_ratio);
+fprintf('Difference (front - post)     : %+.1f ms\n', ...
+    1e3*comparison.saving_seconds);
+fprintf('Post-CMF PHR SECDED pass      : %d\n', framePost.secded_pass);
+fprintf('Post-CMF FCS pass             : %d\n', framePost.fcs_pass);
+if ~isempty(framePost.bytes)
+    fprintf('Post-CMF PSDU bytes           : ');
+    fprintf('%02X ', framePost.bytes);
+    fprintf('\n');
+end
+fprintf('========================================================\n');
 end
 
 function [timing_table, group_table] = buildTimingTables(timing, total_seconds)
