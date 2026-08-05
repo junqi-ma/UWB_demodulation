@@ -120,10 +120,22 @@ if ~isempty(params.cir_max_path_m)
     end
 end
 
+if ~isscalar(params.cir_store_individual_values)
+    error('mergeOptions:InvalidCirStoreIndividualValues', ...
+        'cir_store_individual_values must be a scalar logical value.');
+end
+if ~isscalar(params.cir_timing)
+    error('mergeOptions:InvalidCirTiming', ...
+        'cir_timing must be a scalar logical value.');
+end
+
 params.show_plots = logical(params.show_plots);
 params.enable_interference_cancellation = ...
     logical(params.enable_interference_cancellation);
 params.enable_frame_crop = logical(params.enable_frame_crop);
+params.cir_store_individual_values = ...
+    logical(params.cir_store_individual_values);
+params.cir_timing = logical(params.cir_timing);
 params.verbose = logical(params.verbose);
 
 if ~isempty(params.max_psdu_bytes)

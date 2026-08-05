@@ -22,7 +22,7 @@ end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
+options.file_name = 'F:\UWB基带数据\qm35_new_1.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -114,8 +114,8 @@ options.show_plots = false;
 batch = struct();
 % The reader skips complete IQ records in the file, so this reduces both
 % conversion work and the amount of capture data returned to MATLAB.
-batch.energy_chunk_samples = 20e6;
-batch.energy_step_samples = 19e6;
+batch.energy_chunk_samples = 40e6;
+batch.energy_step_samples = 39e6;
 batch.energy_read_stride = 100;
 % Moving-average length and region controls use original RX sample units.
 batch.energy_smooth_rx_samples = 8192;

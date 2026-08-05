@@ -18,17 +18,18 @@ options.channel_index = 1;
 options.fs_rx = 737.28e6;
 options.x410_center_frequency = 6500e6;
 options.dw1000_center_frequency = 6489.6e6;
-% QM35_1.dat contains a 128-symbol SYNC field. A value of 256 moves the
-% expected SFD boundary 128 symbols into the PHR/payload.
-options.preamble_repetitions = 256;
+% DW1000_new_1 uses a 128-symbol SYNC field with Code 11.
+options.preamble_repetitions = 128;
 % Number of final preamble repetitions coherently averaged for CIR.
 % Set to 256 to use the complete preamble.
 options.cir_repetitions = 64;
 % CIR multipath window at the HRP work rate (~998.4 MHz):
-%   pre=8, post=30 -> 38 samples (~38 ns). Indoor excess path 20 m would be
-%   ~67 samples; 30 is a tighter window for strong near multipath.
+%   pre=8 protects timing uncertainty; post=64 retains the requested
+%   first-path-following delay span without computing a full CIR period.
 options.cir_pre_samples = 8;
-options.cir_post_samples = 30;
+options.cir_post_samples = 64;
+% 输出 estimateCir 内部的细分耗时。
+options.cir_timing = false;
 % Optional alternative: set cir_post_samples=[] and e.g. cir_max_path_m=20
 % to size the positive delay axis from a maximum excess path length.
 options.cir_max_path_m = [];

@@ -11,9 +11,8 @@ function [raw, sampleIndices] = readIqRawStrided( ...
 %   (2*ANTNUM)-by-N matrix and SAMPLEINDICES is an N-by-1 vector of
 %   zero-based capture sample indices.
 %
-%   The repeated-count precision passed to FREAD makes the byte skip occur
-%   after one complete multi-antenna time sample, not between I and Q.
-%   This avoids loading and converting the skipped records.
+%   The mapped int16 vector is reshaped by complete multi-antenna records,
+%   so the stride is applied between samples, not between I and Q values.
 %
 %   See also READIQRAW, SELECTIQCHANNEL.
 
@@ -54,4 +53,5 @@ end
 
 sampleIndices = sampleOffset + (0:outputCount - 1).'*stride;
 clear fileGuard;
+
 end

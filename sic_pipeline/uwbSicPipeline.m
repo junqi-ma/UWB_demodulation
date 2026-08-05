@@ -7,6 +7,8 @@ arguments
     cfg struct
 end
 
+pipelineTimer = tic;
+setupTimer = tic;
 pipelineDir = fileparts(mfilename('fullpath'));
 projectDir = fileparts(pipelineDir);
 % Decode/cancel entry points live in the project root and stay shared with
@@ -21,7 +23,7 @@ ensureDirectory(cfg.output_root);
 algorithm = latestAlgorithmConfig();
 
 pipeline = struct();
-pipeline.version = 3;
+pipeline.version = 4;
 pipeline.algorithm = algorithm;
 pipeline.status = 'running';
 pipeline.started_at = timestampNow();
@@ -30,6 +32,9 @@ pipeline.config = cfg;
 pipeline.paths = paths;
 pipeline.tooling_root = projectDir;
 pipeline.stages = struct();
+pipeline.timing = struct();
+pipeline.timing.setup = toc(setupTimer);
+pipeline.timing.visualization = 0;
 saveManifest(paths.manifest_file, pipeline);
 
 fprintf('\n========== UWB SIC pipeline ==========\n');
@@ -37,37 +42,66 @@ fprintf('Input : %s\n', cfg.input_file);
 fprintf('Output: %s\n', cfg.output_root);
 fprintf('Tools : %s (shared project-root decode/cancel)\n', projectDir);
 
+stageTimer = tic;
 pipeline.stages.qm35_decode = runDecodeStage( ...
     projectDir, cfg.input_file, 'QM35', paths.qm35_decode_dir, ...
     algorithm, cfg.resume, cfg.overwrite);
+pipeline.timing.qm35_decode = toc(stageTimer);
+pipeline.stages.qm35_decode.elapsed_seconds = pipeline.timing.qm35_decode;
 saveManifest(paths.manifest_file, pipeline);
 
+stageTimer = tic;
 toneCoefficient = loadToneCoefficient( ...
     pipeline.stages.qm35_decode.scan_file);
+pipeline.timing.tone_coefficient_load = toc(stageTimer);
+
+stageTimer = tic;
 pipeline.stages.qm35_cancel = runCancelStage( ...
     projectDir, cfg.input_file, cfg.input_file, 'QM35', ...
     paths.qm35_decode_dir, paths.qm35_removed_file, toneCoefficient, ...
     cfg, algorithm, cfg.resume, cfg.overwrite);
+pipeline.timing.qm35_cancel = toc(stageTimer);
+pipeline.stages.qm35_cancel.elapsed_seconds = pipeline.timing.qm35_cancel;
 saveManifest(paths.manifest_file, pipeline);
 
+stageTimer = tic;
 pipeline.stages.dw1000_decode = runDecodeStage( ...
     projectDir, paths.qm35_removed_file, 'DW1000', ...
     paths.dw1000_decode_dir, algorithm, cfg.resume, cfg.overwrite);
+pipeline.timing.dw1000_decode = toc(stageTimer);
+pipeline.stages.dw1000_decode.elapsed_seconds = pipeline.timing.dw1000_decode;
 saveManifest(paths.manifest_file, pipeline);
 
+stageTimer = tic;
 pipeline.stages.dw1000_cancel = runCancelStage( ...
     projectDir, paths.qm35_removed_file, cfg.input_file, 'DW1000', ...
     paths.dw1000_decode_dir, paths.qm35_preserved_file, ...
     toneCoefficient, cfg, algorithm, cfg.resume, cfg.overwrite);
+pipeline.timing.dw1000_cancel = toc(stageTimer);
+pipeline.stages.dw1000_cancel.elapsed_seconds = pipeline.timing.dw1000_cancel;
 
 pipeline.status = 'complete';
 pipeline.completed_at = timestampNow();
-writePipelineSummary(paths.summary_file, pipeline);
+pipeline.timing.sic_processing_total = sum([ ...
+    pipeline.timing.qm35_decode, pipeline.timing.qm35_cancel, ...
+    pipeline.timing.dw1000_decode, pipeline.timing.dw1000_cancel]);
+
+% Save a complete manifest before optional visualization so that the
+% visualization stage can consume the exact completed pipeline products.
 saveManifest(paths.manifest_file, pipeline);
 
 if cfg.make_plots
+    visualizationTimer = tic;
     runPipelineVisualization(pipelineDir, paths.manifest_file);
+    pipeline.timing.visualization = toc(visualizationTimer);
 end
+
+pipeline.timing.total_elapsed = toc(pipelineTimer);
+pipeline.timing.non_sic_overhead = pipeline.timing.total_elapsed - ...
+    pipeline.timing.sic_processing_total;
+writePipelineSummary(paths.summary_file, pipeline);
+writePipelineTimingSummary(paths.timing_file, pipeline);
+saveManifest(paths.manifest_file, pipeline);
 
 fprintf('\n========== SIC complete ==========\n');
 fprintf('QM35 decoded/cancelled   : %d / %d\n', ...
@@ -76,8 +110,28 @@ fprintf('QM35 decoded/cancelled   : %d / %d\n', ...
 fprintf('DW1000 decoded/cancelled : %d / %d\n', ...
     pipeline.stages.dw1000_decode.packet_count, ...
     pipeline.stages.dw1000_cancel.cancelled_count);
+fprintf('\n--- SIC timing ---\n');
+fprintf('QM35 decode              : %.2f s%s\n', ...
+    pipeline.timing.qm35_decode, reuseSuffix(pipeline.stages.qm35_decode));
+fprintf('Tone coefficient load    : %.2f s\n', ...
+    pipeline.timing.tone_coefficient_load);
+fprintf('QM35 cancellation        : %.2f s%s\n', ...
+    pipeline.timing.qm35_cancel, reuseSuffix(pipeline.stages.qm35_cancel));
+fprintf('DW1000 decode            : %.2f s%s\n', ...
+    pipeline.timing.dw1000_decode, reuseSuffix(pipeline.stages.dw1000_decode));
+fprintf('DW1000 cancellation      : %.2f s%s\n', ...
+    pipeline.timing.dw1000_cancel, reuseSuffix(pipeline.stages.dw1000_cancel));
+fprintf('Visualization            : %.2f s\n', ...
+    pipeline.timing.visualization);
+fprintf('SIC processing total     : %.2f s\n', ...
+    pipeline.timing.sic_processing_total);
+fprintf('Pipeline elapsed total   : %.2f s\n', ...
+    pipeline.timing.total_elapsed);
+fprintf('Non-SIC overhead         : %.2f s\n', ...
+    pipeline.timing.non_sic_overhead);
 fprintf('QM35-preserved output    : %s\n', paths.qm35_preserved_file);
 fprintf('Manifest                 : %s\n', paths.manifest_file);
+fprintf('Timing summary           : %s\n', paths.timing_file);
 end
 
 function cfg = normalizeConfig(cfg, projectDir)
@@ -120,6 +174,7 @@ function paths = buildPaths(cfg)
 paths = struct();
 paths.manifest_file = fullfile(cfg.output_root, 'pipeline_manifest.mat');
 paths.summary_file = fullfile(cfg.output_root, 'pipeline_summary.csv');
+paths.timing_file = fullfile(cfg.output_root, 'pipeline_timing_summary.csv');
 paths.qm35_decode_dir = fullfile(cfg.output_root, '01_qm35_decode');
 paths.qm35_cancel_dir = fullfile(cfg.output_root, '02_qm35_cancel');
 paths.qm35_removed_file = fullfile(paths.qm35_cancel_dir, 'qm35_removed.dat');
@@ -134,7 +189,9 @@ function stage = runDecodeStage(toolingDir, inputFile, profile, ...
         resultDir, algorithm, resume, overwrite)
 matFile = fullfile(resultDir, 'all_frames_cir.mat');
 csvFile = fullfile(resultDir, 'frame_summary.csv');
-reuseProducts = resume && isfile(matFile) && isfile(csvFile);
+% overwrite=true requests a cold run for meaningful performance timing.
+% In that mode, do not reuse even provenance-valid cached products.
+reuseProducts = resume && ~overwrite && isfile(matFile) && isfile(csvFile);
 if reuseProducts
     saved = load(matFile, 'results');
     try
@@ -190,7 +247,8 @@ function stage = runCancelStage(toolingDir, fittingFile, outputBaseFile, ...
 [outputDir, outputStem] = fileparts(outputFile);
 metadataFile = fullfile(outputDir, [outputStem '_metadata.mat']);
 summaryFile = fullfile(outputDir, [outputStem '_summary.csv']);
-reuseProducts = resume && isfile(outputFile) && ...
+% Keep cancellation timing representative of an actual cancellation run.
+reuseProducts = resume && ~overwrite && isfile(outputFile) && ...
     isfile(metadataFile) && isfile(summaryFile);
 if reuseProducts
     saved = load(metadataFile, 'success_count', 'reports', ...
@@ -551,11 +609,51 @@ fcsCounts = [pipeline.stages.qm35_decode.fcs_pass_count; NaN; ...
 suppressionDb = [NaN; ...
     pipeline.stages.qm35_cancel.median_packet_suppression_db; NaN; ...
     pipeline.stages.dw1000_cancel.median_packet_suppression_db];
+elapsedSeconds = [pipeline.stages.qm35_decode.elapsed_seconds; ...
+    pipeline.stages.qm35_cancel.elapsed_seconds; ...
+    pipeline.stages.dw1000_decode.elapsed_seconds; ...
+    pipeline.stages.dw1000_cancel.elapsed_seconds];
+reused = [pipeline.stages.qm35_decode.reused; ...
+    pipeline.stages.qm35_cancel.reused; ...
+    pipeline.stages.dw1000_decode.reused; ...
+    pipeline.stages.dw1000_cancel.reused];
 summary = table(names, profiles, inputFiles, outputFiles, packetCounts, ...
-    fcsCounts, suppressionDb, 'VariableNames', ...
+    fcsCounts, suppressionDb, elapsedSeconds, reused, 'VariableNames', ...
     {'stage', 'profile', 'input_file', 'output_file', 'packet_count', ...
-    'fcs_pass_count', 'median_suppression_db'});
+    'fcs_pass_count', 'median_suppression_db', 'elapsed_seconds', ...
+    'reused_cached_product'});
 writetable(summary, fileName);
+end
+
+function writePipelineTimingSummary(fileName, pipeline)
+% Write detailed timing information in a machine-readable format.
+names = {'Pipeline setup'; 'QM35 decode'; 'Tone-coefficient load'; ...
+    'QM35 cancellation'; 'DW1000 decode'; 'DW1000 cancellation'; ...
+    'Visualization'; 'SIC processing total'; 'Non-SIC overhead'; ...
+    'Pipeline elapsed total'};
+categories = {'overhead'; 'sic'; 'overhead'; 'sic'; 'sic'; 'sic'; ...
+    'visualization'; 'aggregate'; 'overhead'; 'aggregate'};
+seconds = [pipeline.timing.setup; pipeline.timing.qm35_decode; ...
+    pipeline.timing.tone_coefficient_load; pipeline.timing.qm35_cancel; ...
+    pipeline.timing.dw1000_decode; pipeline.timing.dw1000_cancel; ...
+    pipeline.timing.visualization; pipeline.timing.sic_processing_total; ...
+    pipeline.timing.non_sic_overhead; pipeline.timing.total_elapsed];
+percentOfTotal = 100 * seconds / max(pipeline.timing.total_elapsed, eps);
+reused = [false; pipeline.stages.qm35_decode.reused; false; ...
+    pipeline.stages.qm35_cancel.reused; pipeline.stages.dw1000_decode.reused; ...
+    pipeline.stages.dw1000_cancel.reused; false; false; false; false];
+timingSummary = table(names, categories, seconds, percentOfTotal, reused, ...
+    'VariableNames', {'step', 'category', 'elapsed_seconds', ...
+    'percent_of_pipeline_total', 'reused_cached_product'});
+writetable(timingSummary, fileName);
+end
+
+function suffix = reuseSuffix(stage)
+if stage.reused
+    suffix = ' (reused)';
+else
+    suffix = '';
+end
 end
 
 function saveManifest(fileName, pipeline)

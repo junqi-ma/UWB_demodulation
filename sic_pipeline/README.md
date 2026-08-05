@@ -70,7 +70,7 @@ adaptive_fullrate_multipkt_v3_pll10_cir11_cfo2_full_packet_sfo_v1
 3. 从 `qm35_removed.dat` 解码 **DW1000**（同一检测栈，code 11）。
 4. 从 **原始** capture 去除同步单音和拟合出的 DW1000，**保留 QM35**，生成 `dw1000_removed_qm35_preserved.dat`。
 5. 两 PHY 消除均启用 PLL + CIR slow + full-packet SFO。
-6. 保存 manifest、CSV 汇总；可选 suppression 图。
+6. 保存 manifest、阶段结果 CSV 和详细耗时 CSV；可选 suppression 图。
 
 所有阶段使用显式路径，不再通过中间文件的 stem 猜测结果目录。
 
@@ -80,6 +80,7 @@ adaptive_fullrate_multipkt_v3_pll10_cir11_cfo2_full_packet_sfo_v1
 sic_dw1000_removed_qm35_preserved/
 ├─ pipeline_manifest.mat
 ├─ pipeline_summary.csv
+├─ pipeline_timing_summary.csv
 ├─ 01_qm35_decode/
 ├─ 02_qm35_cancel/
 ├─ 03_dw1000_decode/
