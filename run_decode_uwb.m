@@ -6,7 +6,7 @@ clc;
 
 %% Input capture
 options = struct();
-options.file_name = 'F:\UWB基带数据\DW1000_new_1.dat';
+options.file_name = 'F:\UWB基带数据\dw1000_new_processed_1.dat';
 options.sample_offset = 0;
 % Enough RX samples for a late-aligned 256-SYNC frame; soft chips are still
 % limited to a budgeted frame span (not the whole buffer).
@@ -14,10 +14,8 @@ options.sample_num = 1.5e6;
 options.ant_num = 1;
 options.channel_index = 1;
 
-%% X410 and DW1000 radio configuration
-options.fs_rx = 737.28e6;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+%% Preprocessed input configuration
+options.fs_rx = 998.4e6;
 % DW1000_new_1 uses a 128-symbol SYNC field with Code 11.
 options.preamble_repetitions = 128;
 % Number of final preamble repetitions coherently averaged for CIR.
@@ -51,14 +49,6 @@ options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
     -1; -1; 1; -1; -1; 1; -1; 1; -1; 1; -1; -1; ...
     -1; 1; 1; -1; -1; -1; 1; -1; 1; 1; -1; -1];
 
-%% Clock-synchronous interference cancellation
-options.enable_interference_cancellation = true;
-options.interference_quiet_offset = 400000;
-% 256k samples is enough for a stable tone estimate and much cheaper than 1.5e6.
-options.interference_quiet_num = 262144;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
-
 %% Speed / span controls
 % Soft chips always run to the end of the work buffer (required by
 % helperUWBBPRFDemod). Frame crop only drops samples *before* the packet.
@@ -84,35 +74,34 @@ addpath(params.helper_path);
 timing = appendTiming(timing, 0, 'mergeOptions + addpath', 'setup', ...
     toc(step_timer));
 
-%% Step 1: Read capture and cancel interference
+%% Step 1: Read the preprocessed capture
 % Variables retained: params, rx_capture, interference
 step_timer = tic;
-[rx_capture, interference] = ...
-    uwbdecoder.readAndCancelInterference(params);
-timing = appendTiming(timing, 1, 'readAndCancelInterference', 'io_front', ...
+raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
+    params.sample_num, params.ant_num);
+rx_capture = uwbdecoder.selectIqChannel(raw, params.channel_index);
+interference = struct('enabled', false, 'frequency_hz', NaN, ...
+    'coefficient', complex(0), 'suppression_db', NaN, ...
+    'source', 'preprocessed input');
+timing = appendTiming(timing, 1, 'readPreprocessedCapture', 'io', ...
     toc(step_timer));
 
-%% Step 2: Compensate the X410/DW1000 center-frequency difference
-% Variable retained: rx_baseband
-step_timer = tic;
-rx_baseband = uwbdecoder.compensateCenterFrequency( ...
-    rx_capture, params);
-timing = appendTiming(timing, 2, 'compensateCenterFrequency', 'io_front', ...
-    toc(step_timer));
-
-%% Step 3: Build the waveform and sparse spreading-code references
+%% Step 2: Build the waveform and sparse spreading-code references
 % Variable retained: reference
 step_timer = tic;
 reference = uwbdecoder.buildUwbReference(params);
-timing = appendTiming(timing, 3, 'buildUwbReference', 'setup', ...
+timing = appendTiming(timing, 2, 'buildUwbReference', 'setup', ...
     toc(step_timer));
 
-%% Step 4: Resample the capture to the HRP working sample rate
+%% Step 3: Use the preprocessed capture directly on the HRP work grid
 % Variable retained: rx_work
 step_timer = tic;
-rx_work = uwbdecoder.resampleCapture( ...
-    rx_baseband, params.fs_rx, reference.fs);
-timing = appendTiming(timing, 4, 'resampleCapture', 'io_front', ...
+if abs(params.fs_rx - reference.fs) > 1
+    error('run_decode_uwb:SampleRateMismatch', ...
+        'Preprocessed input must use the HRP work rate.');
+end
+rx_work = rx_capture;
+timing = appendTiming(timing, 3, 'usePreprocessedWorkRateInput', 'io', ...
     toc(step_timer));
 
 %% Step 5: Detect and track the repeated preamble symbols

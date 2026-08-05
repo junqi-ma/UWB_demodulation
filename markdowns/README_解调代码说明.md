@@ -12,15 +12,13 @@
 
 ## 解调流程
 
-1. 读取 IQ 数据并抑制时钟同步干扰。
-2. 补偿 X410 与 UWB 发射机的中心频率差。
-3. 生成前导码和扩频码参考波形。
-4. 重采样至 HRP UWB 工作采样率。
-5. 检测重复前导符号，估计定时和采样时钟误差。
-6. 估计并补偿载波频偏与相位偏差。
-7. 比较当前 PHY/code family 允许的 SFD，自动选择相关性更高的模板。
-8. 估计 CIR，并形成软判决码片序列。
-9. 定位 SFD，随后解码 PHR、PSDU 和 FCS。
+1. 读取已经预处理到 998.4 MHz 的 IQ 数据。
+2. 生成前导码和扩频码参考波形。
+3. 检测重复前导符号，估计定时和采样时钟误差。
+4. 估计并补偿载波频偏与相位偏差。
+5. 比较当前 PHY/code family 允许的 SFD，自动选择相关性更高的模板。
+6. 估计 CIR，并形成软判决码片序列。
+7. 定位 SFD，随后解码 PHR、PSDU 和 FCS。
 
 ## 关键配置
 
@@ -28,9 +26,7 @@
 options.file_name = 'F:\UWB基带数据\QM35_1.dat';
 options.sample_num = 0.5e6;
 
-options.fs_rx = 737.28e6;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+options.fs_rx = 998.4e6;
 
 options.preamble_repetitions = 128;
 options.cir_repetitions = 128;

@@ -33,12 +33,12 @@ first = zeroDelayIdx;
 last = first + numel(x) - 1;
 alignedWaveform = fullWaveform(first:last);
 
-% Also provide the same sample-rate/frequency format as the X410 waveform.
-[p, q] = rat(tx.sample_rate_tx / tx.sample_rate_work, 1e-12);
-waveformX410 = resample(alignedWaveform, p, q);
-n = (0:numel(waveformX410)-1).';
-waveformX410 = waveformX410 .* ...
-    exp(1j*2*pi*tx.digital_offset_hz*n / tx.sample_rate_tx);
+if abs(tx.sample_rate_tx - tx.sample_rate_work) > 1 || ...
+        abs(tx.digital_offset_hz) > 1
+    error('apply_estimated_cir_to_uwb:PreprocessedGridMismatch', ...
+        'TX must remain on the preprocessed HRP sample grid.');
+end
+waveformX410 = alignedWaveform;
 if tx.guard_samples > 0
     guard = complex(zeros(tx.guard_samples, 1));
     waveformX410 = [guard; waveformX410; guard];

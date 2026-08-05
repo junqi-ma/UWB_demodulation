@@ -22,7 +22,7 @@ end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_new_1.dat';
+options.file_name = 'F:\UWB基带数据\qm35_new_processed_1.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -30,10 +30,8 @@ end
 options.ant_num = 1;
 options.channel_index = 1;
 
-%% -------------------- X410 / DW1000 radio --------------------
-options.fs_rx = 737.28e6;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+%% -------------------- Preprocessed input --------------------
+options.fs_rx = 998.4e6;
 options.data_rate = 6.81;
 pll_phase_compensation_repetitions = 10;
 if sic_managed_run && isfield(sic_stage_config, ...
@@ -67,7 +65,6 @@ switch upper(phy_profile)
             pll_phase_compensation_repetitions;
         options.cir_repetitions = options.preamble_repetitions - ...
             options.cir_skip_initial_repetitions;
-        interference_quiet_num = 1500000;
         fine_window_min_samples = 2.9e5;
         profile_tag = 'dw1000';
     case 'QM35'
@@ -81,7 +78,6 @@ switch upper(phy_profile)
             pll_phase_compensation_repetitions;
         options.cir_repetitions = options.preamble_repetitions - ...
             options.cir_skip_initial_repetitions;
-        interference_quiet_num = 262144;
         fine_window_min_samples = 2.0e5;
         profile_tag = 'qm35';
     otherwise
@@ -100,14 +96,6 @@ else
     profile_suffix = ['_' profile_tag];
 end
 
-%% -------------------- Interference cancellation --------------------
-options.enable_interference_cancellation = true;
-options.interference_quiet_offset = 400000;
-options.interference_quiet_num = interference_quiet_num;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
-% Leave empty to estimate once from the quiet interval, then reuse.
-options.interference_coefficient = [];
 options.show_plots = false;
 
 %% -------------------- Stage 1: strided energy scan --------------------
@@ -177,7 +165,7 @@ batch.correlation_tail_chunk_samples = round(100e-6*options.fs_rx);
 batch.pre_packet_guard_samples = 5e4;
 batch.window_samples = 0.8e6;
 % Profile-specific lower bounds retain the measured complete frame plus
-% the pre-packet guard without resampling an unnecessarily long tail.
+% the pre-packet guard without reading an unnecessarily long tail.
 batch.min_window_samples = fine_window_min_samples;
 % Exact packet_intervals have no guard. blank_intervals use these margins
 % and can be passed directly to options.blank_intervals in other decoders.

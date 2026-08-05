@@ -9,7 +9,12 @@ function preamble = detectRepeatedPreamble(rx, reference, params)
 
 rx = rx(:);
 symbolLength = reference.samples_per_symbol;
-template = reference.preamble_waveform(:);
+% Use the ideal sparse spreading code for preamble correlation. The
+% received signal already contains the transmitter pulse shape; using the
+% generated shaped waveform here would include that pulse shape in the
+% matched template and is not the desired CIR-oriented correlation model.
+template = reference.sampled_code(:);
+template = template / (norm(template) + eps);
 
 % 快速路径：能量门控后，仅扫描候选区域的第一个 SYNC；随后顺序验证
 % 少量重复符号。该路径避免构造完整 ROI 的 16 路相关 metric。

@@ -14,9 +14,7 @@ options.sample_offset = 0;
 options.sample_num = 1.5e6;
 options.ant_num = 1;
 options.channel_index = 1;
-options.fs_rx = 737.28e6;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+options.fs_rx = 998.4e6;
 options.preamble_repetitions = 256;
 options.cir_repetitions = 64;
 options.cir_pre_samples = 8;
@@ -34,11 +32,6 @@ options.sfd4z_3 = [-1; -1; -1; -1; -1; 1; 1; -1; ...
 options.sfd4z_4 = [-1; -1; -1; -1; -1; -1; -1; 1; ...
     -1; -1; 1; -1; -1; 1; -1; 1; -1; 1; -1; -1; ...
     -1; 1; 1; -1; -1; -1; 1; -1; 1; 1; -1; -1];
-options.enable_interference_cancellation = true;
-options.interference_quiet_offset = 400000;
-options.interference_quiet_num = 262144;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
 options.max_psdu_bytes = 32;
 options.enable_frame_crop = true;
 options.verbose = true;

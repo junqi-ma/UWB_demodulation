@@ -10,8 +10,8 @@ function [rx, preamble] = compensateCarrierOffset(rx, preamble, reference, param
 usablePeaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
     params.preamble_repetitions));
 peakValues = readMatchedAt(preamble, usablePeaks);
-% The beginning of a file segment contains the receiver/resampler filter
-% startup transient. Its curved phase previously looked like a false CFO
+% The beginning of a file segment can contain a receiver front-end startup
+% transient. Its curved phase previously looked like a false CFO
 % (about -2.2 kHz in QM35_1.dat). Exclude up to the first 24 repetitions,
 % while always retaining at least 32 repetitions for the linear fit.
 skipCount = min(24, max(0, length(peakValues) - 32));

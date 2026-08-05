@@ -2,10 +2,10 @@ function result = decode_uwb(options, preprocessedRx, interference, preparedRefe
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
-%   RESULT = DECODE_X410_DW1000(OPTIONS, RX, INTERFERENCE) skips file I/O
-%   and tone cancellation, using the already tone-cancelled RX vector and
-%   its INTERFERENCE diagnostic structure. This ensures downstream decode
-%   and comparison operate on exactly the same preprocessed samples.
+%   RESULT = DECODE_UWB(OPTIONS, RX, INTERFERENCE) skips file I/O and uses
+%   the already preprocessed complex-baseband RX vector. The input is
+%   expected to use the configured 998.4 MHz sample rate, with resampling,
+%   single-tone cancellation, and center-frequency shift already applied.
 %   RESULT = DECODE_UWB(OPTIONS, RX, INTERFERENCE, REFERENCE) reuses a
 %   prebuilt UWB reference. Batch decoders use this form to avoid rebuilding
 %   the same PHY waveform for every candidate packet.
@@ -28,7 +28,12 @@ addpath(params.helper_path);
 params.verbose = false;
 
 if nargin < 2 || isempty(preprocessedRx)
-    [rx, interference] = uwbdecoder.readAndCancelInterference(params);
+    raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
+        params.sample_num, params.ant_num);
+    rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
+    interference = struct('enabled', false, 'frequency_hz', NaN, ...
+        'coefficient', complex(0), 'suppression_db', NaN, ...
+        'source', 'preprocessed input');
 else
     if ~isnumeric(preprocessedRx) || ~isvector(preprocessedRx)
         error('decode_uwb:InvalidPreprocessedRx', ...
@@ -42,13 +47,17 @@ else
     end
 end
 
-rx = uwbdecoder.compensateCenterFrequency(rx, params);
 if nargin < 4 || isempty(preparedReference)
     reference = uwbdecoder.buildUwbReference(params);
 else
     reference = preparedReference;
 end
-rxWork = uwbdecoder.resampleCapture(rx, params.fs_rx, reference.fs);
+if abs(params.fs_rx - reference.fs) > 1
+    error('decode_uwb:SampleRateMismatch', ...
+        ['Preprocessed input must use the HRP work rate %.3f MHz; ', ...
+        'received %.3f MHz.'], reference.fs/1e6, params.fs_rx/1e6);
+end
+rxWork = rx;
 
 preamble = uwbdecoder.detectRepeatedPreamble( ...
     rxWork, reference, params);

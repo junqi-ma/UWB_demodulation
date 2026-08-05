@@ -1,9 +1,9 @@
 function comparison = compare_uwb_original_and_generated( ...
         decode_options, tx, output_png, show_figure, ...
-        tone_cancelled_rx, interference, channel_simulation)
+        preprocessed_rx, interference, channel_simulation)
 %COMPARE_QM35_ORIGINAL_AND_GENERATED Compare captured and rebuilt QM35 IQ.
-%   The capture is interference-cancelled, center-frequency corrected,
-%   resampled, carrier-corrected, and timing-aligned before comparison.
+%   The capture is already preprocessed on the HRP work grid; only residual
+%   carrier correction and timing alignment are applied before comparison.
 %   A single complex gain is fitted to expose waveform differences while
 %   retaining receiver/channel distortion.
 
@@ -14,7 +14,7 @@ if nargin < 4
     show_figure = true;
 end
 if nargin < 5
-    tone_cancelled_rx = [];
+    preprocessed_rx = [];
 end
 if nargin < 6
     interference = struct();
@@ -27,16 +27,22 @@ params = uwbdecoder.mergeOptions( ...
     uwbdecoder.defaultOptions(), decode_options);
 addpath(params.helper_path);
 
-if isempty(tone_cancelled_rx)
-    [rx_capture, interference] = ...
-        uwbdecoder.readAndCancelInterference(params);
+if isempty(preprocessed_rx)
+    raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
+        params.sample_num, params.ant_num);
+    rx_capture = uwbdecoder.selectIqChannel(raw, params.channel_index);
+    interference = struct('enabled', false, 'frequency_hz', NaN, ...
+        'coefficient', complex(0), 'suppression_db', NaN, ...
+        'source', 'preprocessed input');
 else
-    rx_capture = tone_cancelled_rx(:);
+    rx_capture = preprocessed_rx(:);
 end
-rx_baseband = uwbdecoder.compensateCenterFrequency(rx_capture, params);
 reference = uwbdecoder.buildUwbReference(params);
-rx_work = uwbdecoder.resampleCapture( ...
-    rx_baseband, params.fs_rx, reference.fs);
+if abs(params.fs_rx - reference.fs) > 1
+    error('compare_uwb_original_and_generated:SampleRateMismatch', ...
+        'Preprocessed input must use the HRP work rate.');
+end
+rx_work = rx_capture;
 preamble = uwbdecoder.detectRepeatedPreamble( ...
     rx_work, reference, params);
 uwbdecoder.validateCaptureLength(rx_work, preamble, reference, params);
@@ -99,7 +105,7 @@ comparison.cir_nmse_db = 10*log10(cir_nmse+eps);
 comparison.cir_fitted_complex_gain = cir_complex_gain;
 comparison.cir_fitted_gain_db = 20*log10(abs(cir_complex_gain)+eps);
 comparison.cir_fitted_phase_deg = rad2deg(angle(cir_complex_gain));
-comparison.input_is_tone_cancelled = true;
+comparison.input_is_preprocessed = true;
 comparison.interference = interference;
 
 if show_figure
@@ -133,7 +139,7 @@ grid on;
 xlabel('Time from frame start (\mus)');
 ylabel('Normalized envelope');
 title('Full-frame envelope');
-legend('Captured (tone cancelled + corrected)', ...
+legend('Captured (preprocessed + corrected)', ...
     'Regenerated (ideal)', 'Pulse train shaped by estimated CIR', ...
     'Location', 'best');
 
@@ -157,7 +163,7 @@ grid on;
 xlabel('Time relative to SFD start (\mus)');
 ylabel('In-phase amplitude');
 title('SFD / PHR waveform detail');
-legend('Captured (tone cancelled + gain corrected)', ...
+legend('Captured (preprocessed + gain corrected)', ...
     'Regenerated (ideal)', 'Pulse train shaped by estimated CIR', ...
     'Location', 'best');
 
@@ -188,7 +194,7 @@ xlabel('Baseband frequency (MHz)');
 ylabel('Normalized magnitude (dB)');
 ylim([-60 5]);
 title('Aligned-frame spectrum');
-legend('Captured (tone cancelled + corrected)', ...
+legend('Captured (preprocessed + corrected)', ...
     'Regenerated (ideal)', 'Pulse train shaped by estimated CIR', ...
     'Location', 'best');
 
@@ -205,15 +211,13 @@ summary_text = sprintf([ ...
     'Fitted channel phase:     %.2f deg\n', ...
     'Compared samples:         %d\n', ...
     'Sample rate:              %.2f MHz\n', ...
-    'Tone cancelled first:     yes\n', ...
-    'Tone suppression:         %.2f dB\n\n', ...
+    'Input preprocessing:      already complete\n\n', ...
     'Note: residual differences include the physical\n', ...
     'channel, receiver filtering, noise, and multipath.'], ...
     params.file_name, timing_correlation, waveform_correlation, ...
     comparison.nmse_db, cir_waveform_correlation, ...
     comparison.cir_nmse_db, comparison.fitted_gain_db, ...
-    comparison.fitted_phase_deg, available, reference.fs/1e6, ...
-    getSuppressionDb(interference));
+    comparison.fitted_phase_deg, available, reference.fs/1e6);
 text(0, 1, summary_text, 'VerticalAlignment', 'top', ...
     'Interpreter', 'none', 'FontName', 'Consolas', 'FontSize', 10.5);
 
@@ -223,13 +227,6 @@ if ~isempty(output_png)
 end
 if ~show_figure
     close(fig);
-end
-end
-
-function value = getSuppressionDb(interference)
-value = NaN;
-if isstruct(interference) && isfield(interference, 'suppression_db')
-    value = interference.suppression_db;
 end
 end
 

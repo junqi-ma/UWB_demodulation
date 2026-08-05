@@ -7,10 +7,10 @@
 ## 一、研究内容与目标
 
 ### 1.1 UWB 相干解调
-针对 X410 以 737.28 MHz 采样率记录的数据，完整实现 HRP UWB PHY（IEEE 802.15.4a / 4z BPRF）的基带处理：时钟同步干扰抑制、中心频率补偿、前导检测、载波频偏恢复、SFD 自动识别、CIR 估计、软判决码片生成、PHR/PSDU 解码及 FCS 校验。
+针对已经完成预处理的 998.4 MHz IQ 数据，完整实现 HRP UWB PHY（IEEE 802.15.4a / 4z BPRF）的基带处理：前导检测、载波频偏恢复、SFD 自动识别、CIR 估计、软判决码片生成、PHR/PSDU 解码及 FCS 校验。输入数据已完成重采样、单音去除和中心频率下移 10 MHz。
 
 ### 1.2 波形再生与一致性验证
-从解码得到的 PSDU 比特流出发，按原 PHY 配置重新生成标准 QM35 发射波形，再经过与真实接收信号完全相同的预处理链路，通过复数增益拟合和相减，验证解调—再生链路的自洽性，并暴露信道/接收机失真。
+从解码得到的 PSDU 比特流出发，按原 PHY 配置重新生成标准 QM35 发射波形，在同一个 998.4 MHz 复基带网格上通过复数增益拟合和相减，验证解调—再生链路的自洽性，并暴露信道/接收机失真。
 
 ### 1.3 DW1000 + QM35 混合场景的干扰分析
 在 `qm35_dw1000_1.dat` 这类 DW1000 与 QM35 交错/重叠发射的采集上：
@@ -19,9 +19,10 @@
 - 以首径峰值功率为信号参考，计算每包的 **SIR（dB）**，输出汇总表与时域/频域可视化；
 - 导出干扰最严重的若干段原始 IQ，做进一步分析。
 
-### 1.4 干扰抑制策略
-- **同步音调消隐（tone cancel）**：利用已知的采样时钟相关干扰（~ -169 bin / 512 周期），在静默段估计复系数后整段抵消。
-- **时域空白（blanking）**：对混合场景中已知的干扰突发位置做加权/渐变置零，避免 QM35 解调被 DW1000 突发拉偏。
+### 1.4 输入数据约定
+- 输入 IQ 已经重采样到 998.4 MHz。
+- 输入 IQ 已经去除同步单音，并将中心频率下移 10 MHz。
+- 解码、批处理、SIC 和波形再生代码不再重复执行上述预处理。
 
 ---
 
@@ -29,11 +30,8 @@
 
 ```
 +uwbdecoder/           % 解调算法包（核心，纯函数，可被批量脚本调用）
-├── readAndCancelInterference.m   % 读 IQ + 同步音调抵消 + 时域空白
 ├── selectIqChannel.m             % 抽取指定通道的复基带
-├── compensateCenterFrequency.m   % X410 中心频点 → 载波 DC
 ├── buildUwbReference.m        % 利用 lrwpan 生成前导/扩频码模板
-├── resampleCapture.m             % 重采样到 HRP 工作采样率 (998.4 MHz)
 ├── detectRepeatedPreamble.m      % 粗检 + ROI 内 16-symbol 累加度量 + 峰值跟踪
 ├── validateCaptureLength.m       % 长度门限检查
 ├── cropToFrame.m                 % 按软判决预算裁掉帧外数据
@@ -45,8 +43,6 @@
 ├── decodePhrAndPayload.m         % PHR/PSDU 解码 + FCS-16
 ├── ieee802154CRC16.m             % 反射式 CRC-16
 ├── mergeOptions / defaultOptions / packageResult / ...
-├── applyBlankIntervals.m         % 加权渐变时域空白
-├── synchronousTone.m             % 采样时钟同步复指数（查表法）
 └── plotXxx.m                     % 各阶段可视化辅助
 
 顶层脚本（面向实验的入口）
@@ -77,7 +73,6 @@
 ├── 干扰与可视化辅助
 │   ├── analyze_worst_uwb_raw_signal.m   % 最差段原始 IQ 可视化
 │   ├── analyze_x410_interference.m       % 时钟相关干扰 / 镜像 / 功率分析
-│   ├── visualize_x410_tone_cancellation.m % 抵消前后时域/频域对比
 │   ├── run_view_uwb_mix_time.m     % 冲突窗时域视图
 │   ├── run_decode_uwb_in_mix.m      % 混合场景多包解调
 │   ├── run_decode_uwb_with_ic.m     % 带干扰抵消的多包解调
@@ -94,24 +89,15 @@
 
 ## 三、解调流程与实现原理
 
-整体流程按"干扰抑制 → 变频 → 重采样 → 同步 → 解扩 → 解码"展开。下面给出每个模块的关键实现要点。
+整体流程按"读取预处理 IQ → 同步 → 解扩 → 解码"展开。下面给出每个模块的关键实现要点。
 
-### 3.1 读取与干扰抑制（`readAndCancelInterference`）
-1. 按 `sample_offset`、`sample_num` 读取 int16 原始 IQ，抽取指定通道。
-2. **同步音调抵消**：干扰频率为 `tone_bin / period_samples * fs_rx`，与采样时钟严格相关。先在静默段（`interference_quiet_offset`）取一段纯净数据，与本地复指数做相关得到复系数 `coefficient = mean(rx_quiet .* conj(basis))`，再从整段减去 `coefficient * basis`。系数可缓存复用。
-3. **时域空白**（`applyBlankIntervals`）：对绝对样本位置给出的干扰区间乘以 `blank_weight`（0 = 全删，1 = 不变），两端用余弦渐变 `0.5 - 0.5 cos(πt)` 避免突变。用于 QM35 解调前压低同段 DW1000 突发。
-4. 去直流。
+### 3.1 预处理输入
+按 `sample_offset`、`sample_num` 读取 int16 交错 IQ，抽取指定通道后直接进入解码。输入必须已经位于 998.4 MHz 的 HRP 工作采样网格，并已完成重采样、单音去除及中心频率下移 10 MHz。
 
-### 3.2 中心频率补偿（`compensateCenterFrequency`）
-X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_frequency`（6489.6 MHz）之差（+10.4 MHz）通过复指数搬移到 DC，再按 RMS 归一化。
-
-### 3.3 参考波形生成（`buildUwbReference`）
+### 3.2 参考波形生成（`buildUwbReference`）
 调用 Communications Toolbox 的 `lrwpanHRPConfig`（802.15.4a, MeanPRF=62.4, 支持 6.81 Mbps）+ `lrwpanWaveformGenerator` 生成 1 个前导符号的成形波形；再用 `lrwpan.internal.HRPCodes(code_index)` 得到扩频码，按扩频因子（16）和 SamplesPerPulse（2）插入零并采样，得到 `sampled_code`。参考结构还保存 `fs`（998.4 MHz）、`samples_per_symbol`、`chips_per_symbol`、`code_energy`。
 
-### 3.4 重采样（`resampleCapture`）
-`resample(rx, p, q)` 将 737.28 MHz 的 X410 采样无混叠地转换为 HRP 工作采样率 998.4 MHz，使用 `rat` 保证有理倍率精度 1e-12。
-
-### 3.5 重复前导检测（`detectRepeatedPreamble`）
+### 3.3 重复前导检测（`detectRepeatedPreamble`）
 采用**粗检 + 精跟踪**两阶段：
 - **粗检**（`coarsePreamblePeak`）：4 倍降采样后做前导匹配滤波 `fftfilt(flipud(conj(template_ds)), rx_ds)`，用滑动能量归一化得 score；再把 16 个相距 symbol_length 的 score 累加为 metric，取最强点作为粗定位。
 - **ROI 跟踪**（`trackPreambleInRoi`）：在粗定位 ±`(preamble_repetitions+32)*symbol_length` 的窗内做满速相关，metric 用 MAD 自适应门限（`median + 6σ`，且不低于峰值的 20%），从最强峰向前/向后 8 符号内迭代搜索相邻峰，再用 `polyfit` 拟合峰位置得到 **measured_period** 和 **clock_error_ppm**。
@@ -121,7 +107,7 @@ X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_f
 按"软判决码片预算"估计帧跨度（`estimateFrameSampleSpan`），在 `start_sample - 3*period` 到帧尾之间裁掉帧外数据，避免后续对毫秒级整段做相关。`preamble.matched / score` 会同步移位为局部坐标。
 
 ### 3.7 载波频偏补偿（`compensateCarrierOffset`）
-前导起始 24 个符号是重采样/接收机启动瞬变的相位弯曲区，**跳过前 24 个（且至少保留 32 个）峰值**；对后续最多 240 个峰值的相位做 `unwrap + polyfit`，一阶系数给出频偏（单位 Hz），整段复指数补偿；再用常相位把前导波形对齐到实轴正方向。
+前导起始 24 个符号是接收机启动瞬变的相位弯曲区，**跳过前 24 个（且至少保留 32 个）峰值**；对后续最多 240 个峰值的相位做 `unwrap + polyfit`，一阶系数给出频偏（单位 Hz），整段复指数补偿；再用常相位把前导波形对齐到实轴正方向。
 
 ### 3.8 SFD 模板自动选择与定时细化（`refineTimingWithNsSfd`）
 根据 `sfd_mode` 决定候选 SFD 模板：
@@ -144,9 +130,9 @@ X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_f
 3. **存盘**：CIR 矩阵 + `frame_summary.csv` + 可选单帧 CIR。
 
 ### 3.12 波形再生与对比
-- `generate_uwb_tx_from_decode`：复用解码得到的 PSDU 比特（含 FCS），用 `lrwpanWaveformGenerator` 生成标准 64-SYNC BPRF 帧，再显式扩展到 128-SYNC 以匹配 QM35 实际配置；输出工作采样率波形和重采样/频移到 X410 的波形。
+- `generate_uwb_tx_from_decode`：复用解码得到的 PSDU 比特（含 FCS），用 `lrwpanWaveformGenerator` 生成标准 64-SYNC BPRF 帧，再显式扩展到 128-SYNC 以匹配 QM35 实际配置；输出 998.4 MHz 工作采样率波形。
 - `apply_estimated_cir_to_uwb`：用测量 CIR 替代 Butterworth 成形，把未成形的 {-1,0,+1} 脉冲序列通过 CIR，避免重复成形。
-- `compare_uwb_original_and_generated`：真实信号走相同预处理（抵消 → 变频 → 重采样 → CFO → 定时细化），再对生成波形做单复数增益拟合，对比波形差异并保留信道/接收机失真特征。
+- `compare_uwb_original_and_generated`：直接使用已预处理的真实信号，仅进行 CFO、定时细化和单复数增益拟合，对比波形差异并保留信道/接收机失真特征。
 
 ### 3.13 Pre-first-path SIR 分析（`run_search_uwb_periodic_cir`）
 - 在 5 ms 周期网格上逐包锁定 QM35，估计 CIR；
@@ -161,9 +147,7 @@ X410 本振 `x410_center_frequency`（6500 MHz）与 UWB 载波 `dw1000_center_f
 
 ```matlab
 options.file_name = 'F:\UWB基带数据\qm35_1.dat';
-options.fs_rx = 737.28e6;                 % X410 采样率
-options.x410_center_frequency = 6500e6;   % X410 本振
-options.dw1000_center_frequency = 6489.6e6; % UWB 载波
+options.fs_rx = 998.4e6;                  % 预处理后的采样率
 
 options.preamble_repetitions = 128;       % QM35 实际 SYNC 长度
 options.cir_repetitions = 64;             % 用于 CIR 平均的 SYNC 数
@@ -173,16 +157,6 @@ options.sfd_mode = 'auto';                % 自动识别 SFD
 ```
 
 `sfd_mode` 可选：`auto` / `decawave` / `ieee` / `4z1` ~ `4z4`。
-
-常用干扰抵消参数：
-```matlab
-options.enable_interference_cancellation = true;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
-options.interference_quiet_offset = 400000;
-options.interference_quiet_num = 262144;
-options.interference_coefficient = [];   % 留空则自动估计，可缓存复用
-```
 
 ---
 

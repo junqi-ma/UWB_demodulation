@@ -1,10 +1,10 @@
 function cancellation = cancel_uwb_with_regenerated( ...
-        decode_options, channel_signal, tone_cancelled_rx, ...
+        decode_options, channel_signal, preprocessed_rx, ...
         output_png, show_figure)
 %CANCEL_QM35_WITH_REGENERATED Subtract rebuilt QM35 from captured IQ.
-%   Cancellation is evaluated after single-tone removal and center-frequency
-%   compensation, but before receiver CFO correction. Both a zero-residual-
-%   CFO replica and CFO-aware replicas are tested.
+%   Cancellation is evaluated on the already preprocessed HRP-rate input,
+%   before residual receiver CFO correction. Both a zero-residual-CFO
+%   replica and CFO-aware replicas are tested.
 
 if nargin < 4
     output_png = '';
@@ -15,11 +15,17 @@ end
 params = uwbdecoder.mergeOptions( ...
     uwbdecoder.defaultOptions(), decode_options);
 reference = uwbdecoder.buildUwbReference(params);
-
-rx_baseband = uwbdecoder.compensateCenterFrequency( ...
-    tone_cancelled_rx(:), params);
-rx_work = uwbdecoder.resampleCapture( ...
-    rx_baseband, params.fs_rx, reference.fs);
+if isempty(preprocessed_rx)
+    raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
+        params.sample_num, params.ant_num);
+    rx_work = uwbdecoder.selectIqChannel(raw, params.channel_index);
+else
+    rx_work = preprocessed_rx(:);
+end
+if abs(params.fs_rx - reference.fs) > 1
+    error('cancel_uwb_with_regenerated:SampleRateMismatch', ...
+        'Preprocessed input must use the HRP work rate.');
+end
 preamble = uwbdecoder.detectRepeatedPreamble( ...
     rx_work, reference, params);
 uwbdecoder.validateCaptureLength(rx_work, preamble, reference, params);

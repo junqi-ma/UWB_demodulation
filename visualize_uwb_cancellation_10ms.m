@@ -128,7 +128,7 @@ raw_cancelled = uwbdecoder.readIqRaw(output_file, ...
 rx_cancelled = uwbdecoder.selectIqChannel(raw_cancelled, channel_index);
 clear raw_original raw_cancelled;
 
-% Identity check before any display-only tone cleaning.
+% Identity check before display-only analysis.
 raw_diff_power = mean(abs(rx_original - rx_cancelled).^2);
 raw_orig_power = mean(abs(rx_original).^2) + eps;
 raw_identity_db = 10 * log10(raw_diff_power / raw_orig_power);
@@ -142,55 +142,7 @@ if files_look_identical
         'Current cancelled file: %s'], raw_identity_db, output_file);
 end
 
-% Display-only tone cleaning. Cancel may already have removed the tone from
-% the cancelled capture (remove_synchronous_tone). In that case only clean
-% the original so residual = packet cancellation, not double-tone removal.
-tone_removed = false;
-tone_removed_from_cancelled_file = isfield(meta, 'remove_synchronous_tone') && ...
-    logical(meta.remove_synchronous_tone);
-if params.enable_interference_cancellation && ...
-        isfield(params, 'interference_tone_bin') && ...
-        ~isempty(params.interference_tone_bin) && ...
-        isfield(params, 'interference_period_samples') && ...
-        ~isempty(params.interference_period_samples)
-    tone_bin = params.interference_tone_bin;
-    tone_period = params.interference_period_samples;
-    quiet_offset = 0;
-    if isfield(params, 'interference_quiet_offset')
-        quiet_offset = params.interference_quiet_offset;
-    end
-    quiet_num = min(params.interference_quiet_num, ...
-        max(0, total_samples - quiet_offset));
-    tone_coeff = [];
-    if isfield(meta, 'output_tone_coefficient') && ...
-            ~isempty(meta.output_tone_coefficient)
-        tone_coeff = meta.output_tone_coefficient(1);
-    elseif quiet_num >= tone_period
-        raw_quiet = uwbdecoder.readIqRaw(input_file, ...
-            quiet_offset, quiet_num, ant_num);
-        rx_quiet = uwbdecoder.selectIqChannel(raw_quiet, channel_index);
-        quiet_n = quiet_offset + (0:numel(rx_quiet) - 1).';
-        quiet_basis = uwbdecoder.synchronousTone( ...
-            quiet_n, tone_bin, tone_period);
-        tone_coeff = mean(rx_quiet .* conj(quiet_basis));
-    end
-    if ~isempty(tone_coeff)
-        window_n = window_offset + (0:window_num - 1).';
-        window_basis = uwbdecoder.synchronousTone( ...
-            window_n, tone_bin, tone_period);
-        rx_original = rx_original - tone_coeff .* window_basis;
-        if ~tone_removed_from_cancelled_file
-            % Cancelled capture still contains the tone; strip it so the
-            % overlay isolates packet cancellation rather than tone.
-            rx_cancelled = rx_cancelled - tone_coeff .* window_basis;
-        end
-        tone_removed = true;
-        fprintf(['Tone cleaned for display: bin=%d/%d | coeff %.1f ADC', ...
-            ' | cancelled-file tone already removed: %d\n'], ...
-            tone_bin, tone_period, abs(tone_coeff), ...
-            tone_removed_from_cancelled_file);
-    end
-end
+% The two files are already on the same preprocessed complex-baseband grid.
 
 % Derived signals.
 rx_removed = rx_original - rx_cancelled;
@@ -376,8 +328,8 @@ title('Removed signal (original - cancelled)');
 set(gca, 'XLim', t_ms([1 end]));
 
 sgtitle(sprintf(['%s full-implementation cancellation | offset %d (%.3f ms) | ', ...
-    '%d ms window | tone removed: %s'], capture_stem, window_offset, ...
-    window_offset / fs_rx * 1e3, window_duration_ms, string(tone_removed)), ...
+    '%d ms window | preprocessed input'], capture_stem, window_offset, ...
+    window_offset / fs_rx * 1e3, window_duration_ms), ...
     'Interpreter', 'none');
 drawnow;
 
@@ -537,27 +489,10 @@ if ~isempty(packet_in_window) && isfield(meta, 'reports')
             rx_cancel_pkt = uwbdecoder.selectIqChannel(raw_cancel, channel_index);
             clear raw_orig raw_cancel;
 
-            % Display-only tone clean (same rules as the main window).
-            if tone_removed && exist('tone_coeff', 'var') && ~isempty(tone_coeff)
-                pkt_n = read_first + (0:read_num - 1).';
-                pkt_basis = uwbdecoder.synchronousTone( ...
-                    pkt_n, tone_bin, tone_period);
-                rx_orig_pkt = rx_orig_pkt - tone_coeff .* pkt_basis;
-                if ~tone_removed_from_cancelled_file
-                    rx_cancel_pkt = rx_cancel_pkt - tone_coeff .* pkt_basis;
-                end
-            end
-
             rx_removed_pkt = rx_orig_pkt - rx_cancel_pkt;
 
             % Zero-IF derotation.
             nominal_digital_offset_hz = 0;
-            if isfield(params, 'dw1000_center_frequency') && ...
-                    isfield(params, 'x410_center_frequency')
-                nominal_digital_offset_hz = ...
-                    params.dw1000_center_frequency - ...
-                    params.x410_center_frequency;
-            end
             display_rotation_hz = nominal_digital_offset_hz + ...
                 report.fitted_cfo_hz;
             local_packet_first = pkt_start - read_first + 1;
@@ -670,7 +605,7 @@ fprintf('Window offset     : %d (%.3f ms)\n', window_offset, ...
 fprintf('Window length     : %d samples (%.3f ms)\n', ...
     window_num, window_num / fs_rx * 1e3);
 fprintf('Window suppression: %.3f dB\n', suppression_db);
-fprintf('Tone removed      : %d\n', tone_removed);
+fprintf('Input preprocessing: complete\n');
 if ~isempty(summary_table)
     fprintf('Total packets     : %d\n', height(summary_table));
     fprintf('In window         : %d\n', numel(packet_in_window));

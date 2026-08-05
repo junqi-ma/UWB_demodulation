@@ -9,19 +9,13 @@ clc;
 %% -------------------- Configuration --------------------
 data_dir = 'F:\UWB基带数据\qm35_worst10_segments';
 rank_to_view = 2;             % 1 is the worst segment
-default_fs = 737.28e6;        % used only when metadata is unavailable
+default_fs = 998.4e6;         % used only when metadata is unavailable
 default_ant_num = 1;
 channel_index = 1;
 zoom_duration_us = 40;        % detailed waveform view around QM35 start
 max_overview_points = 200000; % display decimation only; data stay unchanged
 save_figures = true;
-enable_narrowband_cancel = true;
-tone_bin = -169;              % normalized tone frequency = -169/512
-tone_period_samples = 512;
-save_cleaned_dat = true;
 run_dual_decode = true;        % decode QM35825 and DW1000 from the same IQ
-x410_center_frequency = 6500e6;
-uwb_center_frequency = 6489.6e6;
 
 %% -------------------- Locate rank file --------------------
 if ~isfolder(data_dir)
@@ -53,7 +47,7 @@ else
     meta_file = '';
 end
 
-fs = getFieldOr(segment_info, 'fs_rx', default_fs);
+fs = default_fs;
 ant_num = default_ant_num;
 source_offset = getFieldOr(segment_info, 'source_sample_offset', 0);
 
@@ -81,26 +75,10 @@ end
 rx = complex(raw(2*channel_index-1, :), raw(2*channel_index, :)).';
 clear raw;
 
-%% -------------------- Coherent narrowband cancellation --------------------
-% Estimate the complex amplitude by projecting all samples onto the known
-% clock-synchronous tone. UWB energy is broadband and averages out over the
-% long segment, while the coherent tone accumulates.
-tone_frequency = tone_bin / tone_period_samples * fs;
-tone_phase = 2*pi*(tone_bin/tone_period_samples) * (0:sample_count-1).';
-tone_reference = exp(1j*tone_phase);
-tone_coefficient = mean(rx .* conj(tone_reference));
-estimated_tone = tone_coefficient * tone_reference;
-
-if enable_narrowband_cancel
-    rx_clean = rx - estimated_tone;
-else
-    rx_clean = rx;
-end
-
-residual_coefficient = mean(rx_clean .* conj(tone_reference));
-tone_suppression_db = 20*log10((abs(tone_coefficient)+eps) / ...
-    (abs(residual_coefficient)+eps));
-clear tone_phase tone_reference estimated_tone;
+%% -------------------- Use the preprocessed IQ directly --------------------
+% The input already uses the 998.4 MHz complex-baseband grid and has had
+% its single-tone and center-frequency preprocessing applied upstream.
+rx_clean = rx;
 
 t_ms = (0:sample_count-1).' / fs * 1e3;
 duration_ms = sample_count / fs * 1e3;
@@ -128,11 +106,7 @@ fprintf('I range              : [%.0f, %.0f] ADC\n', min(real(rx)), max(real(rx)
 fprintf('Q range              : [%.0f, %.0f] ADC\n', min(imag(rx)), max(imag(rx)));
 fprintf('|IQ| peak / RMS      : %.2f / %.2f ADC\n', ...
     max(abs(rx)), sqrt(mean(abs(rx).^2)));
-fprintf('Narrowband tone      : %.6f MHz\n', tone_frequency/1e6);
-fprintf('Tone coefficient     : |A|=%.3f ADC, phase=%.2f deg\n', ...
-    abs(tone_coefficient), angle(tone_coefficient)*180/pi);
-fprintf('Tone suppression     : %.2f dB (floating-point estimate)\n', ...
-    tone_suppression_db);
+fprintf('Input preprocessing  : already complete\n');
 if isfinite(qm35_start_sample)
     fprintf('QM35 start in segment: %d (%.6f ms)\n', ...
         qm35_start_sample, qm35_start_sample/fs*1e3);
@@ -178,7 +152,7 @@ markQm35Start(qm35_start_sample, fs, 1e3);
 grid on; box on;
 xlabel('Time in segment (ms)'); ylabel('ADC counts');
 legend('I', 'Q', 'QM35 start', 'Location', 'best');
-title(sprintf('Narrowband-cancelled I/Q (display step = %d)', plot_step));
+title(sprintf('Preprocessed I/Q (display step = %d)', plot_step));
 
 subplot(2,2,2);
 plot(envelope_t_ms, envelope_rms, 'Color', [0.65 0.65 0.65]); hold on;
@@ -186,8 +160,8 @@ plot(envelope_t_ms, envelope_clean_rms, 'k', 'LineWidth', 1.1);
 markQm35Start(qm35_start_sample, fs, 1e3);
 grid on; box on;
 xlabel('Time in segment (ms)'); ylabel('RMS |IQ| (ADC)');
-legend('Raw', 'Cancelled', 'QM35 start', 'Location', 'best');
-title(sprintf('Amplitude before/after cancellation (%.1f us blocks)', ...
+legend('Input', 'Input (same grid)', 'QM35 start', 'Location', 'best');
+title(sprintf('Input amplitude (%.1f us blocks)', ...
     envelope_block/fs*1e6));
 
 subplot(2,2,3);
@@ -197,7 +171,7 @@ if isfinite(qm35_start_sample), xline(0, 'g--', 'QM35 start'); end
 grid on; box on;
 xlabel('Time relative to zoom center (us)'); ylabel('ADC counts');
 legend('I', 'Q', 'Location', 'best');
-title(sprintf('Cancelled waveform detail (%.1f us)', ...
+title(sprintf('Preprocessed waveform detail (%.1f us)', ...
     numel(zoom_idx)/fs*1e6));
 
 subplot(2,2,4);
@@ -206,8 +180,8 @@ plot(zoom_t_us, abs(rx_clean(zoom_idx)), 'Color', [0.1 0.5 0.2]);
 if isfinite(qm35_start_sample), xline(0, 'g--', 'QM35 start'); end
 grid on; box on;
 xlabel('Time relative to zoom center (us)'); ylabel('|IQ| (ADC)');
-legend('Raw', 'Cancelled', 'QM35 start', 'Location', 'best');
-title('Instantaneous magnitude before/after cancellation');
+legend('Input', 'Input (same grid)', 'QM35 start', 'Location', 'best');
+title('Instantaneous magnitude');
 
 sgtitle(sprintf('Worst interference rank %02d | %s', ...
     rank_to_view, files.name), 'Interpreter', 'none');
@@ -234,69 +208,33 @@ fig2 = figure('Name', 'Worst QM35 raw spectrum', 'Color', 'w', ...
 subplot(2,1,1);
 plot(f_spec/1e6, raw_psd_db, 'Color', [0.65 0.65 0.65]); hold on;
 plot(f_spec/1e6, clean_psd_db, 'b', 'LineWidth', 1);
-xline(tone_frequency/1e6, 'r--', 'cancelled tone');
 grid on; box on;
 xlabel('Baseband frequency (MHz)'); ylabel('Relative PSD (dB)');
-legend('Raw', 'Cancelled', 'Tone frequency', 'Location', 'best');
-title('Average spectrum before/after narrowband cancellation');
+legend('Input', 'Input (same grid)', 'Location', 'best');
+title('Average spectrum of preprocessed input');
 xlim([min(f_spec) max(f_spec)]/1e6);
 
 subplot(2,1,2);
 imagesc(t_spec*1e3, f_spec/1e6, stft_clean_db);
 axis xy; colormap turbo; colorbar; caxis([-60 0]);
 xlabel('Time in segment (ms)'); ylabel('Baseband frequency (MHz)');
-title('Narrowband-cancelled IQ spectrogram (dB relative to raw peak)');
+title('Preprocessed IQ spectrogram (dB relative to input peak)');
 if isfinite(qm35_start_sample)
     hold on;
     xline(qm35_start_sample/fs*1e3, 'w--', 'QM35 start', ...
         'LineWidth', 1.2, 'LabelVerticalAlignment', 'bottom');
 end
 
-sgtitle(sprintf('Narrowband cancellation | rank %02d | %.3f MHz', ...
-    rank_to_view, tone_frequency/1e6));
-
-%% -------------------- Save cancelled IQ --------------------
-if enable_narrowband_cancel && save_cleaned_dat
-    cleaned_dir = fullfile(data_dir, 'narrowband_cancelled');
-    if ~isfolder(cleaned_dir), mkdir(cleaned_dir); end
-    [~, source_stem] = fileparts(file_name);
-    cleaned_file = fullfile(cleaned_dir, [source_stem '_nb_cancelled.dat']);
-    cleaned_i = int16(max(-32768, min(32767, round(real(rx_clean)))));
-    cleaned_q = int16(max(-32768, min(32767, round(imag(rx_clean)))));
-    cleaned_interleaved = [cleaned_i.'; cleaned_q.'];
-    fid_out = fopen(cleaned_file, 'wb');
-    if fid_out < 0, error('Cannot create: %s', cleaned_file); end
-    cleanup_out = onCleanup(@() fclose(fid_out));
-    written = fwrite(fid_out, cleaned_interleaved, 'int16');
-    clear cleanup_out cleaned_interleaved cleaned_i cleaned_q;
-    if written ~= 2*sample_count
-        error('Short write while saving: %s', cleaned_file);
-    end
-    cancellation_info = struct( ...
-        'source_file', file_name, 'cleaned_file', cleaned_file, ...
-        'fs', fs, 'tone_bin', tone_bin, ...
-        'tone_period_samples', tone_period_samples, ...
-        'tone_frequency', tone_frequency, ...
-        'tone_coefficient', tone_coefficient, ...
-        'floating_point_suppression_db', tone_suppression_db); %#ok<NASGU>
-    save(fullfile(cleaned_dir, [source_stem '_nb_cancelled.mat']), ...
-        'cancellation_info');
-    fprintf('Cancelled IQ saved to: %s\n', cleaned_file);
-end
+sgtitle(sprintf('Preprocessed input | rank %02d | %.3f MHz', ...
+    rank_to_view, fs/1e6));
 
 %% -------------------- Dual-protocol decoding --------------------
 % Two independent matched-filter chains operate on the same mixed capture.
-% The narrowband-cancelled file is preferred, while neither UWB waveform is
-% blanked or subtracted from the other.
+% Both decoders operate on the same preprocessed mixed capture.
 dual_decode = struct();
 if run_dual_decode
-    if exist('cleaned_file', 'var') && isfile(cleaned_file)
-        decode_file = cleaned_file;
-        decode_input = 'narrowband-cancelled IQ';
-    else
-        decode_file = file_name;
-        decode_input = 'raw IQ';
-    end
+    decode_file = file_name;
+    decode_input = 'preprocessed IQ';
 
     common = struct();
     common.file_name = decode_file;
@@ -305,8 +243,6 @@ if run_dual_decode
     common.ant_num = 1;
     common.channel_index = 1;
     common.fs_rx = fs;
-    common.x410_center_frequency = x410_center_frequency;
-    common.dw1000_center_frequency = uwb_center_frequency;
     common.data_rate = 6.81;
     common.cir_repetitions = 64;
     common.cir_pre_samples = 8;
@@ -314,9 +250,6 @@ if run_dual_decode
     common.cir_max_path_m = [];
     common.max_psdu_bytes = 127;
     common.enable_frame_crop = true;
-    common.enable_interference_cancellation = false;
-    common.blank_intervals = [];
-    common.blank_weight = 0;
     common.verbose = false;
     common.show_plots = false;
 

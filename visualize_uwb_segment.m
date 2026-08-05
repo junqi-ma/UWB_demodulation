@@ -22,10 +22,10 @@ c = uwbdecoder.constants();
 file_name = 'F:\UWB基带数据\dw1000_single_tone_1.dat';
 
 % RF center frequency (Hz) for absolute frequency display.
-center_frequency = 6489.6e6;
+center_frequency = 6479.6e6;
 
 % Sample rate (Hz).
-fs = 737.28e6;
+fs = 998.4e6;
 
 % Number of antenna channels in the file.
 ant_num = 1;

@@ -1,7 +1,7 @@
 # 脚本与函数索引
 
 > 本文件记录 `F:\USRP数据解调` 下每个 `.m` 文件的用途、输入输出和依赖关系。
-> 核心解码函数位于 `+uwbdecoder/` 包内，顶层脚本调用它们完成具体实验。
+> 核心解码函数位于 `+uwbdecoder/` 包内，顶层脚本调用它们完成具体实验。所有输入 IQ 默认已经预处理到 998.4 MHz，并已去除单音、下移中心频率 10 MHz。
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 路径 | 说明 |
 |------|------|
-| `F:\UWB基带数据\DW1000_1.dat` | 纯 DW1000 捕获（单天线，737.28 MHz 采样率） |
+| `F:\UWB基带数据\DW1000_1.dat` | 已预处理的纯 DW1000 捕获（单天线，998.4 MHz 采样率） |
 | `F:\UWB基带数据\DW1000_2.dat` | 纯 DW1000 捕获（用于全文件消除验证） |
 | `F:\UWB基带数据\QM35_1.dat` | 纯 QM35 捕获 |
 | `F:\UWB基带数据\qm35_1.dat` | 同上（大小写别名，部分脚本引用） |
@@ -29,12 +29,8 @@
 | `mergeOptions.m` | 合并用户覆盖选项并校验 |
 | `readIqRaw.m` | 从捕获文件读取交织 int16 IQ（统一文件 I/O） |
 | `selectIqChannel.m` | 从交织 IQ 中提取一个通道为复向量 |
-| `synchronousTone.m` | 生成采样时钟同步的复指数音调 |
 | `ieee802154CRC16.m` | 计算 IEEE 802.15.4 反射 CRC-16 |
-| `readAndCancelInterference.m` | 读取捕获并消除已知窄带音调 |
-| `compensateCenterFrequency.m` | 将 DW1000 载波搬移到基带 DC |
 | `buildUwbReference.m` | 构建 HRP 波形和稀疏扩频码参考 |
-| `resampleCapture.m` | 将 X410 采样率转换到 HRP 工作速率 |
 | `detectRepeatedPreamble.m` | 检测并跟踪重复的 SYNC 符号 |
 | `validateCaptureLength.m` | 校验捕获是否包含完整 SHR |
 | `cropToFrame.m` | 裁剪工作缓冲区到活跃帧区域 |
@@ -46,7 +42,6 @@
 | `locateNsSfd.m` | 在软芯片流中定位 SFD |
 | `decodePhrAndPayload.m` | 解码 PHR、PSDU 和 FCS |
 | `packageResult.m` | 将各阶段输出打包为公共结果结构体 |
-| `applyBlankIntervals.m` | 对绝对捕获区间做软消隐 |
 | `plotPreambleDetection.m` | 可视化前导码匹配结果 |
 | `plotDespreadCir.m` | 可视化解扩 CIR |
 | `plotSfdDetection.m` | 可视化 SFD 搜索度量 |
@@ -105,7 +100,6 @@
 | `run_cancel_all_uwb_packets.m` | 708 | 全文件 UWB 帧再生与消除（含验证模式） | `DW1000_2.dat` |
 | `cancel_uwb_with_regenerated.m` | 253 | 从捕获 IQ 中减去重建的 UWB 帧 | 通用 |
 | `compare_uwb_original_and_generated.m` | 254 | 对比捕获与重建的 UWB IQ | 通用 |
-| `visualize_x410_tone_cancellation.m` | 193 | 可视化 X410 音调消除效果（不写文件） | `qm35_1.dat` |
 
 ---
 
@@ -148,15 +142,14 @@
 ┌─────────────────────────────────────────────┐
 │  +uwbdecoder 包（26 个函数）              │
 │  constants / defaultOptions / mergeOptions  │
-│  readIqRaw / selectIqChannel / synchronousTone │
-│  readAndCancelInterference / compensateCenterFrequency │
-│  buildUwbReference / resampleCapture     │
+│  readIqRaw / selectIqChannel              │
+│  buildUwbReference                         │
 │  detectRepeatedPreamble / validateCaptureLength │
 │  cropToFrame / estimateFrameSampleSpan      │
 │  compensateCarrierOffset / refineTimingWithNsSfd │
 │  analyzeNsSfdSymbols / estimateCirAndSoftChips │
 │  locateNsSfd / decodePhrAndPayload          │
-│  packageResult / applyBlankIntervals        │
+│  packageResult                              │
 │  plot* (3 个可视化)                          │
 └─────────────────────────────────────────────┘
 ```

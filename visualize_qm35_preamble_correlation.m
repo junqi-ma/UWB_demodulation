@@ -80,23 +80,16 @@ detail_region_indices = unique([detail_region_indices, ...
     longest_region_order(1:auto_detail_count).']);
 representative_region_index = longest_region_order(1);
 
-%% -------------------- Current QM35 PHY and tone configuration --------------------
+%% -------------------- Current QM35 PHY configuration --------------------
 options = struct();
 options.file_name = energy_diagnostics.capture_file;
-options.fs_rx = energy_diagnostics.fs_rx;
 options.ant_num = 1;
 options.channel_index = 1;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+options.fs_rx = 998.4e6;
 options.data_rate = 6.81;
 options.preamble_repetitions = 64;
 options.code_index = 9;
 options.sfd_mode = '4z2';
-options.enable_interference_cancellation = true;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
-options.interference_coefficient = ...
-    energy_diagnostics.tone_coefficient;
 options.show_plots = false;
 
 params = uwbdecoder.mergeOptions( ...
@@ -104,9 +97,11 @@ params = uwbdecoder.mergeOptions( ...
 addpath(params.helper_path);
 reference = uwbdecoder.buildUwbReference(params);
 
-[p, q] = rat(params.fs_rx / reference.fs, 1e-12);
-preamble_template = resample(reference.preamble_waveform, p, q);
-preamble_template = preamble_template(:);
+if abs(params.fs_rx - reference.fs) > 1
+    error('visualize_qm35_preamble_correlation:SampleRateMismatch', ...
+        'Preprocessed input must use the HRP work rate.');
+end
+preamble_template = reference.preamble_waveform(:);
 preamble_template = preamble_template / ...
     (norm(preamble_template) + eps);
 template_length = numel(preamble_template);
@@ -830,18 +825,6 @@ raw = uwbdecoder.readIqRaw(params.file_name, ...
 rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 sample_indices = sample_offset + (0:sample_num - 1).';
 
-if params.enable_interference_cancellation
-    basis = uwbdecoder.synchronousTone(sample_indices, ...
-        params.interference_tone_bin, ...
-        params.interference_period_samples);
-    rx = rx - params.interference_coefficient(1) .* basis;
-end
-
-frequency_shift = params.x410_center_frequency - ...
-    params.dw1000_center_frequency;
-rx = rx .* exp(1j * 2 * pi * frequency_shift * ...
-    sample_indices / params.fs_rx);
-rx = rx - mean(rx);
 end
 
 function [positions, energy, threshold] = scanFirstRepetition( ...

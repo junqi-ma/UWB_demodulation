@@ -14,9 +14,7 @@ options.sample_offset = 0;
 options.sample_num = 1.5e6;
 options.ant_num = 1;
 options.channel_index = 1;
-options.fs_rx = 737.28e6;
-options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+options.fs_rx = 998.4e6;
 options.preamble_repetitions = 256;
 options.cir_repetitions = 64;
 options.code_index = 10;
@@ -26,12 +24,6 @@ options.max_psdu_bytes = 32;
 options.enable_frame_crop = true;
 options.verbose = true;
 options.show_plots = false;
-
-options.enable_interference_cancellation = true;
-options.interference_quiet_offset = 400000;
-options.interference_quiet_num = 262144;
-options.interference_tone_bin = -169;
-options.interference_period_samples = 512;
 
 % Exclude early repetitions when fitting the stable phase slope.
 phase_fit_first_repetition = 25;
@@ -45,16 +37,18 @@ end
 output_png = fullfile(output_dir, ...
     'dw1000_preamble_raw_correlation_phase.png');
 
-%% 2. Single-tone cancellation and HRP-rate conversion
+%% 2. Read the preprocessed HRP-rate input
 params = uwbdecoder.mergeOptions( ...
     uwbdecoder.defaultOptions(), options);
-[rx_tone_cancelled, interference] = ...
-    uwbdecoder.readAndCancelInterference(params);
-rx_baseband = uwbdecoder.compensateCenterFrequency( ...
-    rx_tone_cancelled, params);
+raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
+    params.sample_num, params.ant_num);
+rx_preprocessed = uwbdecoder.selectIqChannel(raw, params.channel_index);
 reference = uwbdecoder.buildUwbReference(params);
-rx_work = uwbdecoder.resampleCapture( ...
-    rx_baseband, params.fs_rx, reference.fs);
+if abs(params.fs_rx - reference.fs) > 1
+    error('run_analyze_uwb_preamble_phase:SampleRateMismatch', ...
+        'Preprocessed input must use the HRP work rate.');
+end
+rx_work = rx_preprocessed;
 
 %% 3. Original Preamble matched-filter result
 preamble = uwbdecoder.detectRepeatedPreamble( ...
@@ -110,8 +104,7 @@ fprintf('Measured period           : %.6f samples\n', ...
 fprintf('Stable CFO (%d..%d)       : %+.3f kHz\n', ...
     phase_fit_first_repetition, phase_fit_last_repetition, ...
     stable_cfo_hz/1e3);
-fprintf('Tone suppression          : %.2f dB\n', ...
-    interference.suppression_db);
+fprintf('Input preprocessing       : already complete\n');
 fprintf('===================================================\n');
 
 %% 5. Plot for direct comparison with the QM35 result

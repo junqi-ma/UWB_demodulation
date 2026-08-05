@@ -107,7 +107,7 @@ xlabel('Capture time (ms)');
 ylabel('|IQ| (ADC)');
 title(sprintf('Amplitude | QM35-stage suppression: %.2f dB', ...
     qm35_stage_suppression_db));
-legend('Original mixed signal', 'Tone/QM35 removed; DW1000 retained', ...
+legend('Original mixed signal', 'Preprocessed input; DW1000 retained', ...
     'Location', 'best');
 grid on;
 xlim(t_ms([1 end]));
@@ -168,7 +168,7 @@ xlabel('Baseband frequency (MHz)');
 ylabel('Power relative to original peak (dB)');
 title('Power spectrum');
 legend('Original mixed signal', ...
-    'Tone/QM35 removed; DW1000 retained', 'Location', 'best');
+    'Preprocessed input; DW1000 retained', 'Location', 'best');
 ylim([-80 5]);
 grid on;
 

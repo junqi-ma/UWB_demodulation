@@ -484,49 +484,6 @@ t_abs = read_first + (0:read_num - 1).';
 t_sec = t_abs / fs_rx;
 t_ms = t_sec * 1e3;
 
-% Remove the clock-synchronous single tone before computing envelopes.
-% The tone is an out-of-band interferer that would otherwise dominate the
-% envelope and mask the UWB pulse structure. Estimate its coefficient from a
-% quiet region (same as the decoder's interference cancellation), then
-% subtract it from the original, cancelled, and reconstructed signals.
-tone_cancelled = false;
-if params.enable_interference_cancellation && ...
-        isfield(params, 'interference_tone_bin') && ...
-        ~isempty(params.interference_tone_bin) && ...
-        isfield(params, 'interference_period_samples') && ...
-        ~isempty(params.interference_period_samples)
-    tone_bin = params.interference_tone_bin;
-    tone_period = params.interference_period_samples;
-    quiet_offset = 0;
-    if isfield(params, 'interference_quiet_offset')
-        quiet_offset = params.interference_quiet_offset;
-    end
-    quiet_num = min(params.interference_quiet_num, ...
-        max(0, total_samples - quiet_offset));
-    if quiet_num >= tone_period
-        raw_quiet = uwbdecoder.readIqRaw(input_file, ...
-            quiet_offset, quiet_num, ant_num);
-        rx_quiet = uwbdecoder.selectIqChannel(raw_quiet, channel_index);
-        quiet_n = quiet_offset + (0:numel(rx_quiet) - 1).';
-        quiet_basis = uwbdecoder.synchronousTone( ...
-            quiet_n, tone_bin, tone_period);
-        tone_coeff = mean(rx_quiet .* conj(quiet_basis));
-
-        % Subtract the tone from each signal using its absolute sample grid.
-        original_n = read_first + (0:read_num - 1).';
-        original_basis = uwbdecoder.synchronousTone( ...
-            original_n, tone_bin, tone_period);
-        rx_original = rx_original - tone_coeff .* original_basis;
-        rx_cancelled = rx_cancelled - tone_coeff .* original_basis;
-        rx_removed = rx_original - rx_cancelled;
-
-        tone_freq_hz = tone_bin / tone_period * fs_rx;
-        tone_cancelled = true;
-        fprintf('Tone removed: bin=%d/%d -> %+.3f MHz | coeff %.1f ADC\n', ...
-            tone_bin, tone_period, tone_freq_hz / 1e6, abs(tone_coeff));
-    end
-end
-
 % Local envelope via a sliding RMS so dense UWB pulses read as a smooth curve.
 envelope_samples = max(1, round(0.25e-6 * fs_rx));
 env_original = sqrt(movmean(abs(rx_original).^2, envelope_samples));
@@ -953,17 +910,16 @@ sgtitle(sprintf('%s packet %d (#%d) | stride %d | Fs %.3f MHz%s', ...
 %% 4. Figure 4: strong peak phase difference (zero-IF, CFO-removed)
 % Reproduce the strong-sample phase-error diagnostic from
 % run_analyze_uwb_cancellation_steps.m. The regenerated waveform contains
-% the intentional digital offset between the X410 tuning frequency and the
-% DW1000 center frequency. Remove that offset AND the fitted CFO from both
-% signals before plotting. Keep only strong samples where both amplitudes
+% The input is already on the desired baseband grid, so there is no
+% intentional center-frequency offset to remove. Remove only the fitted CFO
+% from both signals before plotting. Keep only strong samples where both amplitudes
 % exceed a threshold, then compare their phases. Radial/tangential
 % decomposition separates amplitude and phase contributions to the residual.
 % Use time relative to the fitted packet start. The reference only fixes a
 % constant display phase, while the time slope removes both rotations.
 detail_time_from_packet_start = ...
     (detail_abs_samples - packet_first) / fs_rx;
-nominal_digital_offset_hz = params.dw1000_center_frequency - ...
-    params.x410_center_frequency;
+nominal_digital_offset_hz = 0;
 display_rotation_hz = nominal_digital_offset_hz + ...
     report.fitted_cfo_hz;
 zero_if_derotation = exp(-1j * 2 * pi * display_rotation_hz * ...

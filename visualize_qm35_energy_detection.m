@@ -11,15 +11,9 @@ clc;
 
 %% -------------------- Current QM35 configuration --------------------
 capture_file = 'F:\UWB基带数据\qm35_dw1000_new_3.dat';
-fs_rx = 737.28e6;
+fs_rx = 998.4e6;
 ant_num = 1;
 channel_index = 1;
-
-enable_interference_cancellation = true;
-interference_quiet_offset = 400000;
-interference_quiet_num = 262144;
-interference_tone_bin = -169;
-interference_period_samples = 512;
 
 energy_chunk_samples = 20e6;
 energy_step_samples = 19e6;
@@ -47,7 +41,7 @@ overview_plot_decimation = 10;
 max_zoom_regions = 6;
 save_figures = true;
 
-%% -------------------- Validate capture and estimate tone --------------------
+%% -------------------- Validate preprocessed capture --------------------
 if ~isfile(capture_file)
     error('visualize_qm35_energy_detection:FileNotFound', ...
         'Cannot find capture: %s', capture_file);
@@ -58,21 +52,6 @@ file_info = dir(capture_file);
 total_samples = floor(file_info.bytes / ...
     (c.BYTES_PER_IQ_SAMPLE * ant_num));
 duration_s = total_samples / fs_rx;
-
-tone_coefficient = complex(0); %#ok<NASGU>
-if enable_interference_cancellation
-    quiet_num = min(interference_quiet_num, ...
-        total_samples - interference_quiet_offset);
-    raw_quiet = uwbdecoder.readIqRaw(capture_file, ...
-        interference_quiet_offset, quiet_num, ant_num);
-    rx_quiet = uwbdecoder.selectIqChannel(raw_quiet, channel_index);
-    quiet_indices = interference_quiet_offset + ...
-        (0:numel(rx_quiet) - 1).';
-    quiet_basis = uwbdecoder.synchronousTone(quiet_indices, ...
-        interference_tone_bin, interference_period_samples);
-    tone_coefficient = mean(rx_quiet .* conj(quiet_basis));
-    clear raw_quiet rx_quiet quiet_indices quiet_basis;
-end
 
 fprintf('QM35 energy scan: %.3f million samples (%.3f ms)\n', ...
     total_samples / 1e6, duration_s * 1e3);
@@ -105,13 +84,6 @@ while offset < total_samples
         capture_file, offset, chunk_samples, ant_num, energy_read_stride);
     rx = uwbdecoder.selectIqChannel(raw, channel_index);
     clear raw;
-
-    if enable_interference_cancellation
-        tone_basis = uwbdecoder.synchronousTone(sample_indices, ...
-            interference_tone_bin, interference_period_samples);
-        rx = rx - tone_coefficient .* tone_basis;
-    end
-    rx = rx - mean(rx);
 
     sparse_smooth_length = max(3, round( ...
         energy_smooth_rx_samples / energy_read_stride));
@@ -392,7 +364,6 @@ energy_diagnostics = struct();
 energy_diagnostics.capture_file = capture_file;
 energy_diagnostics.fs_rx = fs_rx;
 energy_diagnostics.total_samples = total_samples;
-energy_diagnostics.tone_coefficient = tone_coefficient;
 energy_diagnostics.chunk_stats = chunk_stats;
 energy_diagnostics.raw_regions = raw_regions_merged;
 energy_diagnostics.final_regions = final_regions;

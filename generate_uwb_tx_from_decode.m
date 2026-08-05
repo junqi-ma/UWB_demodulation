@@ -5,10 +5,8 @@ function tx = generate_uwb_tx_from_decode(decoded, options)
 %   including its two FCS bytes, and an IEEE 802.15.4z BPRF/SFD #2 waveform
 %   is generated.
 %
-%   TX.waveform_work is sampled at the HRP rate (998.4 MHz).
-%   TX.waveform_x410 is resampled to OPTIONS.fs_tx and frequency shifted so
-%   that an X410 tuned to OPTIONS.x410_center_frequency transmits at
-%   OPTIONS.qm35_center_frequency.
+%   TX.waveform_work and TX.waveform_x410 are both kept on the preprocessed
+%   HRP grid. No input/output resampling or center-frequency shift is done.
 %
 %   The MATLAB BPRF generator only permits a 64-symbol preamble. QM35 uses
 %   128 symbols in the capture, so this function generates a standard
@@ -16,9 +14,7 @@ function tx = generate_uwb_tx_from_decode(decoded, options)
 %
 %   See also APPLY_ESTIMATED_CIR_TO_QM35, DECODE_X410_DW1000.
 
-defaults = struct('fs_tx', 737.28e6, ...
-    'x410_center_frequency', 6500e6, ...
-    'qm35_center_frequency', 6489.6e6, ...
+defaults = struct('fs_tx', 998.4e6, ...
     'phy_mode', 'BPRF', ...
     'ranging', false, ...
     'preamble_repetitions', 128, 'code_index', 9, ...
@@ -136,13 +132,13 @@ fieldIndices.SFD = standardIndices.SFD + extraSyncSamples;
 fieldIndices.PHR = standardIndices.PHR + extraSyncSamples;
 fieldIndices.Payload = standardIndices.Payload + extraSyncSamples;
 
-[p, q] = rat(options.fs_tx / cfg.SampleRate, 1e-12);
-waveformX410 = resample(waveformWork, p, q);
-digitalOffsetHz = ...
-    options.qm35_center_frequency - options.x410_center_frequency;
-n = (0:numel(waveformX410)-1).';
-waveformX410 = waveformX410 .* ...
-    exp(1j*2*pi*digitalOffsetHz*n / options.fs_tx);
+if abs(options.fs_tx - cfg.SampleRate) > 1
+    error('generate_uwb_tx_from_decode:SampleRateMismatch', ...
+        ['Generated waveform must use the preprocessed HRP rate ', ...
+        '%.3f MHz.'], cfg.SampleRate/1e6);
+end
+waveformX410 = waveformWork;
+digitalOffsetHz = 0;
 
 peak = max(abs(waveformX410));
 if peak > 0
@@ -172,8 +168,7 @@ tx.samples_per_pulse = cfg.SamplesPerPulse;
 tx.sample_rate_work = cfg.SampleRate;
 tx.sample_rate_tx = options.fs_tx;
 tx.digital_offset_hz = digitalOffsetHz;
-tx.x410_center_frequency = options.x410_center_frequency;
-tx.qm35_center_frequency = options.qm35_center_frequency;
+tx.center_frequency_shift_hz = digitalOffsetHz;
 tx.waveform_work = waveformWork;
 tx.waveform_x410 = waveformX410;
 tx.guard_samples = options.guard_samples;

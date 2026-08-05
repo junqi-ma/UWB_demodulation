@@ -1,7 +1,7 @@
 function validateCaptureLength(rx, preamble, reference, params)
 %VALIDATECAPTURELENGTH Ensure the capture includes the complete SHR.
 %   VALIDATECAPTURELENGTH(RX, PREAMBLE, REFERENCE, PARAMS) errors if the
-%   resampled work buffer RX is too short to contain the configured
+%   work-rate RX buffer is too short to contain the configured
 %   preamble repetitions plus the SFD. On error it reports how many
 %   additional samples are needed.
 %
@@ -12,7 +12,7 @@ requiredEnd = preamble.start_sample + round( ...
     (params.preamble_repetitions + sfdLength)*preamble.measured_period) - 1;
 
 if requiredEnd > length(rx)
-    requiredRxSamples = ceil(requiredEnd*params.fs_rx/reference.fs);
+    requiredRxSamples = requiredEnd;
     haveRxSamples = params.sample_num;
     missingWork = requiredEnd - length(rx);
     error('validateCaptureLength:CaptureTooShort', ...

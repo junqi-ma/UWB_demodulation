@@ -1,5 +1,5 @@
 function results = decode_uwb_all(options, batch)
-%DECODE_X410_DW1000_ALL Decode every packet in an X410 capture file.
+%DECODE_UWB_ALL Decode every packet in a preprocessed UWB capture file.
 %   RESULTS = DECODE_X410_DW1000_ALL(OPTIONS, BATCH) uses three stages:
 %   (1) strided energy-envelope scanning over the full .dat, (2) adaptive
 %   full-rate preamble correlation near each energy onset, and (3) full-rate
@@ -30,13 +30,6 @@ if totalSamples < batch.min_window_samples
     error('decode_uwb_all:CaptureTooShort', ...
         'Capture has only %d complex samples; need at least %d.', ...
         totalSamples, batch.min_window_samples);
-end
-
-% Estimate the interference coefficient once and reuse it everywhere.
-if baseParams.enable_interference_cancellation && ...
-        isempty(baseParams.interference_coefficient)
-    baseParams.interference_coefficient = estimateInterferenceCoefficient( ...
-        baseParams, totalSamples);
 end
 
 % Build the reference once for refined correlation and sample coordinates.
@@ -100,8 +93,6 @@ for candIdx = 1:numCandidates
 end
 
 attemptCount = nnz(candValid);
-interferenceCoefficient = baseParams.interference_coefficient;
-
 % Collect decode results in a cell array; each entry is [] on failure.
 decodeCells = cell(numCandidates, 1);
 timingCells = cell(numCandidates, 1);
@@ -117,9 +108,6 @@ parfor c = 1:numCandidates
     windowOptions.sample_offset = offset;
     windowOptions.sample_num = windowSamples;
     windowOptions.show_plots = false;
-    windowOptions.interference_coefficient = ...
-        interferenceCoefficient;
-
     try
         result = decode_uwb(windowOptions, [], [], reference);
     catch decodeError
@@ -481,33 +469,14 @@ c = uwbdecoder.constants();
 totalSamples = floor(info.bytes / (c.BYTES_PER_IQ_SAMPLE*params.ant_num));
 end
 
-function coefficient = estimateInterferenceCoefficient(params, totalSamples)
-quietOffset = params.interference_quiet_offset;
-quietNum = params.interference_quiet_num;
-if quietOffset < 0 || quietOffset >= totalSamples
-    error('decode_uwb_all:QuietOffsetOutOfRange', ...
-        'interference_quiet_offset is outside the capture.');
-end
-quietNum = min(quietNum, totalSamples - quietOffset);
-if quietNum < params.interference_period_samples
-    error('decode_uwb_all:NotEnoughQuietSamples', ...
-        'Not enough samples available for interference estimation.');
-end
-
-rawQuiet = uwbdecoder.readIqRaw(params.file_name, quietOffset, quietNum, params.ant_num);
-rxQuiet = uwbdecoder.selectIqChannel(rawQuiet, params.channel_index);
-quietN = quietOffset + (0:length(rxQuiet)-1).';
-quietBasis = uwbdecoder.synchronousTone(quietN, ...
-    params.interference_tone_bin, params.interference_period_samples);
-coefficient = mean(rxQuiet .* conj(quietBasis));
-
-end
-
 function template = buildCoarseTemplate(params, reference, ~)
 %BUILDCOARSETEMPLATE Map one preamble symbol to the full-rate receive grid.
-[p, q] = rat(params.fs_rx / reference.fs, 1e-12);
-prefRx = resample(reference.preamble_waveform, p, q);
-prefRx = prefRx(:);
+if abs(params.fs_rx - reference.fs) > 1
+    error('decode_uwb_all:SampleRateMismatch', ...
+        ['Preprocessed input must use the HRP work rate %.3f MHz; ', ...
+        'received %.3f MHz.'], reference.fs/1e6, params.fs_rx/1e6);
+end
+prefRx = reference.preamble_waveform(:);
 prefRx = prefRx / (norm(prefRx) + eps);
 template = struct( ...
     'decimation', 1, ...
@@ -536,9 +505,6 @@ while offset < totalSamples
         params.file_name, offset, chunkSamples, params.ant_num, ...
         batch.energy_read_stride);
     rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
-    rx = cancelToneAtIndices(rx, sampleIndices, params);
-    rx = rx - mean(rx);
-
     smoothLength = max(3, round( ...
         batch.energy_smooth_rx_samples/batch.energy_read_stride));
     energy = movmean(abs(rx).^2, smoothLength);
@@ -1018,12 +984,8 @@ function rx = readProcessedBuffer(params, sampleOffset, sampleNum)
 raw = uwbdecoder.readIqRaw( ...
     params.file_name, sampleOffset, sampleNum, params.ant_num);
 rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
-sampleIndices = sampleOffset + (0:sampleNum - 1).';
-rx = cancelToneAtIndices(rx, sampleIndices, params);
-frequencyShift = params.x410_center_frequency - ...
-    params.dw1000_center_frequency;
-rx = rx .* exp(1j*2*pi*frequencyShift*sampleIndices/params.fs_rx);
-rx = rx - mean(rx);
+% The capture is already on the preprocessed HRP grid. Keep its sample
+% grid and amplitude unchanged.
 end
 
 function [positions, energy, threshold] = scanFirstRepetition( ...
@@ -1202,21 +1164,6 @@ if isempty(intervals)
 end
 coveredSamples = sum(intervals(:, 2) - intervals(:, 1) + 1);
 coverage = coveredSamples/max(totalSamples, 1);
-end
-
-function rx = cancelToneAtIndices(rx, sampleIndices, params)
-%CANCELTONEATINDICES Remove the cached synchronous tone at sparse indices.
-rx = rx(:);
-if ~params.enable_interference_cancellation
-    return;
-end
-if isempty(params.interference_coefficient)
-    error('decode_uwb_all:MissingInterferenceCoefficient', ...
-        'The energy scanner requires a precomputed interference coefficient.');
-end
-basis = uwbdecoder.synchronousTone(sampleIndices(:), ...
-    params.interference_tone_bin, params.interference_period_samples);
-rx = rx - params.interference_coefficient(1).*basis;
 end
 
 function absSample = absoluteRxSample(sampleOffset, workSample, fsRx, fsWork)

@@ -6,7 +6,7 @@ function raw = readIqRaw(fileName, sampleOffset, sampleNum, antNum)
 %   RAW is a (2*ANTNUM)-by-SAMPLENUM matrix. The file is closed on
 %   return (even on error) via onCleanup.
 %
-%   See also SELECTIQCHANNEL, READANDCANCELINTERFERENCE.
+%   See also SELECTIQCHANNEL, READIQRAWSTRIDED.
 
 c = uwbdecoder.constants();
 

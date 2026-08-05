@@ -130,8 +130,6 @@ if ~isscalar(params.cir_timing)
 end
 
 params.show_plots = logical(params.show_plots);
-params.enable_interference_cancellation = ...
-    logical(params.enable_interference_cancellation);
 params.enable_frame_crop = logical(params.enable_frame_crop);
 params.cir_store_individual_values = ...
     logical(params.cir_store_individual_values);
@@ -147,32 +145,4 @@ if ~isempty(params.max_psdu_bytes)
     end
 end
 
-if ~isempty(params.interference_coefficient)
-    if ~isscalar(params.interference_coefficient) || ...
-            ~isnumeric(params.interference_coefficient)
-        error('mergeOptions:InvalidInterferenceCoefficient', ...
-            'interference_coefficient must be empty or a scalar complex value.');
-    end
-    params.interference_coefficient = complex(params.interference_coefficient);
-end
-
-if ~isempty(params.blank_intervals)
-    if ~isnumeric(params.blank_intervals) || size(params.blank_intervals, 2) ~= 2
-        error('mergeOptions:InvalidBlankIntervals', ...
-            'blank_intervals must be empty or an N-by-2 numeric array [start end].');
-    end
-    params.blank_intervals = double(params.blank_intervals);
-end
-
-if ~isscalar(params.blank_taper_samples) || params.blank_taper_samples < 0 || ...
-        params.blank_taper_samples ~= fix(params.blank_taper_samples)
-    error('mergeOptions:InvalidBlankTaperSamples', ...
-        'blank_taper_samples must be a non-negative integer.');
-end
-
-if ~isscalar(params.blank_weight) || params.blank_weight < 0 || ...
-        params.blank_weight > 1
-    error('mergeOptions:InvalidBlankWeight', ...
-        'blank_weight must be a scalar in [0, 1] (0=full blank, 1=no blank).');
-end
 end

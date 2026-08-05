@@ -23,8 +23,6 @@ input_file = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
 fitting_file = input_file;
 output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
-remove_synchronous_tone = false;
-output_tone_coefficient = [];
 
 % Compensate the repeatable nonlinear phase transient at packet start.
 % The default template uses 32 phase bins per SYNC repetition, learned by
@@ -72,8 +70,6 @@ if sic_managed_run
     fitting_file = sic_stage_config.input_file;
     output_base_file = sic_stage_config.output_base_file;
     final_cancellation_mode = sic_stage_config.cancellation_mode;
-    remove_synchronous_tone = sic_stage_config.remove_synchronous_tone;
-    output_tone_coefficient = sic_stage_config.tone_coefficient;
     if isfield(sic_stage_config, 'enable_pll_phase_compensation')
         enable_pll_phase_compensation = ...
             sic_stage_config.enable_pll_phase_compensation;
@@ -361,7 +357,7 @@ fprintf('Selected frames    : %d\n', numel(frames));
 fprintf('Cancellation mode  : %s\n', final_cancellation_mode);
 fprintf('Fitting input      : %s\n', fitting_file);
 fprintf('Output base        : %s\n', output_base_file);
-fprintf('Remove sync tone   : %d\n', remove_synchronous_tone);
+fprintf('Input grid         : preprocessed 998.4 MHz complex baseband\n');
 fprintf('PLL compensation   : %d\n', pll_phase_compensation.enabled);
 if pll_phase_compensation.enabled
     fprintf('PLL template       : %s\n', ...
@@ -419,10 +415,6 @@ if input_info.bytes ~= base_info.bytes
 end
 bytes_per_time_sample = c.BYTES_PER_IQ_SAMPLE * params.ant_num;
 total_samples = input_info.bytes / bytes_per_time_sample;
-if remove_synchronous_tone
-    removeToneFromCapture(output_file, total_samples, params, ...
-        output_tone_coefficient, c);
-end
 
 %% 3. Reconstruct, fit, and subtract every selected packet
 % The per-packet work is split into a compute-only stage and a serial
@@ -535,7 +527,6 @@ writetable(field_summary_table, field_summary_file);
 save(metadata_file, 'reports', 'success_count', 'frames', 'params', ...
     'input_file', 'fitting_file', 'output_base_file', 'output_file', ...
     'scan_file', 'packet_summary_file', 'final_cancellation_mode', ...
-    'remove_synchronous_tone', 'output_tone_coefficient', ...
     'pll_phase_compensation', ...
     'enable_cir_slow_phase_compensation', ...
     'cir_slow_phase_options', ...
@@ -629,8 +620,6 @@ decoded.cir = frame.cir;
 
 tx_options = struct( ...
     'fs_tx', params.fs_rx, ...
-    'x410_center_frequency', params.x410_center_frequency, ...
-    'qm35_center_frequency', params.dw1000_center_frequency, ...
     'phy_mode', phyMode, ...
     'ranging', ranging, ...
     'preamble_repetitions', preambleRepetitions, ...
@@ -651,18 +640,9 @@ read_last = min(totalSamples - 1, ...
 [raw, received] = readIqSegment(fittingFile, read_first, ...
     read_last - read_first + 1, params.ant_num, params.channel_index);
 
-% The tone is removed only in the fitting copy. The saved residual retains
-% the original tone and every component not represented by the UWB model.
+% The input has already had its front-end preprocessing applied. Fit the
+% reconstructed packet directly against the stored complex-baseband data.
 fit_received = received;
-if params.enable_interference_cancellation && ...
-        isfield(params, 'interference_coefficient') && ...
-        ~isempty(params.interference_coefficient)
-    absolute_n = read_first + (0:numel(fit_received) - 1).';
-    tone = uwbdecoder.synchronousTone(absolute_n, ...
-        params.interference_tone_bin, params.interference_period_samples);
-    fit_received = fit_received - ...
-        params.interference_coefficient(1) .* tone;
-end
 
 period_rx = c.PREAMBLE_PERIOD_S * params.fs_rx;
 nominal_local = nominal_start - read_first + 1;
@@ -1173,38 +1153,6 @@ if count ~= numel(raw)
     error('Only %d of %d int16 values were written.', count, numel(raw));
 end
 clear guard;
-end
-
-function removeToneFromCapture( ...
-        fileName, totalSamples, params, coefficient, c)
-% Remove the absolute-sample synchronous tone from one complete capture.
-if isempty(coefficient)
-    warning('run_cancel_all_uwb_packets:NoToneCoefficient', ...
-        'No tone coefficient provided. Skipping output tone removal.');
-    return;
-end
-if ~isfield(params, 'interference_tone_bin') || ...
-        ~isfield(params, 'interference_period_samples')
-    error('run_cancel_all_uwb_packets:MissingToneParameters', ...
-        'Tone bin and period are missing from decode parameters.');
-end
-
-chunkSamples = 5e6;
-fprintf('Removing synchronous tone from output base ...\n');
-offset = 0;
-while offset < totalSamples
-    count = min(chunkSamples, totalSamples - offset);
-    [raw, rx] = readIqSegment( ...
-        fileName, offset, count, params.ant_num, params.channel_index);
-    absoluteN = offset + (0:count - 1).';
-    basis = uwbdecoder.synchronousTone(absoluteN, ...
-        params.interference_tone_bin, params.interference_period_samples);
-    rx = rx - coefficient(1) .* basis;
-    [raw, ~] = replaceIqChannel(raw, rx, params.channel_index, c);
-    writeIqSegment(fileName, offset, raw, params.ant_num, c);
-    offset = offset + count;
-    fprintf('  tone removal %.1f%%\n', 100 * offset / totalSamples);
-end
 end
 
 function compensation = loadPllPhaseCompensation( ...
