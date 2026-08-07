@@ -1,5 +1,5 @@
 function [raw, sampleIndices] = readIqRawStrided( ...
-        fileName, sampleOffset, sampleNum, antNum, stride)
+        fileName, sampleOffset, sampleNum, antNum, stride, outputClass)
 %READIQRAWSTRIDED Read every STRIDE-th interleaved IQ time sample.
 %   [RAW, SAMPLEINDICES] = READIQRAWSTRIDED(FILENAME, SAMPLEOFFSET,
 %   SAMPLENUM, ANTNUM, STRIDE) reads complete I/Q records at zero-based
@@ -11,18 +11,27 @@ function [raw, sampleIndices] = readIqRawStrided( ...
 %   (2*ANTNUM)-by-N matrix and SAMPLEINDICES is an N-by-1 vector of
 %   zero-based capture sample indices.
 %
-%   The mapped int16 vector is reshaped by complete multi-antenna records,
+%   OUTPUTCLASS can be 'double' (default) or 'single'. The mapped int16
+%   vector is reshaped by complete multi-antenna records,
 %   so the stride is applied between samples, not between I and Q values.
 %
 %   See also READIQRAW, SELECTIQCHANNEL.
 
-arguments
-    fileName {mustBeTextScalar}
-    sampleOffset (1, 1) double {mustBeInteger, mustBeNonnegative}
-    sampleNum (1, 1) double {mustBeInteger, mustBePositive}
-    antNum (1, 1) double {mustBeInteger, mustBePositive}
-    stride (1, 1) double {mustBeInteger, mustBePositive}
+if nargin < 6
+    outputClass = 'double';
 end
+outputClass = validatestring(outputClass, {'double', 'single'}, ...
+    mfilename, 'outputClass');
+
+mustBeTextScalar(fileName);
+validateattributes(sampleOffset, {'double'}, ...
+    {'scalar', 'integer', 'nonnegative'}, mfilename, 'sampleOffset');
+validateattributes(sampleNum, {'double'}, ...
+    {'scalar', 'integer', 'positive'}, mfilename, 'sampleNum');
+validateattributes(antNum, {'double'}, ...
+    {'scalar', 'integer', 'positive'}, mfilename, 'antNum');
+validateattributes(stride, {'double'}, ...
+    {'scalar', 'integer', 'positive'}, mfilename, 'stride');
 
 c = uwbdecoder.constants();
 recordValueCount = 2*antNum;
@@ -42,7 +51,7 @@ if status ~= 0
         'Failed to seek to sample offset %d.', sampleOffset);
 end
 
-precision = sprintf('%d*int16=>double', recordValueCount);
+precision = sprintf('%d*int16=>%s', recordValueCount, outputClass);
 skipBytes = (stride - 1)*recordBytes;
 raw = fread(fid, [recordValueCount, outputCount], precision, skipBytes);
 if size(raw, 2) ~= outputCount

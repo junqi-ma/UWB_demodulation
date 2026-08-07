@@ -1,14 +1,21 @@
-function raw = readIqRaw(fileName, sampleOffset, sampleNum, antNum)
+function raw = readIqRaw(fileName, sampleOffset, sampleNum, antNum, outputClass)
 %READIQRAW Read interleaved int16 IQ from a capture file.
 %   RAW = READIQRAW(FILENAME, SAMPLEOFFSET, SAMPLENUM, ANTNUM) opens
 %   FILENAME, seeks to the given complex-sample offset, and reads
 %   SAMPLENUM interleaved int16 I/Q samples for ANTNUM antenna channels.
 %   RAW is a (2*ANTNUM)-by-SAMPLENUM matrix. The file is closed on
-%   return (even on error) via onCleanup.
+%   return (even on error) via onCleanup. OUTPUTCLASS can be 'double'
+%   (default) or 'single'.
 %
 %   See also SELECTIQCHANNEL, READIQRAWSTRIDED.
 
 c = uwbdecoder.constants();
+
+if nargin < 5
+    outputClass = 'double';
+end
+outputClass = validatestring(outputClass, {'double', 'single'}, ...
+    mfilename, 'outputClass');
 
 fid = fopen(fileName, 'rb', 'ieee-le');
 if fid < 0
@@ -23,7 +30,7 @@ if status ~= 0
         'Failed to seek to sample offset %d.', sampleOffset);
 end
 
-raw = fread(fid, [2*antNum, sampleNum], 'int16=>double');
+raw = fread(fid, [2*antNum, sampleNum], ['int16=>' outputClass]);
 if size(raw, 2) ~= sampleNum
     error('readIqRaw:ShortRead', ...
         'Could not read %d samples at offset %d.', sampleNum, sampleOffset);

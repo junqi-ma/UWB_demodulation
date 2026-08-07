@@ -20,7 +20,8 @@ lastEnd = preamble.start_sample + (params.preamble_repetitions + shifts(end) + .
 roiStart = max(1, floor(firstEnd - halfWidth - reference.samples_per_symbol));
 roiEnd = min(numel(rx), ceil(lastEnd + halfWidth + reference.samples_per_symbol));
 roi = rx(roiStart:roiEnd);
-matchedRoi = fftfilt(flipud(conj(reference.preamble_waveform)), roi);
+matchedRoi = uwbdecoder.fftFilter( ...
+    flipud(conj(reference.preamble_waveform)), roi);
 
 correlations = zeros(size(shifts));
 for shiftIdx = 1:length(shifts)

@@ -144,9 +144,11 @@ parfor c = 1:numCandidates
     windowOptions.sample_offset = offset;
     windowOptions.sample_num = windowSamples;
     windowOptions.show_plots = false;
+    seededPreambleStart = candidates(c) - offset + 1;
     % 第 4 个参数复用主流程已构造的 reference，避免每个候选重复生成 PHY 波形。
     try
-        result = decode_uwb(windowOptions, [], [], reference);
+        result = decode_uwb(windowOptions, [], [], reference, 'single', ...
+            seededPreambleStart);
     catch decodeError
         continue;  % 单个候选解码失败不影响其他候选。
     end
@@ -157,8 +159,6 @@ parfor c = 1:numCandidates
     decodeCells{c} = result;
     timingCells{c} = timing;
 end
-
-fineSeconds = toc(ticFine);
 
 % 串行后处理：去重并保存帧。按候选顺序遍历可以保持“首次出现者优先”的行为。
 for c = 1:numCandidates
@@ -186,8 +186,8 @@ for c = 1:numCandidates
     if batch.save_individual_cir
         cirFile = fullfile(batch.output_directory, ...
             sprintf('cir_%03d.mat', packetCount));
-        cir = frames(packetCount).cir; %#ok<NASGU>
-        meta = frames(packetCount); %#ok<NASGU>
+        cir = frames(packetCount).cir;
+        meta = frames(packetCount);
         save(cirFile, 'cir', 'meta', '-v7');
     end
 end
@@ -197,6 +197,7 @@ if packetCount == 0
 else
     frames = frames(1:packetCount);
 end
+fineSeconds = toc(ticFine);
 
 %% -------------------- 结果打包与落盘 --------------------
 % 汇总计时、检测统计、包区间、CIR 矩阵和输出路径，并写盘。
@@ -261,7 +262,9 @@ if packetCount > 0
         results.precise_interval_mask, :);
     results.cir_delay_ns = frames(1).cir.delay_ns(:);
     cirLen = numel(results.cir_delay_ns);
-    results.cir_values = complex(zeros(cirLen, packetCount));
+    firstCirValues = frames(1).cir.values(:);
+    results.cir_values = complex(zeros( ...
+        cirLen, packetCount, 'like', firstCirValues));
     for k = 1:packetCount
         values = frames(k).cir.values(:);
         n = min(cirLen, numel(values));
@@ -272,7 +275,6 @@ end
 % 结果写盘：MAT 文件保存完整结果，CSV 保存帧级摘要。
 save(batch.mat_file, 'results', '-v7');
 writeSummaryCsv(batch.summary_csv, frames);
-fineSeconds = toc(ticFine);
 
 printProgress('Stage 3/3: fine decode', 1, fineSeconds);
 fprintf('\n');
@@ -660,21 +662,22 @@ while offset < totalSamples
     % 跨步读取：只读每 energy_read_stride 个 IQ 记录中的一个，降低 I/O 与转换量。
     [raw, sampleIndices] = uwbdecoder.readIqRawStrided( ...
         params.file_name, offset, chunkSamples, params.ant_num, ...
-        batch.energy_read_stride);
+        batch.energy_read_stride, 'single');
     rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
+    clear raw;
     % 抽取网格上的滑动平均能量包络。
     smoothLength = max(3, round( ...
         batch.energy_smooth_rx_samples/batch.energy_read_stride));
     energy = movmean(abs(rx).^2, smoothLength);
     % 取能量最低的 baseline_fraction 部分作为噪声基线，用中位数 + MAD 估计底噪。
-    sortedEnergy = sort(energy);
     baselineCount = max(32, floor( ...
-        batch.energy_baseline_fraction*numel(sortedEnergy)));
-    baselineCount = min(baselineCount, numel(sortedEnergy));
-    baselineEnergy = sortedEnergy(1:baselineCount);
+        batch.energy_baseline_fraction*numel(energy)));
+    baselineCount = min(baselineCount, numel(energy));
+    baselineEnergy = mink(energy, baselineCount);
     energyMedian = median(baselineEnergy);
     energySigma = 1.4826*median(abs(baselineEnergy - energyMedian));
-    robustSigma = max(energySigma, eps(max(abs(energyMedian), 1)));
+    robustSigma = max(energySigma, ...
+        eps(max(abs(energyMedian), single(1))));
     adaptiveHigh = energyMedian + ...
         batch.energy_threshold_sigma_high*robustSigma;
     adaptiveLow = energyMedian + ...
@@ -970,16 +973,16 @@ for level = 1:3
     levelCandidateThreshold = zeros(0, 1);
     for intervalIdx = 1:size(newIntervals, 1)
         interval = newIntervals(intervalIdx, :);
-        [delayPositions, correlationEnergy, threshold] = ...
+        [correlationEnergy, threshold] = ...
             scanFirstRepetition(rxBuffer, bufferStart, interval, ...
             preambleTemplate, batch.correlation_baseline_fraction, ...
             batch.corr_threshold_sigma);
         diagnostics.scanned_delay_count = ...
-            diagnostics.scanned_delay_count + numel(delayPositions);
+            diagnostics.scanned_delay_count + numel(correlationEnergy);
         diagnostics.scan_interval_count = ...
             diagnostics.scan_interval_count + 1;
         [candidatePositions, candidateEnergy] = ...
-            extractCorrelationCandidates(delayPositions, ...
+            extractCorrelationCandidates(interval(1), ...
             correlationEnergy, threshold, ...
             batch.corr_candidate_relative_level, ...
             batch.correlation_peak_min_distance_samples);
@@ -1060,17 +1063,17 @@ while tailStart <= tailEnd
         templateLength - 1);
     rxBuffer = readProcessedBuffer( ...
         params, bufferStart, bufferEnd - bufferStart + 1);
-    [delayPositions, correlationEnergy, threshold] = ...
+    [correlationEnergy, threshold] = ...
         scanFirstRepetition(rxBuffer, bufferStart, ...
         [tailStart, chunkEnd], preambleTemplate, ...
         batch.correlation_baseline_fraction, ...
         batch.corr_threshold_sigma);
     diagnostics.scanned_delay_count = ...
-        diagnostics.scanned_delay_count + numel(delayPositions);
+        diagnostics.scanned_delay_count + numel(correlationEnergy);
     diagnostics.scan_interval_count = ...
         diagnostics.scan_interval_count + 1;
     [candidatePositions, candidateEnergy] = ...
-        extractCorrelationCandidates(delayPositions, ...
+        extractCorrelationCandidates(tailStart, ...
         correlationEnergy, threshold, ...
         batch.corr_candidate_relative_level, ...
         batch.correlation_peak_min_distance_samples);
@@ -1131,8 +1134,8 @@ for trainIdx = 1:numel(trainStarts)
         memberScores(memberIdx) = mean( ...
             detections(members(memberIdx)).per_rep_energy);
     end
-    trainScores(trainIdx) = max(memberScores);
-    representatives(trainIdx) = detections(members(1));
+    [trainScores(trainIdx), bestMember] = max(memberScores);
+    representatives(trainIdx) = detections(members(bestMember));
 end
 
 [~, strengthOrder] = sort(trainScores, 'descend');
@@ -1184,10 +1187,10 @@ if isempty(previous)
 end
 intervals = zeros(0, 2);
 if current(1) < previous(1)
-    intervals(end + 1, :) = [current(1), previous(1) - 1]; %#ok<AGROW>
+    intervals(end + 1, :) = [current(1), previous(1) - 1];
 end
 if current(2) > previous(2)
-    intervals(end + 1, :) = [previous(2) + 1, current(2)]; %#ok<AGROW>
+    intervals(end + 1, :) = [previous(2) + 1, current(2)];
 end
 end
 
@@ -1199,12 +1202,12 @@ function rx = readProcessedBuffer(params, sampleOffset, sampleNum)
 %   输入文件已经处于 HRP 预处理工作采样率，因此这里不再重采样、不改变样本网格，
 %   也不额外归一化幅度，以便相关结果与绝对采样坐标保持一致。
 raw = uwbdecoder.readIqRaw( ...
-    params.file_name, sampleOffset, sampleNum, params.ant_num);
+    params.file_name, sampleOffset, sampleNum, params.ant_num, 'single');
 rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
 % 采集数据已经位于预处理后的 HRP 网格上，因此保持采样网格和幅度不变。
 end
 
-function [positions, energy, threshold] = scanFirstRepetition( ...
+function [energy, threshold] = scanFirstRepetition( ...
         rxBuffer, bufferStart, interval, preambleTemplate, ...
         baselineFraction, thresholdSigma)
 %SCANFIRSTREPETITION 扫描指定区间内第一段前导码的归一化相关能量。
@@ -1220,23 +1223,21 @@ segmentFirst = interval(1) - bufferStart + 1;
 segmentLast = segmentFirst + width + templateLength - 2;
 segment = rxBuffer(segmentFirst:segmentLast);
 % FFT 快速匹配滤波，得到每个延迟点的相关输出。
-matched = fftfilt(flipud(conj(preambleTemplate)), segment);
+matched = uwbdecoder.fftFilter( ...
+    flipud(conj(preambleTemplate)), segment);
 % 滑动接收能量归一化，使相关得分不受幅度变化影响。
-energyNorm = sqrt(movsum(abs(segment).^2, ...
+receiveNorm = sqrt(movsum(abs(segment).^2, ...
     [templateLength - 1, 0])) + eps;
-score = abs(matched)./energyNorm;
-% 去掉滤波器瞬态段，只保留与 interval 内各延迟点对齐的得分，再平方得到能量。
-score = score(templateLength:templateLength + width - 1);
-energy = score.^2;
+% 去掉滤波器瞬态段，只保留与 interval 内各延迟点对齐的能量。
+validRange = templateLength:templateLength + width - 1;
+energy = (abs(matched(validRange))./receiveNorm(validRange)).^2;
 % 从能量低分位估计稳健噪声阈值。
 threshold = robustCorrelationThreshold( ...
     energy, baselineFraction, thresholdSigma);
-% 每个得分对应 interval 内的一个绝对采样位置（零基文件坐标）。
-positions = (interval(1):interval(2)).';
 end
 
 function [positions, values] = extractCorrelationCandidates( ...
-        delayPositions, energy, threshold, relativeLevel, minDistance)
+        firstPosition, energy, threshold, relativeLevel, minDistance)
 %EXTRACTCORRELATIONCANDIDATES 从相关能量曲线中提取峰值候选。
 %
 %   峰值必须同时高于稳健噪声阈值 threshold 和全局最大能量的相对门限
@@ -1257,7 +1258,7 @@ else
     locations = simpleFindPeaks(energy, level, minDistance);
     values = energy(locations);
 end
-positions = delayPositions(locations);
+positions = firstPosition + locations(:) - 1;
 values = values(:);
 end
 
@@ -1275,10 +1276,10 @@ function result = validateCorrelationCandidate( ...
 %   输出 result 同时保留每段能量、实际使用的重复次数、命中数和最终阈值比。
 templateLength = numel(preambleTemplate);
 perRepEnergy = zeros(maxRepetitions, 1);
-runningRatio = zeros(maxRepetitions, 1);
 perRepEnergy(1) = firstEnergy;
 hitCount = double(firstEnergy > singleThreshold);
 detected = false;
+thresholdRatio = 0;
 
 % 逐段验证后续重复前导码；一旦达到阈值比与命中数要求就提前接受。
 for repetition = 1:maxRepetitions
@@ -1296,14 +1297,14 @@ for repetition = 1:maxRepetitions
         hitCount = hitCount + ...
             (perRepEnergy(repetition) > singleThreshold);
     end
-    runningRatio(repetition) = ...
-        mean(perRepEnergy(1:repetition))/max(singleThreshold, eps);
+    thresholdRatio = mean(perRepEnergy(1:repetition)) / ...
+        max(singleThreshold, eps);
     enoughHits = hitCount >= minRepetitions;
     if requireAllHits
         enoughHits = hitCount == repetition;
     end
     if repetition >= minRepetitions && ...
-            runningRatio(repetition) >= minThresholdRatio && enoughHits
+            thresholdRatio >= minThresholdRatio && enoughHits
         detected = true;
         break;
     end
@@ -1314,7 +1315,7 @@ result = struct( ...
     'candidate', 0, ...
     'level', 0, ...
     'repetitions_used', repetition, ...
-    'threshold_ratio', runningRatio(repetition), ...
+    'threshold_ratio', thresholdRatio, ...
     'hit_count', hitCount, ...
     'per_rep_energy', perRepEnergy(1:repetition));
 end
@@ -1327,13 +1328,13 @@ function threshold = robustCorrelationThreshold( ...
 %   与 MAD（乘以 1.4826 后近似标准差）估计中心和离散程度。返回值为
 %   baselineMedian + thresholdSigma * baselineSigma。至少保留 16 个样本作为基线，
 %   同时用 eps 防止全零或近似常数信号造成除零和零阈值问题。
-sortedMetric = sort(metric);
-baselineCount = max(16, floor(baselineFraction*numel(sortedMetric)));
-baselineCount = min(baselineCount, numel(sortedMetric));
-baseline = sortedMetric(1:baselineCount);
+baselineCount = max(16, floor(baselineFraction*numel(metric)));
+baselineCount = min(baselineCount, numel(metric));
+baseline = mink(metric, baselineCount);
 baselineMedian = median(baseline);
 baselineSigma = 1.4826*median(abs(baseline - baselineMedian));
-threshold = baselineMedian + thresholdSigma*max(baselineSigma, eps);
+threshold = baselineMedian + ...
+    thresholdSigma*max(baselineSigma, eps);
 end
 
 function locs = simpleFindPeaks(metric, threshold, minSep)

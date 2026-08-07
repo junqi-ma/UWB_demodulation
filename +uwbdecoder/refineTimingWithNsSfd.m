@@ -58,7 +58,8 @@ for k = 1:numel(candidateSequences)
     searchEnd = min(length(rx), expected + reference.samples_per_symbol + ...
         length(sfdReference) - 1);
     searchSignal = rx(searchStart:searchEnd);
-    matched = fftfilt(flipud(conj(sfdReference)), searchSignal);
+    matched = uwbdecoder.fftFilter( ...
+        flipud(conj(sfdReference)), searchSignal);
     energy = sqrt(movsum(abs(searchSignal).^2, ...
         [length(sfdReference)-1, 0]));
     score = abs(matched) ./ (energy + eps);

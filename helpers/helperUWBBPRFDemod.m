@@ -106,69 +106,65 @@ function [cw, fieldEnd] = helperUWBBPRFDemod(isPHR, ternarySymbols, fieldStart, 
     error("cfg.CodeIndex is required for BPRF descrambling.");
   end
 
-  try
-    pn = lrwpan.internal.createScrambler(codeIndex, chipsPerBurst, pnMaskOffset);
-  catch ME
-    error("Cannot create lrwpan.internal.createScrambler. Original error: %s", ME.message);
-  end
+  spreadingSequences = cachedSpreadingSequences( ...
+      isPHR, codeIndex, chipsPerBurst, pnMaskOffset, numSymbols);
 
   % -------------------------------
   % 4) Reshape into one column per BPM-BPSK symbol
   % -------------------------------
   rx = ternarySymbols(fieldStart:fieldEnd);
-  symbols = reshape(rx, chipsPerSymbol, []);
-
-  cw = zeros(2, numSymbols);
-
-  % Candidate burst starts inside quarter 1 and quarter 3.
-  % MATLAB indexing is 1-based.
-  hopOffsets = (0:numHopBursts-1) * chipsPerBurst;
-
-  q0Base = 0;                % 1st quarter, BPM bit g0 = 0
-  q1Base = 2 * quarterLen;   % 3rd quarter, BPM bit g0 = 1
-
-  % -------------------------------
-  % 5) BPM-BPSK hard demodulation
-  % -------------------------------
-  for sym = 1:numSymbols
-    thisSym = real(symbols(:, sym));
-
-    % PN sequence for this active burst.
-    % 0 -> +1, 1 -> -1.
-    spreadingBits = pn();
-    spreadingSeq  = 1 - 2*spreadingBits(:);
-
-    metricPos0 = zeros(1, numHopBursts);
-    metricPos1 = zeros(1, numHopBursts);
-
-    for h = 1:numHopBursts
-      idx0 = q0Base + hopOffsets(h) + (1:chipsPerBurst);
-      idx1 = q1Base + hopOffsets(h) + (1:chipsPerBurst);
-
-      burst0 = thisSym(idx0);
-      burst1 = thisSym(idx1);
-
-      % Coherent projection onto the expected scrambled burst.
-      metricPos0(h) = sum(burst0(:) .* spreadingSeq);
-      metricPos1(h) = sum(burst1(:) .* spreadingSeq);
-    end
-
-    % Position bit: choose the quarter with larger absolute correlation.
-    [best0, hop0] = max(abs(metricPos0));
-    [best1, hop1] = max(abs(metricPos1));
-
-    if best0 >= best1
-      cw(1, sym) = 0;                 % g0: position bit
-      bestMetric = metricPos0(hop0);
-    else
-      cw(1, sym) = 1;                 % g0: position bit
-      bestMetric = metricPos1(hop1);
-    end
-
-    % Polarity bit: sign after descrambling.
-    % positive -> g1 = 0, negative -> g1 = 1
-    cw(2, sym) = bestMetric < 0;
+  if isa(rx, 'single') && exist('helperUWBBPRFDemodKernel_mex', 'file') == 3
+    [cw, fieldEnd] = helperUWBBPRFDemodKernel_mex( ...
+        rx, fieldStart, numSymbols, chipsPerBurst, chipsPerSymbol, ...
+        spreadingSequences);
+  else
+    [cw, fieldEnd] = helperUWBBPRFDemodKernel( ...
+        rx, fieldStart, numSymbols, chipsPerBurst, chipsPerSymbol, ...
+        spreadingSequences);
   end
+end
+
+function sequences = cachedSpreadingSequences( ...
+    isPHR, codeIndex, chipsPerBurst, pnMaskOffset, numSymbols)
+% Cache PHR and payload PN matrices independently on each MATLAB worker.
+persistent phrKey phrSequences payloadKey payloadSequences
+
+key = double([codeIndex, chipsPerBurst, pnMaskOffset]);
+if isPHR
+  cacheHit = ~isempty(phrKey) && isequal(phrKey, key) && ...
+      size(phrSequences, 2) >= numSymbols;
+  if ~cacheHit
+    phrKey = key;
+    phrSequences = generateSpreadingSequences( ...
+        codeIndex, chipsPerBurst, pnMaskOffset, numSymbols);
+  end
+  sequences = phrSequences(:, 1:numSymbols);
+else
+  cacheHit = ~isempty(payloadKey) && isequal(payloadKey, key) && ...
+      size(payloadSequences, 2) >= numSymbols;
+  if ~cacheHit
+    payloadKey = key;
+    payloadSequences = generateSpreadingSequences( ...
+        codeIndex, chipsPerBurst, pnMaskOffset, numSymbols);
+  end
+  sequences = payloadSequences(:, 1:numSymbols);
+end
+end
+
+function sequences = generateSpreadingSequences( ...
+    codeIndex, chipsPerBurst, pnMaskOffset, numSymbols)
+try
+  pn = lrwpan.internal.createScrambler( ...
+      codeIndex, chipsPerBurst, pnMaskOffset);
+catch ME
+  error("Cannot create lrwpan.internal.createScrambler. Original error: %s", ...
+      ME.message);
+end
+sequences = zeros(chipsPerBurst, numSymbols);
+for sym = 1:numSymbols
+  spreadingBits = pn();
+  sequences(:, sym) = 1 - 2*double(spreadingBits(:));
+end
 end
 
 function val = localGetCfg(cfg, name, defaultVal)

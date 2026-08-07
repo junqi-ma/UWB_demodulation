@@ -1,4 +1,5 @@
-function result = decode_uwb(options, preprocessedRx, interference, preparedReference)
+function result = decode_uwb(options, preprocessedRx, interference, ...
+        preparedReference, inputClass, seededPreambleStart)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -9,6 +10,12 @@ function result = decode_uwb(options, preprocessedRx, interference, preparedRefe
 %   RESULT = DECODE_UWB(OPTIONS, RX, INTERFERENCE, REFERENCE) reuses a
 %   prebuilt UWB reference. Batch decoders use this form to avoid rebuilding
 %   the same PHY waveform for every candidate packet.
+%   RESULT = DECODE_UWB(OPTIONS, [], [], REFERENCE, INPUTCLASS) controls the
+%   file-reader output class. INPUTCLASS is 'double' by default; full-file
+%   batch decoding uses 'single' to reduce working-buffer memory.
+%   RESULT = DECODE_UWB(..., SEEDEDPREAMBLESTART) starts preamble tracking
+%   near a one-based location supplied by the full-capture detector. If the
+%   seeded path fails validation, the decoder falls back to a full search.
 %
 %   Processing stages are implemented as separate files in the
 %   +uwbdecoder package folder.
@@ -17,6 +24,12 @@ function result = decode_uwb(options, preprocessedRx, interference, preparedRefe
 
 if nargin < 1
     options = struct();
+end
+if nargin < 5 || isempty(inputClass)
+    inputClass = 'double';
+end
+if nargin < 6
+    seededPreambleStart = [];
 end
 params = uwbdecoder.mergeOptions( ...
     uwbdecoder.defaultOptions(), options);
@@ -29,7 +42,7 @@ params.verbose = false;
 
 if nargin < 2 || isempty(preprocessedRx)
     raw = uwbdecoder.readIqRaw(params.file_name, params.sample_offset, ...
-        params.sample_num, params.ant_num);
+        params.sample_num, params.ant_num, inputClass);
     rx = uwbdecoder.selectIqChannel(raw, params.channel_index);
     interference = struct('enabled', false, 'frequency_hz', NaN, ...
         'coefficient', complex(0), 'suppression_db', NaN, ...
@@ -60,7 +73,7 @@ end
 rxWork = rx;
 
 preamble = uwbdecoder.detectRepeatedPreamble( ...
-    rxWork, reference, params);
+    rxWork, reference, params, seededPreambleStart);
 uwbdecoder.validateCaptureLength( ...
     rxWork, preamble, reference, params);
 

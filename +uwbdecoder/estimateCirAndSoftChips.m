@@ -86,7 +86,7 @@ if padLeft > 0 || padRight > 0
 end
 axisStart = absStart - padLeft;
 if tapCount <= 128, filtered = filter(filterTaps, 1, segment);
-else, filtered = fftfilt(filterTaps, segment); end
+else, filtered = uwbdecoder.fftFilter(filterTaps, segment); end
 sampleAxis = axisStart + (0:numel(filtered)-1).';
 filtered = filtered(:);
 end

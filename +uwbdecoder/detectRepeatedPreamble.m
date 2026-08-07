@@ -1,4 +1,4 @@
-function preamble = detectRepeatedPreamble(rx, reference, params)
+function preamble = detectRepeatedPreamble(rx, reference, params, seededStart)
 %DETECTREPEATEDPREAMBLE 检测并跟踪重复出现的 SYNC 前导符号。
 %   PREAMBLE = DETECTREPEATEDPREAMBLE(RX, REFERENCE, PARAMS) 采用与
 %   decode_uwb_all 相同的三步思想：低成本能量门控缩小搜索范围、仅对
@@ -8,6 +8,9 @@ function preamble = detectRepeatedPreamble(rx, reference, params)
 %   See also DECODE_X410_DW1000, VALIDATECAPTURELENGTH.
 
 rx = rx(:);
+if nargin < 4
+    seededStart = [];
+end
 symbolLength = reference.samples_per_symbol;
 % Match against the shaped SYNC waveform actually present in the received
 % signal. The bare spreading code (sampled_code) is the right template only
@@ -17,7 +20,15 @@ template = reference.preamble_waveform(:);
 
 % 快速路径：能量门控后，仅扫描候选区域的第一个 SYNC；随后顺序验证
 % 少量重复符号。该路径避免构造完整 ROI 的 16 路相关 metric。
-preamble = detectAdaptivePreamble(rx, template, symbolLength, params);
+if isempty(seededStart) || ~isfinite(seededStart)
+    preamble = detectAdaptivePreamble(rx, template, symbolLength, params);
+else
+    preamble = detectSeededPreamble( ...
+        rx, template, symbolLength, seededStart, params);
+    if preamble.detected_repetitions < 32
+        preamble = detectAdaptivePreamble(rx, template, symbolLength, params);
+    end
+end
 
 % 兼容性回退：弱信号或异常能量区域下，保留原有全速率相关逻辑。
 if preamble.detected_repetitions < 32
@@ -42,6 +53,40 @@ end
 if preamble.detected_repetitions < 32
     error('detectRepeatedPreamble:TooFewRepetitions', ...
         'A reliable repeated preamble was not found. Check receiver settings.');
+end
+end
+
+% -------------------------------------------------------------------------
+function preamble = detectSeededPreamble( ...
+        rx, template, symbolLength, seededStart, params)
+%DETECTSEEDEDPREAMBLE Confirm and track a full-capture detector candidate.
+%   SEEDEDSTART is a one-based template start in RX. Only a narrow interval
+%   is correlated; the existing full detector remains the fallback path.
+
+maxStart = numel(rx) - symbolLength + 1;
+if maxStart < 1
+    preamble = emptyPreambleResult(8, 1, numel(rx));
+    return;
+end
+seededStart = min(max(1, round(seededStart)), maxStart);
+searchRadius = max(64, ceil(symbolLength/32));
+interval = [max(1, seededStart - searchRadius), ...
+    min(maxStart, seededStart + searchRadius)];
+[starts, scoreEnergy, noiseThreshold] = scanFirstSync( ...
+    rx, interval, template, symbolLength);
+[peakEnergy, peakIdx] = max(scoreEnergy);
+candidateStart = starts(peakIdx);
+validation = validateSyncCandidate( ...
+    rx, candidateStart, template, symbolLength, noiseThreshold, ...
+    max(noiseThreshold, 0.20*peakEnergy), params);
+if ~validation.detected
+    preamble = emptyPreambleResult(8, 1, numel(rx));
+    return;
+end
+preamble = trackCandidatePreamble(rx, template, symbolLength, ...
+    candidateStart, sqrt(max(noiseThreshold, 0.20*peakEnergy)), params, 4);
+if preamble.detected_repetitions >= 32
+    preamble.detector = 'seeded_full_capture_candidate';
 end
 end
 
@@ -159,7 +204,7 @@ function [starts, scoreEnergy, threshold] = scanFirstSync(rx, interval, template
 % 对搜索区的每个可能起点计算一次归一化 SYNC 相关。
 width = interval(2) - interval(1) + 1;
 segment = rx(interval(1):interval(2)+symbolLength-1);
-matched = fftfilt(flipud(conj(template)), segment);
+matched = uwbdecoder.fftFilter(flipud(conj(template)), segment);
 energy = sqrt(movsum(abs(segment).^2, [symbolLength-1, 0])) + eps;
 score = abs(matched)./energy;
 score = score(symbolLength:symbolLength+width-1);
@@ -208,18 +253,27 @@ result = struct('detected', false, 'candidate_start', candidateStart, ...
     'threshold_energy', perRepetitionThreshold, 'repetitions_used', repetition);
 end
 
-function preamble = trackCandidatePreamble(rx, template, symbolLength, candidateStart, threshold, params)
+function preamble = trackCandidatePreamble(rx, template, symbolLength, ...
+        candidateStart, threshold, params, maxBackwardRepetitions)
 % 候选确认后才做局部峰跟踪。下游 CFO 至少需要 32 个峰，CIR 默认使用
 % 64 个 SYNC，因此不必遍历全部前导字段。
+if nargin < 7
+    maxBackwardRepetitions = inf;
+end
 searchHalfWidth = 8;
 firstStart = candidateStart;
-while true
-    expected = firstStart - symbolLength;
-    [bestStart, bestScore] = localBestStart(rx, expected, searchHalfWidth, template);
-    if isempty(bestStart) || bestScore < threshold
-        break;
+backwardCount = 0;
+if maxBackwardRepetitions > 0
+    while backwardCount < maxBackwardRepetitions
+        expected = firstStart - symbolLength;
+        [bestStart, bestScore] = localBestStart( ...
+            rx, expected, searchHalfWidth, template);
+        if isempty(bestStart) || bestScore < threshold
+            break;
+        end
+        firstStart = bestStart;
+        backwardCount = backwardCount + 1;
     end
-    firstStart = bestStart;
 end
 
 maxPeaks = min(params.preamble_repetitions, ...
@@ -341,10 +395,10 @@ if isempty(previous)
 end
 intervals = zeros(0, 2);
 if current(1) < previous(1)
-    intervals(end+1, :) = [current(1), previous(1)-1]; %#ok<AGROW>
+    intervals(end+1, :) = [current(1), previous(1)-1];
 end
 if current(2) > previous(2)
-    intervals(end+1, :) = [previous(2)+1, current(2)]; %#ok<AGROW>
+    intervals(end+1, :) = [previous(2)+1, current(2)];
 end
 end
 
@@ -391,7 +445,7 @@ function preamble = trackPreambleInRoi(rx, template, symbolLength, ...
 % 在指定 ROI 内完成全采样率匹配、重复 metric 构造和峰值跟踪。
 roi = rx(roiStart:roiEnd);
 % 匹配滤波输出每个采样点与完整 SYNC 模板的相关幅度。
-matchedRoi = fftfilt(flipud(conj(template)), roi);
+matchedRoi = uwbdecoder.fftFilter(flipud(conj(template)), roi);
 % 用滑动窗口信号能量进行归一化，减小幅度变化和噪声功率的影响。
 energy = sqrt(movsum(abs(roi).^2, [symbolLength-1, 0]));
 scoreRoi = abs(matchedRoi) ./ (energy + eps);
@@ -505,7 +559,7 @@ templateDs = template(1:decimation:end);
 templateDs = templateDs / (norm(templateDs) + eps);
 rxDs = rx(1:decimation:end);
 symbolDs = max(1, round(symbolLength/decimation));
-matched = fftfilt(flipud(conj(templateDs)), rxDs);
+matched = uwbdecoder.fftFilter(flipud(conj(templateDs)), rxDs);
 % 粗搜索同样使用能量归一化和 16 个周期的重复累加。
 energy = sqrt(movsum(abs(rxDs).^2, [symbolDs-1, 0]));
 score = abs(matched) ./ (energy + eps);

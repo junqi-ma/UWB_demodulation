@@ -22,6 +22,12 @@ Desktop.ini
 .vscode/
 .idea/
 
+# Local MATLAB Coder / MEX build products
+codegen/
+*.mexw64
+*.mexa64
+*.mexmaci64
+
 # Local agent / tool state
 .agents/
 .claude/
