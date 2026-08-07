@@ -7,16 +7,22 @@ function [rx, preamble] = compensateCarrierOffset(rx, preamble, reference, param
 %
 %   See also DECODE_X410_DW1000.
 
-usablePeaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
-    params.preamble_repetitions));
-peakValues = readMatchedAt(preamble, usablePeaks);
-% The beginning of a file segment can contain a receiver front-end startup
-% transient. Its curved phase previously looked like a false CFO
-% (about -2.2 kHz in QM35_1.dat). Exclude up to the first 24 repetitions,
-% while always retaining at least 32 repetitions for the linear fit.
-skipCount = min(24, max(0, length(peakValues) - 32));
-stablePeaks = usablePeaks(skipCount+1:end);
-stableValues = peakValues(skipCount+1:end);
+directTiming = isfield(preamble, 'direct_sfd_timing') && ...
+    preamble.direct_sfd_timing;
+if directTiming
+    [stablePeaks, stableValues, skipCount] = directCfoAnchors( ...
+        rx, preamble, reference, params);
+else
+    usablePeaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
+        params.preamble_repetitions));
+    peakValues = readMatchedAt(preamble, usablePeaks);
+    % The beginning of a file segment can contain a receiver front-end
+    % startup transient. Exclude up to the first 24 repetitions, while
+    % retaining at least 32 repetitions for the linear fit.
+    skipCount = min(24, max(0, length(peakValues) - 32));
+    stablePeaks = usablePeaks(skipCount+1:end);
+    stableValues = peakValues(skipCount+1:end);
+end
 fitCount = min(240, length(stableValues));
 fitTime = (double(stablePeaks(1:fitCount)) - ...
     double(stablePeaks(1))) / reference.fs;
@@ -27,7 +33,11 @@ frequencyOffset = phaseFit(1) / (2*pi);
 nn = (0:numel(rx)-1).';
 rx = rx(:) .* exp(-1j*2*pi*frequencyOffset*nn/reference.fs);
 
-phaseRepetitions = min(32, preamble.detected_repetitions);
+if directTiming
+    phaseRepetitions = min(8, preamble.detected_repetitions);
+else
+    phaseRepetitions = min(32, preamble.detected_repetitions);
+end
 known = repmat(reference.preamble_waveform, phaseRepetitions, 1);
 firstRepetition = max(0, params.preamble_repetitions - phaseRepetitions);
 phaseStart = round(preamble.start_sample + firstRepetition*preamble.measured_period);
@@ -40,9 +50,43 @@ gain = known' * rx(phaseIndices);
 rx = rx * exp(-1j*angle(gain));
 preamble.frequency_offset_hz = frequencyOffset;
 preamble.frequency_offset_skipped_repetitions = skipCount;
+preamble.frequency_offset_anchor_count = fitCount;
 
 if isfield(params, 'verbose') && params.verbose
     fprintf('Estimated frequency offset: %.3f kHz.\n', frequencyOffset/1e3);
+end
+
+% -------------------------------------------------------------------------
+function [peaks, values, skipCount] = directCfoAnchors( ...
+        rx, preamble, reference, params)
+%DIRECTCFOANCHORS Correlate a small set of widely spaced known SYNCs.
+%   SFD timing has already fixed the preamble origin, so there is no need
+%   to perform a local timing search for every repeated symbol.
+
+available = min(params.preamble_repetitions, ...
+    preamble.detected_repetitions);
+skipCount = min(8, max(0, available - 8));
+anchorCount = min(16, available - skipCount);
+if anchorCount < 2
+    error('compensateCarrierOffset:TooFewAnchors', ...
+        'At least two preamble repetitions are required for CFO estimation.');
+end
+repetitions = unique(round(linspace( ...
+    skipCount, available - 1, anchorCount))).';
+starts = round(preamble.start_sample + ...
+    repetitions*preamble.measured_period);
+sampleOffsets = (0:numel(reference.preamble_waveform)-1).';
+indices = sampleOffsets + starts.';
+valid = all(indices >= 1 & indices <= numel(rx), 1);
+indices = indices(:, valid);
+starts = starts(valid);
+if numel(starts) < 2
+    error('compensateCarrierOffset:AnchorWindowOutOfBounds', ...
+        'Too few complete preamble anchors remain inside the work buffer.');
+end
+segments = rx(indices);
+values = sum(segments.*conj(reference.preamble_waveform), 1).';
+peaks = starts + reference.samples_per_symbol - 1;
 end
 end
 

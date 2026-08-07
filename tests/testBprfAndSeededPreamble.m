@@ -54,7 +54,8 @@ preamble = uwbdecoder.detectRepeatedPreamble( ...
     single(rx), reference, params, knownStart + 3);
 
 testCase.verifyEqual(preamble.detector, ...
-    'seeded_full_capture_candidate');
+    'seeded_direct_sfd_candidate');
+testCase.verifyTrue(preamble.direct_sfd_timing);
 testCase.verifyEqual(preamble.start_sample, knownStart, 'AbsTol', 1);
 testCase.verifyEqual(preamble.detected_repetitions, repetitions);
 testCase.verifyEqual(preamble.measured_period, symbolLength, 'AbsTol', 1e-9);

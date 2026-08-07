@@ -23,8 +23,8 @@ code_index = 10;
 preamble_repetitions = 64;
 psdu_length_bytes = 20;
 empty_samples = 160000;          % Must be divisible by every factor below.
-preamble_downsampling = [1 2 4 8 16 32];
-benchmark_repetitions = 5;
+preamble_downsampling = [1 2 4 8 16 32 64];
+benchmark_repetitions = 20;
 show_plot = true;
 cir_delay_range_ns = [-100 300];
 

@@ -80,8 +80,12 @@ if isfield(params, 'verbose') && params.verbose
 end
 
 if correlation >= 0.10
-    preamble.start_sample = sfdStart - round( ...
+    refinedStart = sfdStart - round( ...
         params.preamble_repetitions * preamble.measured_period);
+    timingShift = refinedStart - preamble.start_sample;
+    preamble.start_sample = refinedStart;
+    preamble.peaks = preamble.peaks + timingShift;
+    preamble.strongest_end = preamble.strongest_end + timingShift;
     if isfield(params, 'verbose') && params.verbose
         fprintf('SFD-refined preamble start: work sample %d.\n', ...
             preamble.start_sample);
@@ -93,4 +97,5 @@ preamble.sfd_waveform_candidate_names = candidateNames;
 preamble.sfd_waveform_candidate_correlations = correlations;
 preamble.selected_sfd_name = candidateNames{selectedIndex};
 preamble.selected_sfd_sequence = candidateSequences{selectedIndex};
+preamble.sfd_start_sample = sfdStart;
 end

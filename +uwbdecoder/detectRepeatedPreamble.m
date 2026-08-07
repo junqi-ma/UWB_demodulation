@@ -83,11 +83,52 @@ if ~validation.detected
     preamble = emptyPreambleResult(8, 1, numel(rx));
     return;
 end
-preamble = trackCandidatePreamble(rx, template, symbolLength, ...
-    candidateStart, sqrt(max(noiseThreshold, 0.20*peakEnergy)), params, 4);
+preamble = buildDirectSeededPreamble(rx, template, symbolLength, ...
+    candidateStart, sqrt(max(noiseThreshold, 0.20*peakEnergy)), ...
+    peakEnergy, interval, params);
 if preamble.detected_repetitions >= 32
-    preamble.detector = 'seeded_full_capture_candidate';
+    preamble.detector = 'seeded_direct_sfd_candidate';
 end
+end
+
+function preamble = buildDirectSeededPreamble(rx, template, symbolLength, ...
+        candidateStart, threshold, peakEnergy, interval, params)
+%BUILDDIRECTSEEDEDPREAMBLE Confirm the first SYNC without tracking all of it.
+%   Stage 2 already supplied a packet candidate. Correct a candidate that
+%   landed on one of the next few repetitions, then describe the remaining
+%   preamble on the configured symbol grid. Full-rate NS-SFD correlation
+%   refines the start before CFO and CIR estimation.
+
+searchHalfWidth = 8;
+firstStart = candidateStart;
+for backwardCount = 1:4
+    expected = firstStart - symbolLength;
+    [bestStart, bestScore] = localBestStart( ...
+        rx, expected, searchHalfWidth, template);
+    if isempty(bestStart) || bestScore < threshold
+        break;
+    end
+    firstStart = bestStart;
+end
+
+availableRepetitions = max(0, floor( ...
+    (numel(rx) - firstStart + 1)/symbolLength));
+repetitionCount = min(params.preamble_repetitions, availableRepetitions);
+starts = firstStart + (0:repetitionCount-1).'*symbolLength;
+peaks = starts + symbolLength - 1;
+
+preamble = struct( ...
+    'matched', complex(zeros(0, 1)), 'score', zeros(0, 1), ...
+    'metric', peakEnergy, 'metric_peak', sqrt(peakEnergy), ...
+    'metric_peak_index', 1, ...
+    'strongest_end', firstStart + symbolLength - 1, ...
+    'threshold', threshold, 'peaks', peaks, ...
+    'detected_repetitions', repetitionCount, ...
+    'measured_period', double(symbolLength), 'clock_error_ppm', 0, ...
+    'start_sample', firstStart, 'search_half_width', searchHalfWidth, ...
+    'roi_start', interval(1), 'roi_end', interval(2), ...
+    'matched_is_roi', false, 'direct_sfd_timing', true, ...
+    'detector', 'seeded_direct_sfd_candidate');
 end
 
 % -------------------------------------------------------------------------
@@ -338,13 +379,11 @@ if isempty(starts)
     bestStart = []; bestScore = []; bestMatch = [];
     return;
 end
-scores = zeros(numel(starts), 1);
-matches = complex(zeros(numel(starts), 1));
-for k = 1:numel(starts)
-    window = rx(starts(k):starts(k)+numel(template)-1);
-    matches(k) = sum(window.*conj(template));
-    scores(k) = abs(matches(k))/(sqrt(sum(abs(window).^2)) + eps);
-end
+segment = rx(starts(1):starts(end)+numel(template)-1);
+matches = conv(segment, flipud(conj(template)), 'valid');
+windowEnergy = real(conv(abs(segment).^2, ...
+    ones(numel(template), 1, 'like', segment), 'valid'));
+scores = abs(matches)./(sqrt(max(windowEnergy, 0)) + eps);
 [bestScore, idx] = max(scores);
 bestStart = starts(idx);
 bestMatch = matches(idx);

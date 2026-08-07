@@ -1,5 +1,5 @@
 function result = decode_uwb(options, preprocessedRx, interference, ...
-        preparedReference, inputClass, seededPreambleStart)
+        preparedReference, inputClass, seededPreambleStart, optionsAreMerged)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -16,6 +16,8 @@ function result = decode_uwb(options, preprocessedRx, interference, ...
 %   RESULT = DECODE_UWB(..., SEEDEDPREAMBLESTART) starts preamble tracking
 %   near a one-based location supplied by the full-capture detector. If the
 %   seeded path fails validation, the decoder falls back to a full search.
+%   RESULT = DECODE_UWB(..., OPTIONSAREMERGED) lets an internal batch caller
+%   reuse an already merged and validated parameter structure.
 %
 %   Processing stages are implemented as separate files in the
 %   +uwbdecoder package folder.
@@ -31,9 +33,16 @@ end
 if nargin < 6
     seededPreambleStart = [];
 end
-params = uwbdecoder.mergeOptions( ...
-    uwbdecoder.defaultOptions(), options);
-addpath(params.helper_path);
+if nargin < 7
+    optionsAreMerged = false;
+end
+if optionsAreMerged
+    params = options;
+else
+    params = uwbdecoder.mergeOptions( ...
+        uwbdecoder.defaultOptions(), options);
+end
+ensureHelperPath(params.helper_path);
 
 % Suppress all progress fprintf inside +uwbdecoder so the console stays
 % clean for CLI / LLM-driven debugging. The decode results are fully saved
@@ -88,10 +97,33 @@ if params.enable_frame_crop
     cropStartWork = cropInfo.crop_start;
 end
 
-[rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
-    rxWork, preamble, reference, params);
-preamble = uwbdecoder.refineTimingWithNsSfd( ...
-    rxWork, preamble, reference, params);
+directSfdTiming = isfield(preamble, 'direct_sfd_timing') && ...
+    preamble.direct_sfd_timing;
+if directSfdTiming
+    % Stage 2 already supplied the packet origin. Jump to the configured
+    % preamble boundary and use the complete NS-SFD waveform to refine it;
+    % then estimate CFO from a small set of known preamble anchors.
+    preamble = uwbdecoder.refineTimingWithNsSfd( ...
+        rxWork, preamble, reference, params);
+    if preamble.sfd_waveform_correlation >= 0.10
+        [rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
+            rxWork, preamble, reference, params);
+    else
+        % A wrong Stage-2 seed should cost performance, not correctness.
+        % Re-run the established detector inside the cropped packet window.
+        preamble = uwbdecoder.detectRepeatedPreamble( ...
+            rxWork, reference, params, []);
+        [rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
+            rxWork, preamble, reference, params);
+        preamble = uwbdecoder.refineTimingWithNsSfd( ...
+            rxWork, preamble, reference, params);
+    end
+else
+    [rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
+        rxWork, preamble, reference, params);
+    preamble = uwbdecoder.refineTimingWithNsSfd( ...
+        rxWork, preamble, reference, params);
+end
 sfdSymbols = uwbdecoder.analyzeNsSfdSymbols( ...
     rxWork, preamble, reference, params);
 [cir, chips] = uwbdecoder.estimateCirAndSoftChips( ...
@@ -120,4 +152,20 @@ result.soft_chip_timing = struct( ...
     'last_chip_sample_uncropped', ...
         chips.chip_end_sample + cropStartWork - 1, ...
     'num_chips', chips.num_chips);
+end
+
+function ensureHelperPath(helperPath)
+%ENSUREHELPERPATH Add the helper directory at most once per MATLAB process.
+%   In a parfor batch, each worker initializes its path on its first packet
+%   instead of repeating addpath for every candidate.
+persistent initializedPaths
+
+helperPath = char(helperPath);
+if isempty(initializedPaths)
+    addpath(helperPath);
+    initializedPaths = {helperPath};
+elseif ~any(strcmp(initializedPaths, helperPath))
+    addpath(helperPath);
+    initializedPaths{end + 1} = helperPath;
+end
 end

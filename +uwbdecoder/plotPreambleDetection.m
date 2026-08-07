@@ -19,6 +19,14 @@ grid on; xlabel('Sample'); ylabel('16-symbol accumulated metric');
 title(sprintf('Code %d preamble matching', params.code_index));
 
 subplot(2, 1, 2);
+if isempty(preamble.score)
+    plot(preamble.peaks, zeros(size(preamble.peaks)), 'ro');
+    xline(preamble.peaks(1), 'g--', 'First repetition end');
+    grid on; xlabel('Sample'); ylabel('Seeded timing grid');
+    title(sprintf(['Direct SFD timing candidate: %d configured ', ...
+        'preamble repetitions'], preamble.detected_repetitions));
+    return;
+end
 peakIdx = matchedLocalIndex(preamble, preamble.peaks);
 margin = 2*reference.samples_per_symbol;
 first = max(1, peakIdx(1) - margin);

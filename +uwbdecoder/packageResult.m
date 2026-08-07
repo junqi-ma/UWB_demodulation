@@ -19,6 +19,18 @@ result.preamble = struct('metric_peak', preamble.metric_peak, ...
     'start_sample', preamble.start_sample, ...
     'carrier_frequency_offset_hz', preamble.frequency_offset_hz, ...
     'sfd_waveform_correlation', preamble.sfd_waveform_correlation);
+if isfield(preamble, 'frequency_offset_anchor_count')
+    result.preamble.frequency_offset_anchor_count = ...
+        preamble.frequency_offset_anchor_count;
+end
+if isfield(preamble, 'direct_sfd_timing')
+    result.preamble.direct_sfd_timing = preamble.direct_sfd_timing;
+else
+    result.preamble.direct_sfd_timing = false;
+end
+if isfield(preamble, 'sfd_start_sample')
+    result.preamble.sfd_start_sample = preamble.sfd_start_sample;
+end
 result.cir = cir;
 result.sfd_symbol_diagnostics = sfdSymbols;
 result.sfd = sfd;

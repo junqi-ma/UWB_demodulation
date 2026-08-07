@@ -140,7 +140,9 @@ parfor c = 1:numCandidates
     offset = candOffsets(c);
     windowSamples = candWindowSamples(c);
 
-    windowOptions = options;
+    % baseParams was merged and validated once before entering parfor.
+    % Only the candidate-specific file window changes here.
+    windowOptions = baseParams;
     windowOptions.sample_offset = offset;
     windowOptions.sample_num = windowSamples;
     windowOptions.show_plots = false;
@@ -148,7 +150,7 @@ parfor c = 1:numCandidates
     % 第 4 个参数复用主流程已构造的 reference，避免每个候选重复生成 PHY 波形。
     try
         result = decode_uwb(windowOptions, [], [], reference, 'single', ...
-            seededPreambleStart);
+            seededPreambleStart, true);
     catch decodeError
         continue;  % 单个候选解码失败不影响其他候选。
     end
