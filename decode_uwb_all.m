@@ -47,6 +47,15 @@ end
 
 % 只构造一次参考信号，供候选窗口完整解码和采样坐标换算共同使用。
 reference = uwbdecoder.buildUwbReference(baseParams);
+
+% 提前一次性构造 SFD 模板，避免每包重复生成
+sfdTemplates = struct();
+sfdTemplates.decawave = baseParams.decawave_sfd(:);
+sfdTemplates.ieee = baseParams.ieee_sfd(:);
+sfdTemplates.sfd4z_1 = baseParams.sfd4z_1(:);
+sfdTemplates.sfd4z_2 = baseParams.sfd4z_2(:);
+sfdTemplates.sfd4z_3 = baseParams.sfd4z_3(:);
+sfdTemplates.sfd4z_4 = baseParams.sfd4z_4(:);
 addpath(baseParams.helper_path);
 
 if strcmp(batch.detection_mode, 'fixed_interval')
@@ -149,7 +158,7 @@ parfor c = 1:numCandidates
     seededPreambleStart = candidates(c) - offset + 1;
     % 第 4 个参数复用主流程已构造的 reference，避免每个候选重复生成 PHY 波形。
     try
-        result = decode_uwb(windowOptions, [], [], reference, 'single', ...
+        result = decode_uwb(windowOptions, [], [], reference, sfdTemplates, 'single', ...
             seededPreambleStart, true);
     catch decodeError
         continue;  % 单个候选解码失败不影响其他候选。

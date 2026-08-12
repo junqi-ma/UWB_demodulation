@@ -1,5 +1,5 @@
 function result = decode_uwb(options, preprocessedRx, interference, ...
-        preparedReference, inputClass, seededPreambleStart, optionsAreMerged)
+        preparedReference, sfdTemplates, inputClass, seededPreambleStart, optionsAreMerged)
 %DECODE_X410_DW1000 Decode a DW1000 capture recorded by an X410 receiver.
 %   RESULT = DECODE_X410_DW1000() uses the project defaults.
 %   RESULT = DECODE_X410_DW1000(OPTIONS) overrides default fields.
@@ -35,6 +35,9 @@ if nargin < 6
 end
 if nargin < 7
     optionsAreMerged = false;
+end
+if nargin < 5 || isempty(sfdTemplates)
+    sfdTemplates = struct('decawave', [], 'ieee', [], 'sfd4z_1', [], 'sfd4z_2', [], 'sfd4z_3', [], 'sfd4z_4', []);
 end
 if optionsAreMerged
     params = options;
@@ -104,7 +107,7 @@ if directSfdTiming
     % preamble boundary and use the complete NS-SFD waveform to refine it;
     % then estimate CFO from a small set of known preamble anchors.
     preamble = uwbdecoder.refineTimingWithNsSfd( ...
-        rxWork, preamble, reference, params);
+        rxWork, preamble, reference, sfdTemplates, params);
     if preamble.sfd_waveform_correlation >= 0.10
         [rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
             rxWork, preamble, reference, params);
@@ -122,7 +125,7 @@ else
     [rxWork, preamble] = uwbdecoder.compensateCarrierOffset( ...
         rxWork, preamble, reference, params);
     preamble = uwbdecoder.refineTimingWithNsSfd( ...
-        rxWork, preamble, reference, params);
+        rxWork, preamble, reference, sfdTemplates, params);
 end
 sfdSymbols = uwbdecoder.analyzeNsSfdSymbols( ...
     rxWork, preamble, reference, params);

@@ -15,14 +15,14 @@ clc;
 
 %% -------------------- 信号类型 --------------------
 % 只能选择一种信号类型：'DW1000' 或 'QM35'。
-phy_profile = 'QM35';
+phy_profile = 'DW1000';
 if sic_managed_run
     phy_profile = sic_stage_config.phy_profile;
 end
 
 %% -------------------- 输入采集文件 --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_new_processed_1.dat';
+options.file_name = 'F:\UWB基带数据\dw1000_new_processed_2.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
