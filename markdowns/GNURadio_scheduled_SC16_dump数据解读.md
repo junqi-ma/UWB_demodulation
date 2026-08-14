@@ -25,7 +25,8 @@ F:\UWB基带数据\qm35_scheduled_sc16_dump\
 
 来源：mixed `dw1000_qm35_mixed_*737p28*0p5s*`，盲 t0 锁定后 EverySlot 落盘。共 **100 窗**（1 个 acquisition + 99 个 scheduled/provisional）。
 
-入口脚本：[[#MATLAB 怎么读]] · 仓库函数 `decode_scheduled_sc16_dump.m` · 运行 `run_decode_scheduled_sc16_dump.m`。
+入口脚本：[[#MATLAB 怎么读]] · 仓库函数 `decode_scheduled_sc16_dump.m` · 运行 `run_decode_scheduled_sc16_dump.m`。  
+C++ 对照与 Codex 修 MATLAB：[[CODEX_scheduled_dump_MATLAB对照手册]]。
 
 解调算法仍见 [[README_解调代码说明]]。dump 只负责把窗和坐标留下来。
 
