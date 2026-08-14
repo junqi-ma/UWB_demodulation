@@ -27,23 +27,32 @@ function result = decode_uwb(options, preprocessedRx, interference, ...
 if nargin < 1
     options = struct();
 end
-if nargin < 5 || isempty(inputClass)
+if nargin < 6 || isempty(inputClass)
     inputClass = 'double';
 end
-if nargin < 6
+if nargin < 7
     seededPreambleStart = [];
 end
-if nargin < 7
+if nargin < 8
     optionsAreMerged = false;
 end
-if nargin < 5 || isempty(sfdTemplates)
-    sfdTemplates = struct('decawave', [], 'ieee', [], 'sfd4z_1', [], 'sfd4z_2', [], 'sfd4z_3', [], 'sfd4z_4', []);
+if nargin < 5
+    sfdTemplates = [];
 end
 if optionsAreMerged
     params = options;
 else
     params = uwbdecoder.mergeOptions( ...
         uwbdecoder.defaultOptions(), options);
+end
+if isempty(sfdTemplates)
+    sfdTemplates = struct( ...
+        'decawave', params.decawave_sfd(:), ...
+        'ieee', params.ieee_sfd(:), ...
+        'sfd4z_1', params.sfd4z_1(:), ...
+        'sfd4z_2', params.sfd4z_2(:), ...
+        'sfd4z_3', params.sfd4z_3(:), ...
+        'sfd4z_4', params.sfd4z_4(:));
 end
 ensureHelperPath(params.helper_path);
 

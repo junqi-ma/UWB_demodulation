@@ -5,8 +5,9 @@ end
 %REFINETIMINGWITHNSSFD Select the SFD template and refine frame timing.
 %   PREAMBLE = REFINETIMINGWITHNSSFD(RX, PREAMBLE, REFERENCE, PARAMS)
 %   picks the best-matching SFD template (Decawave, IEEE, or 802.15.4z)
-%   and refines the preamble start sample at full rate. The selected
-%   template name and correlation are stored back into PREAMBLE.
+%   and refines the preamble start sample at full rate. Full-rate matching
+%   uses the unshaped sampled spreading code at the HRP pulse grid. The
+%   selected template name and correlation are stored back into PREAMBLE.
 %
 %   See also ANALYZENSSFDSYMBOLS, LOCATENSSFD.
 
@@ -54,8 +55,7 @@ correlations = zeros(numel(candidateSequences), 1);
 startSamples = zeros(numel(candidateSequences), 1);
 
 for k = 1:numel(candidateSequences)
-    sfdReference = kron(candidateSequences{k}, ...
-        reference.preamble_waveform);
+    sfdReference = kron(candidateSequences{k}, reference.sampled_code);
     sfdReference = sfdReference / (norm(sfdReference) + eps);
     searchStart = max(1, expected - reference.samples_per_symbol);
     searchEnd = min(length(rx), expected + reference.samples_per_symbol + ...

@@ -1,0 +1,7 @@
+# MCP Servers - 项目作用域配置
+# 这个文件放在 USRP 数据解调项目根目录，配置会随项目 git 同步
+
+[mcp_servers.matlab]
+command = "C:\\Users\\junqima\\.grok\\matlab-mcp-server-windows-x64.exe"
+startup_timeout_sec = 60
+tool_timeout_sec = 300
