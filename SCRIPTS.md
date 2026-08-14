@@ -66,6 +66,8 @@
 | `read_x410.m` | 59 | 快速查看捕获文件：时域波形 + 频谱 |
 | `write_x410_iq_int16.m` | 43 | 将复向量写为交织 int16 IQ 文件 |
 | `read_uwb_cancelled_dat.m` | 171 | 读取消除前后的捕获，对比时域/频谱 |
+| `read_uwb_packet.m` | — | 读取 GNU Radio `capture.iq` + `capture.jsonl`（SC16 dump） |
+| `decode_scheduled_sc16_dump.m` | — | 解析 scheduled SC16 dump，65/48 后按窗 `decode_uwb`（QM35；可选 DW1000） |
 
 ---
 
