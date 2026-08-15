@@ -32,7 +32,7 @@ opts = struct();
 opts.decode_dw1000 = false;     % true 时同一窗再解 DW1000（code 10 / 256）
 opts.max_slots = [];            % [] = 全部 scheduled/provisional；调试可改 8
 opts.show_plots = false;
-opts.iq_name = 'capture.iq';          % 去单音后改成 'capture_notch.iq'
+opts.iq_name = 'capture.iq';
 opts.output_dir = fullfile(thisDir, 'decoded_results', 'scheduled_sc16_dump');
 opts.cpp_truth_csv = fullfile(opts.output_dir, 'scheduled_dump_cpp.csv');
 if ~isfile(opts.cpp_truth_csv)

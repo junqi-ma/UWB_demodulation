@@ -2,7 +2,8 @@ function report = cancel_capture_tone(dumpDir, opts)
 %CANCEL_CAPTURE_TONE Notch a CW from a scheduled SC16 dump.
 %   REPORT = CANCEL_CAPTURE_TONE(DUMPDIR) reads DUMPDIR/capture.iq +
 %   capture.jsonl, subtracts one complex tone in each window, and writes
-%   DUMPDIR/capture_notch.iq (jsonl unchanged).
+%   DUMPDIR/capture.iq in place (jsonl unchanged). The un-notched IQ is
+%   not kept.
 %
 %   Windows are not time-contiguous, so the fit is per jsonl window.
 %   Default RF hint is 6200 MHz with LO 6489.6 MHz (search ±80 MHz).
@@ -14,7 +15,6 @@ function report = cancel_capture_tone(dumpDir, opts)
 %     .rf_hz       (6200e6)
 %     .search_hz   (80e6)
 %     .auto        (false)  strongest bin anywhere
-%     .replace     (false)  capture.iq -> capture_raw.iq, install notch
 
 if nargin < 1 || isempty(dumpDir)
     error('cancel_capture_tone:usage', ...
@@ -28,11 +28,10 @@ if ~isfield(opts, 'center_hz'), opts.center_hz = 6489.6e6; end
 if ~isfield(opts, 'rf_hz'), opts.rf_hz = 6200e6; end
 if ~isfield(opts, 'search_hz'), opts.search_hz = 80e6; end
 if ~isfield(opts, 'auto'), opts.auto = false; end
-if ~isfield(opts, 'replace'), opts.replace = false; end
 
 iqFile = fullfile(dumpDir, 'capture.iq');
 jsonlFile = fullfile(dumpDir, 'capture.jsonl');
-outFile = fullfile(dumpDir, 'capture_notch.iq');
+outFile = fullfile(dumpDir, 'capture.iq.tmp');
 assert(isfile(iqFile) && isfile(jsonlFile), ...
     'need capture.iq and capture.jsonl in %s', dumpDir);
 
@@ -94,7 +93,16 @@ end
 
 fprintf('windows=%d  power_suppression_db mean=%.2f  tone_bin_db mean=%.1f\n', ...
     numel(metas), mean(sup), mean(binDb));
-fprintf('wrote %s\n', outFile);
+clear cleanup;
+movefile(outFile, iqFile, 'f');
+leftovers = {'capture_notch.iq', 'capture_raw.iq'};
+for i = 1:numel(leftovers)
+    p = fullfile(dumpDir, leftovers{i});
+    if isfile(p)
+        delete(p);
+    end
+end
+fprintf('wrote %s (notched, un-notched IQ discarded)\n', iqFile);
 
 report = struct( ...
     'tone_baseband_hz', fHz, ...
@@ -102,17 +110,7 @@ report = struct( ...
     'n_windows', numel(metas), ...
     'power_suppression_db_mean', mean(sup), ...
     'tone_bin_suppression_db_mean', mean(binDb), ...
-    'output', string(outFile));
-
-if opts.replace
-    rawBak = fullfile(dumpDir, 'capture_raw.iq');
-    if isfile(rawBak)
-        delete(rawBak);
-    end
-    movefile(iqFile, rawBak);
-    copyfile(outFile, iqFile);
-    fprintf('replaced capture.iq  backup=%s\n', rawBak);
-end
+    'output', string(iqFile));
 end
 
 function metas = readDumpJsonl(jsonlFile)

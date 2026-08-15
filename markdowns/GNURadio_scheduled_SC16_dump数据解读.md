@@ -28,6 +28,9 @@ F:\UWB基带数据\qm35_scheduled_sc16_dump\
 入口脚本：[[#MATLAB 怎么读]] · 仓库函数 `decode_scheduled_sc16_dump.m` · 运行 `run_decode_scheduled_sc16_dump.m`。  
 C++ 对照与 Codex 修 MATLAB：[[CODEX_scheduled_dump_MATLAB对照手册]]。
 
+保存后去单音：`testdata/cancel_capture_tone.py DUMP` 或 MATLAB `run_cancel_capture_tone`。  
+约 6200 MHz 的 CW 实测在 **RF 6256.640 MHz**（基带 −232.960 MHz）。逐窗减去后**直接覆盖 `capture.iq`**，不保留未去单音副本。jsonl 不变。
+
 解调算法仍见 [[README_解调代码说明]]。dump 只负责把窗和坐标留下来。
 
 ---
