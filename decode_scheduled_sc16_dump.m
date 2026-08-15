@@ -34,6 +34,7 @@ if ~isfield(opts, 'max_slots'), opts.max_slots = []; end
 if ~isfield(opts, 'output_dir'), opts.output_dir = dumpDir; end
 if ~isfield(opts, 'taps_file'), opts.taps_file = []; end
 if ~isfield(opts, 'show_plots'), opts.show_plots = false; end
+if ~isfield(opts, 'iq_name'), opts.iq_name = 'capture.iq'; end
 
 thisDir = fileparts(mfilename('fullpath'));
 if exist(fullfile(thisDir, 'decode_uwb.m'), 'file')
@@ -42,7 +43,7 @@ else
     addpath(fullfile(fileparts(thisDir), 'UWB_demodulation'));
 end
 
-iqFile = fullfile(dumpDir, 'capture.iq');
+iqFile = fullfile(dumpDir, opts.iq_name);
 jsonlFile = fullfile(dumpDir, 'capture.jsonl');
 assert(isfile(iqFile), 'Missing %s', iqFile);
 assert(isfile(jsonlFile), 'Missing %s', jsonlFile);
