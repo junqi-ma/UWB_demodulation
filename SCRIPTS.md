@@ -66,8 +66,6 @@
 | `read_x410.m` | 59 | 快速查看捕获文件：时域波形 + 频谱 |
 | `write_x410_iq_int16.m` | 43 | 将复向量写为交织 int16 IQ 文件 |
 | `read_uwb_cancelled_dat.m` | 171 | 读取消除前后的捕获，对比时域/频谱 |
-| `read_uwb_packet.m` | — | 读取 GNU Radio `capture.iq` + `capture.jsonl`（SC16 dump） |
-| `decode_scheduled_sc16_dump.m` | — | 解析 scheduled SC16 dump，65/48 后按窗 `decode_uwb`（QM35；可选 DW1000） |
 
 ---
 
@@ -86,8 +84,6 @@
 
 | 文件 | 行数 | 功能 | 数据文件 |
 |------|------|------|----------|
-| `run_cancel_capture_tone.m` | — | dump 保存后逐窗去掉约 6200 MHz 单音，覆盖 `capture.iq` | `capture.iq` + `capture.jsonl` |
-| `run_decode_scheduled_sc16_dump.m` | — | 调用 `decode_scheduled_sc16_dump` 解 GNU Radio SC16 dump 的 QM35 | `capture.iq` + `capture.jsonl` |
 | `run_decode_uwb_all.m` | 208 | 全文件 UWB 包扫描，保存所有 CIR | `QM35_1.dat` |
 | `run_decode_uwb_in_mix.m` | 338 | 混合捕获中解码所有 QM35 包 | `qm35_dw1000_1.dat` |
 | `run_decode_uwb_with_ic.m` | 615 | QM35 解码 + 间隙填充干扰抑制 | `qm35_dw1000_1.dat` |

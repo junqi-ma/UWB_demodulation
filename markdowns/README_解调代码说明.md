@@ -9,9 +9,6 @@
 - `run_decode_uwb_all.m`：滑窗扫描整段 `.dat`，解调全部报文并保存 CIR。
 - `decode_uwb_all.m`：全文件解调函数入口。
 - `+uwbdecoder/`：各解调模块的具体实现。
-- GNU Radio 周期截窗 dump 格式：[[GNURadio_scheduled_SC16_dump数据解读]]。
-- 入口：`run_decode_scheduled_sc16_dump.m`。
-- C++ 对照手册（Codex）：[[CODEX_scheduled_dump_MATLAB对照手册]]。
 
 ## 解调流程
 
