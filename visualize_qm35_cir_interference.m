@@ -1,16 +1,19 @@
 %% Visualize one scheduled QM35 packet: raw IQ plus CIR threshold decision.
 % packet_index is the packet_id in capture.jsonl / scheduled_dump_matlab.csv.
 % Prefers stored CIR diagnostics in decoded_results; otherwise decodes only
-% that packet. Raw IQ is the 998.4 MHz resampled window, aligned to the
-% C++ QM35 detection start.
+% that packet. Raw IQ is the full ~590 us 998.4 MHz window (I/Q, not |IQ|).
+%
+% DW1000 FCS 失败目前就两类，改 packet_index 对着看：
+%   假锁、后面还有完整包 : 1 24 28 51 55 74 78
+%   窗头截断（上一包 SYNC 残尾）: 5 9 32 36 59 63 82 86 90
 
 clear;
 close all;
 clc;
 
 %% -------------------- User parameters --------------------
-packet_index = 4;
-dump_dir = 'F:\UWB基带数据\qm35_clean_scheduled_sc16_dump';
+packet_index = 51;
+dump_dir = 'F:\UWB基带数据\qm35_gain1_scheduled_sc16_dump_20260817';
 save_figure = true;
 
 %% -------------------- Paths --------------------
@@ -73,9 +76,12 @@ rPeak = result.qm35_early_peak_ratio_db;
 occupancy = result.qm35_interference_occupancy;
 state = string(result.qm35_interference_state);
 
+dwAnn = loadDwAnnotations(result_dir, packet_index);
+
 fig = figure('Name', sprintf('QM35 CIR threshold packet %d', packet_index), ...
-    'Color', 'w', 'Position', [30 30 1480 960]);
-tiledlayout(fig, 3, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+    'Color', 'w', 'Position', [20 20 1680 1080]);
+set(fig, 'ToolBar', 'none');
+tiledlayout(fig, 4, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 nexttile;
 plotFirstPathProcess(delayNs, hBar, earlyIdx, signalIdx, fpIndex, ...
@@ -96,17 +102,21 @@ nexttile;
 plotFeatureMeters(rEarly, rPeak, occupancy, opt);
 
 nexttile;
-plotRawIq(iq);
+plotDwFailurePanel(dwAnn, iq);
+
+nexttile([1 2]);
+plotRawIq(iq, dwAnn);
 
 stateColor = stateRgb(state);
 sgtitle(fig, sprintf( ...
-    ['QM35 CIR 干扰阈值判定    packet %d    状态 %s    ', ...
-    'SIC %s    FCS %d'], packet_index, upper(char(state)), ...
-    yesNo(result.qm35_sic_recommended), result.qm35_fcs_pass), ...
-    'FontWeight', 'bold', 'Color', stateColor);
+    ['packet %d    CIR %s    SIC %s    QM35 FCS %d    %s'], ...
+    packet_index, upper(char(state)), ...
+    yesNo(result.qm35_sic_recommended), result.qm35_fcs_pass, ...
+    dwProblemTitle(dwAnn)), ...
+    'FontWeight', 'bold', 'Color', stateColor, 'Interpreter', 'none');
 
 printDecisionConsole(result, d, opt);
-printIqConsole(iq);
+printIqConsole(iq, dwAnn);
 
 if save_figure
     outDir = fileparts(output_png);
@@ -117,7 +127,10 @@ if save_figure
     fprintf('figure: %s\n', output_png);
 end
 
-function plotRawIq(iq)
+function plotRawIq(iq, dwAnn)
+if nargin < 2
+    dwAnn = emptyDwAnnotations();
+end
 if ~isstruct(iq) || ~isfield(iq, 'ok') || ~iq.ok
     if isstruct(iq) && isfield(iq, 'message') && ~isempty(iq.message)
         axisOffMessage(iq.message);
@@ -130,39 +143,201 @@ end
 x998 = iq.x998(:);
 fs = iq.fs;
 n = numel(x998);
-origin = iq.detected_start_one;
-if ~(isfinite(origin) && origin >= 1 && origin <= n)
-    origin = 1;
+tEndUs = n / fs * 1e6;
+qm35Start = iq.detected_start_one;
+if ~(isfinite(qm35Start) && qm35Start >= 1 && qm35Start <= n)
+    qm35Start = NaN;
 end
 
-preSamp = round(5e-6 * fs);
-postSamp = round(200e-6 * fs);
-idx0 = max(1, origin - preSamp);
-idx1 = min(n, origin + postSamp);
-span = idx0:idx1;
-maxPoints = 40000;
-stride = max(1, ceil(numel(span) / maxPoints));
-span = span(1:stride:end);
-tUs = (double(span) - origin) / fs * 1e6;
-x = x998(span);
+% Full dump window (~500–590 μs): raw I and Q, not |IQ|.
+maxPoints = 80000;
+stride = max(1, ceil(n / maxPoints));
+span = 1:stride:n;
+tUs = (double(span) - 1) / fs * 1e6;
+xi = real(x998(span));
+xq = imag(x998(span));
+peakAmp = max(abs(x998));
+if ~(isfinite(peakAmp) && peakAmp > 0)
+    peakAmp = 1;
+end
+yl = 1.05 * peakAmp * [-1, 1];
 
 hold on;
-plot(tUs, real(x), 'Color', [0.15 0.40 0.85], 'LineWidth', 0.5);
-plot(tUs, imag(x), '--','Color', [0.85 0.20 0.18], 'LineWidth', 0.5);
-xline(0, 'k--', 'C++ start', 'LineWidth', 1.0);
-if isfinite(iq.predicted_start_one)
-    predUs = (double(iq.predicted_start_one) - origin) / fs * 1e6;
-    if predUs >= tUs(1) && predUs <= tUs(end)
-        xline(predUs, 'b:', 'predicted', 'LineWidth', 1.0);
-    end
+syncDwUs = 256 * 1016 / fs * 1e6;
+syncQmUs = 64 * 1016 / fs * 1e6;
+if isfinite(dwAnn.dw_start)
+    shadeTime(sampleToUs(dwAnn.dw_start, fs), syncDwUs, yl, ...
+        [0.86 0.28 0.22], 0.12);
+end
+if isfinite(dwAnn.later_viable)
+    shadeTime(sampleToUs(dwAnn.later_viable, fs), syncDwUs, yl, ...
+        [0.20 0.65 0.30], 0.14);
+end
+if isfinite(dwAnn.clipped)
+    shadeTime(sampleToUs(dwAnn.clipped, fs), syncDwUs, yl, ...
+        [0.95 0.70 0.15], 0.10);
+end
+if isfinite(qm35Start)
+    shadeTime(sampleToUs(qm35Start, fs), syncQmUs, yl, ...
+        [0.20 0.40 0.85], 0.12);
+end
+plot(tUs, xi, 'Color', [0.15 0.40 0.85], 'LineWidth', 0.5);
+plot(tUs, xq, '--', 'Color', [0.85 0.20 0.18], 'LineWidth', 0.5);
+addTimeMarker(sampleToUs(qm35Start, fs), tEndUs, 'k--', 'QM35');
+addTimeMarker(sampleToUs(iq.predicted_start_one, fs), tEndUs, 'b:', 'QM35 pred');
+if dwAnn.dw_fcs
+    addTimeMarker(sampleToUs(dwAnn.dw_start, fs), tEndUs, 'r-', 'DW FCS ok');
+elseif dwAnn.class == "false_lock_missed_later_dw"
+    addTimeMarker(sampleToUs(dwAnn.dw_start, fs), tEndUs, 'r-', '假锁');
+    addTimeMarker(sampleToUs(dwAnn.later_viable, fs), tEndUs, 'g-', '后段真包');
+elseif dwAnn.class == "clipped_head_incomplete_sync"
+    addTimeMarker(sampleToUs(dwAnn.dw_start, fs), tEndUs, 'r-', '窗头残尾');
+    addTimeMarker(sampleToUs(dwAnn.truncated, fs), tEndUs, 'm-.', '后包SFD出窗');
+else
+    addTimeMarker(sampleToUs(dwAnn.dw_start, fs), tEndUs, 'r-', 'DW lock');
+    addTimeMarker(sampleToUs(dwAnn.later_viable, fs), tEndUs, 'g-', '后段真包');
+    addTimeMarker(sampleToUs(dwAnn.truncated, fs), tEndUs, 'm-.', '后包SFD出窗');
 end
 grid on;
-xlabel('相对 C++ detected start (\mus)');
+xlim([0, tEndUs]);
+ylim(yl);
+xlabel('相对窗起点 (\mus)，整窗原始 I/Q');
 ylabel('幅度');
 legend({'I', 'Q'}, 'Location', 'northeast');
-title(sprintf(['6. 原始 IQ    %s    schedule %.0f    C++ FCS=%d    ', ...
-    'det-pred=%+.0f samp'], iq.capture_mode, iq.schedule_index, ...
-    iq.fcs_pass, iq.det_minus_pred));
+title(sprintf('6. 原始 IQ 全窗  %.1f us    %s', tEndUs, ...
+    dwProblemTitle(dwAnn)), 'Interpreter', 'none');
+end
+
+function plotDwFailurePanel(dwAnn, iq)
+axis off;
+xlim([0 1]);
+ylim([0 1]);
+title('DW1000 失败类型', 'Interpreter', 'none');
+lines = dwProblemLines(dwAnn, iq);
+text(0.04, 0.92, lines, 'Interpreter', 'none', 'FontSize', 10, ...
+    'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
+end
+
+function titleTxt = dwProblemTitle(dwAnn)
+if ~isstruct(dwAnn) || strlength(dwAnn.class) == 0
+    if isstruct(dwAnn) && dwAnn.has_sic && dwAnn.dw_fcs
+        titleTxt = 'DW FCS 通过';
+    else
+        titleTxt = '无 DW 失败标注';
+    end
+    return
+end
+switch dwAnn.class
+    case "false_lock_missed_later_dw"
+        titleTxt = '假锁：窗头残段，后段还有完整 DW';
+    case "clipped_head_incomplete_sync"
+        titleTxt = '窗头截断：上一包 SYNC 残尾，本窗解不出';
+    otherwise
+        titleTxt = char(dwAnn.class);
+end
+end
+
+function lines = dwProblemLines(dwAnn, iq)
+if ~isstruct(dwAnn) || ~dwAnn.has_sic
+    lines = {'本窗不在 16 个 DW FCS 失败里。', ...
+        '假锁: 1 24 28 51 55 74 78', ...
+        '窗头截断: 5 9 32 36 59 63 82 86 90'};
+    return
+end
+fs = 998.4e6;
+lockUs = sampleToUs(dwAnn.dw_start, fs);
+laterUs = sampleToUs(dwAnn.later_viable, fs);
+clipUs = sampleToUs(dwAnn.clipped, fs);
+truncUs = sampleToUs(dwAnn.truncated, fs);
+switch dwAnn.class
+    case "false_lock_missed_later_dw"
+        lines = { ...
+            '类型: 假锁', ...
+            sprintf('检测器锁在窗头 %.1f us', lockUs), ...
+            '那是上一包 DW 伸进来的 SYNC 残尾。', ...
+            sprintf('后段真包约 %.1f us（绿带）', laterUs), ...
+            '单包搜索 earliest-first，没有再往后找。'};
+    case "clipped_head_incomplete_sync"
+        lines = { ...
+            '类型: 窗头截断', ...
+            sprintf('上一包 DW 起点在窗外 %.1f us', clipUs), ...
+            sprintf('本窗只剩残尾，锁点 %.1f us', lockUs), ...
+            sprintf('若有后包，SFD 约 %.1f us 已出窗', truncUs), ...
+            '590 us 窗装不下完整 256 SYNC+SFD。'};
+    otherwise
+        lines = {char(dwAnn.class), sprintf('lock=%.1f us', lockUs)};
+end
+if nargin >= 2 && isstruct(iq) && isfield(iq, 'detected_start_one')
+    lines{end+1} = sprintf('QM35 约 %.1f us', ...
+        sampleToUs(iq.detected_start_one, fs));
+end
+end
+
+function addTimeMarker(tUs, tEndUs, style, label)
+if ~(isfinite(tUs) && tUs >= -1 && tUs <= tEndUs + 1)
+    return
+end
+xline(tUs, style, label, 'LineWidth', 1.05, 'Interpreter', 'none', ...
+    'LabelOrientation', 'horizontal', 'LabelVerticalAlignment', 'bottom');
+end
+
+function tUs = sampleToUs(sampleOne, fs)
+tUs = (double(sampleOne) - 1) / fs * 1e6;
+end
+
+function shadeTime(t0Us, durUs, yl, color, alpha)
+if ~isfinite(t0Us) || ~isfinite(durUs) || numel(yl) < 2
+    return
+end
+x0 = t0Us;
+x1 = t0Us + durUs;
+patch([x0 x1 x1 x0], [yl(1) yl(1) yl(2) yl(2)], color, ...
+    'FaceAlpha', alpha, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+end
+
+function ann = emptyDwAnnotations()
+ann = struct( ...
+    'has_sic', false, ...
+    'dw_start', NaN, ...
+    'dw_fcs', false, ...
+    'later_viable', NaN, ...
+    'clipped', NaN, ...
+    'truncated', NaN, ...
+    'class', "");
+end
+
+function ann = loadDwAnnotations(resultDir, packetIndex)
+ann = emptyDwAnnotations();
+sicDir = fullfile(resultDir, 'sic_dw1000_removed_qm35_preserved');
+failCsv = fullfile(sicDir, 'dw1000_decode_failures.csv');
+sicMat = fullfile(sicDir, 'pipeline_manifest.mat');
+if isfile(failCsv)
+    T = readtable(failCsv, 'TextType', 'string');
+    row = find(double(T.packet_id) == double(packetIndex), 1);
+    if ~isempty(row)
+        ann.dw_start = tableNum(T, row, 'dw_lock_start');
+        ann.later_viable = tableNum(T, row, 'later_viable_start');
+        ann.clipped = tableNum(T, row, 'clipped_start');
+        ann.truncated = tableNum(T, row, 'truncated_start');
+        if ismember('failure_class', T.Properties.VariableNames)
+            ann.class = string(T.failure_class(row));
+        end
+        ann.dw_fcs = false;
+        ann.has_sic = true;
+    end
+end
+if ~ann.has_sic && isfile(sicMat)
+    loaded = load(sicMat, 'pipeline');
+    packets = loaded.pipeline.packets;
+    for k = 1:numel(packets)
+        if double(packets(k).packet_id) == double(packetIndex)
+            ann.has_sic = true;
+            ann.dw_start = packets(k).dw.start_sample;
+            ann.dw_fcs = logical(packets(k).dw.fcs_pass);
+            break
+        end
+    end
+end
 end
 
 function plotFirstPathProcess(delayNs, hBar, earlyIdx, signalIdx, ...
@@ -375,14 +550,20 @@ for k = 1:3
 end
 end
 
-function printIqConsole(iq)
+function printIqConsole(iq, dwAnn)
 if ~isstruct(iq) || ~isfield(iq, 'ok') || ~iq.ok
     return
 end
-fprintf(['IQ packet_id=%d local_start=%d predicted_local=%d ', ...
-    'det_minus_pred=%+.0f C++ FCS=%d\n'], iq.packet_id, ...
-    iq.detected_start_one, iq.predicted_start_one, iq.det_minus_pred, ...
-    iq.fcs_pass);
+winUs = numel(iq.x998) / iq.fs * 1e6;
+fprintf(['IQ packet_id=%d  window=%.1f us  C++ start=%d (%.1f us)  ', ...
+    'predicted=%d  det-pred=%+.0f  C++ FCS=%d\n'], iq.packet_id, winUs, ...
+    iq.detected_start_one, sampleToUs(iq.detected_start_one, iq.fs), ...
+    iq.predicted_start_one, iq.det_minus_pred, iq.fcs_pass);
+if nargin >= 2 && isstruct(dwAnn) && dwAnn.has_sic
+    fprintf('%s\n', dwProblemTitle(dwAnn));
+    fprintf('DW lock=%.0f  later=%.0f  clipped=%.0f  trunc=%.0f\n', ...
+        dwAnn.dw_start, dwAnn.later_viable, dwAnn.clipped, dwAnn.truncated);
+end
 end
 
 function printDecisionConsole(result, d, opt)

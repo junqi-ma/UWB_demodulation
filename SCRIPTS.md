@@ -107,6 +107,10 @@ GNU Radio `UwbAutoScheduledExtractorSc16` / `UwbScheduledExtractorSc16` 按雷�
 | `run_cancel_capture_tone.m` | 去单音入口；覆盖 `capture.iq` |
 | `decode_scheduled_sc16_dump.m` | 按窗切开 head / QM35 body / tail，升采样后解码，并跑 CIR 干扰检测 |
 | `run_decode_scheduled_sc16_dump.m` | 实验入口；改 `dumpDir` 切换 mixed / clean / gain1 |
+| `cancel_uwb_packet_in_iq.m` | 在 998.4 MHz 窗内再生并减去一个已解码包（dump SIC 用） |
+| `scheduledDumpSicPipeline.m` | dump 窗上的 QM35→消→DW1000→消编排 |
+| `run_scheduled_dump_sic_pipeline.m` | 被干扰 dump 的 SIC 入口；对比消除前后 QM35 CIR |
+| `visualize_scheduled_dump_sic_cir.m` | dump SIC 前后 CIR 叠图 / 热图 |
 
 升采样抽头：`testdata/resampler_65_48/taps_quality_minorder.txt`。
 
@@ -129,16 +133,21 @@ GNU Radio `UwbAutoScheduledExtractorSc16` / `UwbScheduledExtractorSc16` 按雷�
 
 ## 5. SIC 流水线
 
-`sic_pipeline/` 不复制解码 / 消除逻辑，只编排阶段。调用根目录
+连续 `.dat` 的 `sic_pipeline/` 不复制解码 / 消除逻辑，只编排阶段。调用根目录
 `run_decode_uwb_all` / `run_cancel_all_uwb_packets`。
+
+GNU Radio dump 的 SIC 在根目录：`run_scheduled_dump_sic_pipeline.m`。它按窗复用
+`decode_uwb` 和 `cancel_uwb_packet_in_iq`（内部仍是 `generate_uwb_tx_from_decode`
++ `apply_estimated_cir_to_uwb`），不走连续文件能量扫描。
 
 | 文件 | 功能 |
 |------|------|
-| `sic_pipeline/run_qm35_dw1000_sic_pipeline.m` | 入口：QM35 解 → 消 → DW1000 解 → 消 |
-| `sic_pipeline/uwbSicPipeline.m` | 编排函数 |
-| `sic_pipeline/analyze_qm35_cir_before_after_dw1000.m` | 消除前后 CIR |
+| `sic_pipeline/run_qm35_dw1000_sic_pipeline.m` | 连续 `.dat` 入口：QM35 解 → 消 → DW1000 解 → 消 |
+| `sic_pipeline/uwbSicPipeline.m` | 连续 `.dat` 编排函数 |
+| `sic_pipeline/analyze_qm35_cir_before_after_dw1000.m` | 连续 `.dat` 消除前后 CIR |
 | `sic_pipeline/visualize_UwbSicPipeline.m` | 包数量 / suppression / 发送时间 |
 | `sic_pipeline/visualize_sic_signal_comparison.m` | 原始混叠 vs 消除后 |
+| `run_scheduled_dump_sic_pipeline.m` | dump 入口：被干扰窗上同样的 SIC 顺序，并画 CIR |
 
 ---
 
@@ -180,6 +189,7 @@ GNU Radio detector
 |------|------|
 | 解一份 scheduled dump | 改 `run_decode_scheduled_sc16_dump.m` 的 `dumpDir` 后运行 |
 | 看单包 CIR 干扰判定 | 改 `visualize_qm35_cir_interference.m` 的 `dump_dir` / `packet_index` |
+| DW1000 假锁 / 窗头截断 | `markdowns/DW1000_dump窗解调失败_假锁与窗头截断.md` |
 | dump 去单音 | `run_cancel_capture_tone` |
 | 验证解码器环境 | `run_decode_uwb_smoke_test` |
 | SIC（连续 `.dat` 参考） | `sic_pipeline/run_qm35_dw1000_sic_pipeline` |

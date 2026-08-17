@@ -3,7 +3,8 @@
 入口文件：
 
 ```matlab
-sic_pipeline/run_qm35_dw1000_sic_pipeline.m
+sic_pipeline/run_qm35_dw1000_sic_pipeline.m   % 连续 1 s .dat
+run_scheduled_dump_sic_pipeline.m             % GNU Radio scheduled dump
 ```
 
 `uwbSicPipeline.m` 是入口调用的核心函数，不作为 `run_` 入口脚本。

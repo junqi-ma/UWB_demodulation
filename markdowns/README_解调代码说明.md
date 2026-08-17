@@ -6,9 +6,11 @@
 ## 入口文件
 
 - GNU Radio dump：`run_decode_scheduled_sc16_dump.m`（改 `dumpDir`）。
+- dump SIC + CIR 对比：`run_scheduled_dump_sic_pipeline.m`。
 - 格式说明：[[GNURadio_scheduled_SC16_dump数据解读]]。
 - C++ 对照：[[CODEX_scheduled_dump_MATLAB对照手册]]。
 - CIR 干扰：[[QM35_CIR通信干扰检测与SIC决策方案]]，图入口 `visualize_qm35_cir_interference.m`。
+- dump 窗 DW1000 FCS 失败（假锁 / 窗头截断）：[[DW1000_dump窗解调失败_假锁与窗头截断]]。
 - `run_decode_uwb.m`：连续 `.dat` 分步调试。
 - `decode_uwb.m`：函数式入口，dump 解码也调用它。
 - `run_decode_uwb_all.m` / `decode_uwb_all.m`：整段 `.dat` 扫描，SIC 使用。

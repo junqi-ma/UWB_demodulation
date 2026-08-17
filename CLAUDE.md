@@ -32,6 +32,9 @@ matlab -batch "run_decode_uwb"
 % CIR interference detector unit test
 matlab -batch "runtests('tests/testAnalyzeCirInterference.m')"
 
+% SIC on an interfered GNU Radio dump (edit dumpDir; compares CIR before/after)
+matlab -batch "run_scheduled_dump_sic_pipeline"
+
 % SIC pipeline (continuous mixed .dat reference): QM35 → cancel → DW1000 → cancel
 matlab -batch "run_qm35_dw1000_sic_pipeline"
 ```
@@ -60,9 +63,9 @@ Key design choices to be aware of:
 | Decoder primitives | `+uwbdecoder/` | Pure, reusable stages, including `analyzeCirInterference` |
 | Single/batch decode | `decode_uwb.m`, `decode_uwb_all.m` | Orchestrate the package |
 | GNU Radio dump I/O + decode | `read_uwb_packet.m`, `decode_scheduled_sc16_dump.m` | Slice SC16 windows, 65/48, call `decode_uwb` |
-| Dump experiment drivers | `run_decode_scheduled_sc16_dump.m`, `run_cancel_capture_tone.m` | Concrete dump paths |
-| CIR / interference views | `visualize_qm35_cir_interference.m`, `analyze_qm35_early_energy_stats.m` | Per-packet and multi-frame analysis |
-| SIC pipeline | `sic_pipeline/` | Multi-stage QM35→DW1000 cancellation |
+| Dump experiment drivers | `run_decode_scheduled_sc16_dump.m`, `run_cancel_capture_tone.m`, `run_scheduled_dump_sic_pipeline.m` | Concrete dump paths |
+| CIR / interference views | `visualize_qm35_cir_interference.m`, `visualize_scheduled_dump_sic_cir.m`, `analyze_qm35_early_energy_stats.m` | Per-packet and multi-frame analysis |
+| SIC pipeline | `sic_pipeline/` plus dump `scheduledDumpSicPipeline.m` | QM35→DW1000 cancellation |
 | Chip helper wrappers | `helpers/` | Communications Toolbox BPRF/HPRF/PHR wrappers |
 | Tests | `tests/` | MATLAB `functiontests` |
 

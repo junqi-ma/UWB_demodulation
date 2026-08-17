@@ -31,8 +31,10 @@ HRP UWB PHY（IEEE 802.15.4a / 4z BPRF）：前导检测、CFO、SFD、CIR、
 `visualize_qm35_cir_interference`。
 
 ### 1.4 波形再生与 SIC
-从 PSDU 再生 QM35 / DW1000，做消除。`sic_pipeline/` 只编排阶段，解码 /
-消除仍走根目录 `run_decode_uwb_all` / `run_cancel_all_uwb_packets`。
+从 PSDU 再生 QM35 / DW1000，做消除。连续 `.dat` 走 `sic_pipeline/`（编排
+`run_decode_uwb_all` / `run_cancel_all_uwb_packets`）。GNU Radio dump 走
+`run_scheduled_dump_sic_pipeline`：按窗 `decode_uwb`，用
+`cancel_uwb_packet_in_iq` 再生消除，并对比 SIC 前后 QM35 CIR。
 
 ---
 
@@ -48,7 +50,10 @@ GNU Radio dump
 ├── cancel_capture_tone.m / run_cancel_capture_tone.m
 ├── decode_scheduled_sc16_dump.m
 ├── run_decode_scheduled_sc16_dump.m
+├── scheduledDumpSicPipeline.m / run_scheduled_dump_sic_pipeline.m
+├── cancel_uwb_packet_in_iq.m
 ├── visualize_qm35_cir_interference.m
+├── visualize_scheduled_dump_sic_cir.m
 └── analyze_qm35_early_energy_stats.m
 
 解调 / 再生 / 消除参考
@@ -143,7 +148,8 @@ options.sfd_mode = 'auto';                % 自动识别 SFD
 
 `sfd_mode` 可选：`auto` / `decawave` / `ieee` / `4z1` ~ `4z4`。
 
-scheduled dump 入口只改 `run_decode_scheduled_sc16_dump.m` 里的 `dumpDir`。
+scheduled dump 入口只改 `run_decode_scheduled_sc16_dump.m` 或
+`run_scheduled_dump_sic_pipeline.m` 里的 `dumpDir`。
 
 ---
 
@@ -156,16 +162,19 @@ run_decode_scheduled_sc16_dump
 % 2) 单包 CIR 干扰判定图（改 dump_dir / packet_index）
 visualize_qm35_cir_interference
 
-% 3) 验证解码器环境
+% 3) 被干扰 dump 上做 SIC，对比消除前后 CIR
+run_scheduled_dump_sic_pipeline
+
+% 4) 验证解码器环境
 run_decode_uwb_smoke_test
 
-% 4) 函数式单包解码（连续 .dat 参考）
+% 5) 函数式单包解码（连续 .dat 参考）
 options.file_name = 'F:\UWB基带数据\qm35_1.dat';
 options.preamble_repetitions = 128;
 options.sfd_mode = 'auto';
 result = decode_uwb(options);
 
-% 5) SIC（连续混合 .dat 参考）
+% 6) SIC（连续混合 .dat 参考）
 run('sic_pipeline/run_qm35_dw1000_sic_pipeline.m')
 ```
 
