@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project does
 
-MATLAB implementation for demodulating / regenerating / analyzing HRP UWB PHY (IEEE 802.15.4a/4z BPRF) baseband IQ captured from a USRP X410. Targets two chip families — **DW1000** and **QM35/QM35825** — plus mixed DW1000+QM35 captures for interference (SIR) analysis and successive-interference-cancellation (SIC).
+This branch (`gnuradio-scheduled-dump`) analyzes **GNU Radio scheduled-extractor** dumps (`capture.iq` + `capture.jsonl`) from `UwbAutoScheduledExtractorSc16` / `UwbScheduledExtractorSc16`. MATLAB upsamples 65/48 from 737.28 MS/s SC16 to 998.4 MHz, then demodulates QM35 (and optionally DW1000) with the shared HRP UWB PHY stack.
+
+The decode / regenerate / SIC reference implementation is kept. Continuous 1 s `.dat` experiment scripts (grid search, energy-detection plots, PLL notes, `backup/`) stay on `acceleration` and are not on this branch.
 
 ## Environment
 
@@ -18,19 +20,19 @@ MATLAB implementation for demodulating / regenerating / analyzing HRP UWB PHY (I
 MATLAB is interpreted — there is no build step. Run scripts via `matlab -batch` (preferred, headless, no GUI) or interactively.
 
 ```matlab
+% Decode a GNU Radio scheduled SC16 dump (edit dumpDir in the script)
+matlab -batch "run_decode_scheduled_sc16_dump"
+
 % Verify the decoder works end-to-end (non-interactive, pass/fail report)
 matlab -batch "run_decode_uwb_smoke_test"
 
-% Decode a single packet, keep intermediate variables for debugging
+% Decode a single packet from a continuous .dat, keep intermediates
 matlab -batch "run_decode_uwb"
 
-% Full-file batch scan (coarse energy gate + fine decode of every packet)
-matlab -batch "run_decode_uwb_all"
+% CIR interference detector unit test
+matlab -batch "runtests('tests/testAnalyzeCirInterference.m')"
 
-% Single test in tests/ (MATLAB unittest framework)
-matlab -batch "runtests('tests/testReadIqRawStrided.m')"
-
-% SIC pipeline: QM35 decode → cancel → DW1000 decode → cancel
+% SIC pipeline (continuous mixed .dat reference): QM35 → cancel → DW1000 → cancel
 matlab -batch "run_qm35_dw1000_sic_pipeline"
 ```
 
@@ -55,12 +57,14 @@ Key design choices to be aware of:
 
 | Layer | Location | Role |
 |-------|----------|------|
-| Decoder primitives | `+uwbdecoder/` (26 functions) | Pure, reusable stages |
-| Single/batch decode entry points | `decode_uwb.m`, `decode_uwb_all.m` | Orchestrate the package |
-| Experiment drivers | `run_*.m` (repo root) | Concrete configs + I/O for one capture |
-| SIC (cancellation) pipeline | `sic_pipeline/` | Multi-stage QM35→DW1000 cancellation orchestration |
-| Chip helper wrappers | `helpers/` | Thin wrappers around Communications Toolbox BPRF/HPRF/PHR functions |
-| Tests | `tests/` | MATLAB `functiontests`, currently one spec |
+| Decoder primitives | `+uwbdecoder/` | Pure, reusable stages, including `analyzeCirInterference` |
+| Single/batch decode | `decode_uwb.m`, `decode_uwb_all.m` | Orchestrate the package |
+| GNU Radio dump I/O + decode | `read_uwb_packet.m`, `decode_scheduled_sc16_dump.m` | Slice SC16 windows, 65/48, call `decode_uwb` |
+| Dump experiment drivers | `run_decode_scheduled_sc16_dump.m`, `run_cancel_capture_tone.m` | Concrete dump paths |
+| CIR / interference views | `visualize_qm35_cir_interference.m`, `analyze_qm35_early_energy_stats.m` | Per-packet and multi-frame analysis |
+| SIC pipeline | `sic_pipeline/` | Multi-stage QM35→DW1000 cancellation |
+| Chip helper wrappers | `helpers/` | Communications Toolbox BPRF/HPRF/PHR wrappers |
+| Tests | `tests/` | MATLAB `functiontests` |
 
 `sic_pipeline/` deliberately does **not** duplicate decode/cancel logic — it calls the root `run_decode_uwb_all` / `run_cancel_all_uwb_packets` via `run(fullfile(project_root, ...))` and only owns staging, config, and SIC-specific visualization. Don't edit decode behavior inside `sic_pipeline/`.
 

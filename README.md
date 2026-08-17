@@ -1,89 +1,77 @@
-# X410 UWB 基带数据解调 / 再生 / 干扰分析
+# GNU Radio scheduled dump：解调、CIR 干扰检测与 SIC
 
-本项目基于 **USRP X410** 采集的 UWB 基带 IQ 数据，实现对 **DW1000 / QM35（QM35825）** 两种 UWB 芯片发射波形的完整解调流程，并延伸到信道冲激响应（CIR）估计、波形再生对比、以及混合场景下 **DW1000 → QM35 干扰的定量分析（SIR）**。代码使用 MATLAB，依赖 Communications Toolbox 的 `lrwpan` / `helperUWB*` 系列函数（用于扩频码 / SFD 模板参考波形生成和 BPRF 解调）。
+本分支分析 **GNU Radio detector**（`UwbAutoScheduledExtractorSc16` /
+`UwbScheduledExtractorSc16`）按 QM35 雷达周期截下的 SC16 窗，而不是
+`acceleration` 上那套连续 1 s `.dat` 搜索脚本。
+
+解码、再生和 SIC 仍复用同一套 `+uwbdecoder` / `decode_uwb` /
+`sic_pipeline` 参考实现。连续 1 s 采集上的网格搜索、能量检测可视化、
+PLL 笔记和 `backup/` 实验产物不在本分支。
+
+代码使用 MATLAB，依赖 Communications Toolbox 的 `lrwpan` / `helperUWB*`。
 
 ---
 
-## 一、研究内容与目标
+## 一、本分支做什么
 
-### 1.1 UWB 相干解调
-针对已经完成预处理的 998.4 MHz IQ 数据，完整实现 HRP UWB PHY（IEEE 802.15.4a / 4z BPRF）的基带处理：前导检测、载波频偏恢复、SFD 自动识别、CIR 估计、软判决码片生成、PHR/PSDU 解码及 FCS 校验。输入数据已完成重采样、单音去除和中心频率下移 10 MHz。
+### 1.1 读 GNU Radio 截窗
+dump 目录里是 `capture.iq` + `capture.jsonl`：737.28 MS/s SC16，各雷达 slot
+只切约 0.6–0.8 ms，中间空隙丢掉。MATLAB 先按 jsonl 切片，65/48 升到
+998.4 MHz，再调用 `decode_uwb`。
 
-### 1.2 波形再生与一致性验证
-从解码得到的 PSDU 比特流出发，按原 PHY 配置重新生成标准 QM35 发射波形，在同一个 998.4 MHz 复基带网格上通过复数增益拟合和相减，验证解调—再生链路的自洽性，并暴露信道/接收机失真。
+### 1.2 相干解调（参考实现）
+HRP UWB PHY（IEEE 802.15.4a / 4z BPRF）：前导检测、CFO、SFD、CIR、
+软芯片、PHR/PSDU、FCS。连续 `.dat` 入口仍保留，供 SIC 和冒烟测试使用。
+对已经预处理到 998.4 MHz 的 `.dat`，解码代码不再重复重采样 / 去单音 /
+下移 10 MHz。scheduled dump 自己做 65/48 和（可选）去单音。
 
-### 1.3 DW1000 + QM35 混合场景的干扰分析
-在 `qm35_dw1000_1.dat` 这类 DW1000 与 QM35 交错/重叠发射的采集上：
-- 利用 QM35 5 ms 周期网格定位每个包；
-- 取 **pre-first-path CIR bin**（首径之前、几乎没有 QM35 多径能量的延迟段）作为 DW1000 干扰 + 热噪声的代理；
-- 以首径峰值功率为信号参考，计算每包的 **SIR（dB）**，输出汇总表与时域/频域可视化；
-- 导出干扰最严重的若干段原始 IQ，做进一步分析。
+### 1.3 CIR 干扰检测
+在 First Path 之前的诊断 CIR 窗上提特征，决定是否触发 SIC。入口是
+`uwbdecoder.analyzeCirInterference`，单包图是
+`visualize_qm35_cir_interference`。
 
-### 1.4 输入数据约定
-- 输入 IQ 已经重采样到 998.4 MHz。
-- 输入 IQ 已经去除同步单音，并将中心频率下移 10 MHz。
-- 解码、批处理、SIC 和波形再生代码不再重复执行上述预处理。
+### 1.4 波形再生与 SIC
+从 PSDU 再生 QM35 / DW1000，做消除。`sic_pipeline/` 只编排阶段，解码 /
+消除仍走根目录 `run_decode_uwb_all` / `run_cancel_all_uwb_packets`。
 
 ---
 
 ## 二、项目结构
 
 ```
-+uwbdecoder/           % 解调算法包（核心，纯函数，可被批量脚本调用）
-├── selectIqChannel.m             % 抽取指定通道的复基带
-├── buildUwbReference.m        % 利用 lrwpan 生成前导/扩频码模板
-├── detectRepeatedPreamble.m      % 粗检 + ROI 内 16-symbol 累加度量 + 峰值跟踪
-├── validateCaptureLength.m       % 长度门限检查
-├── cropToFrame.m                 % 按软判决预算裁掉帧外数据
-├── compensateCarrierOffset.m     % 基于前导峰值相位的线性拟合 CFO + 常相位
-├── refineTimingWithNsSfd.m       % 多 SFD 模板满速相关 + 自动选优 + 定时细化
-├── analyzeNsSfdSymbols.m         % 码片级 SFD 诊断
-├── estimateCirAndSoftChips.m     % 解扩 CIR + 软判决码片生成
-├── locateNsSfd.m                 % 在软判决流中定位 SFD
-├── decodePhrAndPayload.m         % PHR/PSDU 解码 + FCS-16
-├── ieee802154CRC16.m             % 反射式 CRC-16
-├── mergeOptions / defaultOptions / packageResult / ...
-└── plotXxx.m                     % 各阶段可视化辅助
++uwbdecoder/                 % 解调原语 + analyzeCirInterference
+helpers/                     % Communications Toolbox 薄封装
+sic_pipeline/                % QM35 → DW1000 SIC 编排
 
-顶层脚本（面向实验的入口）
-├── 单包解调
-│   ├── run_decode_uwb.m        % 分步运行，保留中间变量（调试用）
-│   ├── decode_uwb.m            % 函数式入口，返回 result 结构
-│   └── run_decode_uwb_smoke_test.m         % 最小冒烟测试
-├── 全文件批解调（滑窗 + 粗精两级）
-│   ├── run_decode_uwb_all.m
-│   └── decode_uwb_all.m
-├── 混合场景（混叠信号）搜索与 CIR
-│   ├── run_find_first_uwb_in_mix.m    % 从文件头滑窗找第一个 UWB 包 + 相关诊断图
-│   ├── run_search_uwb_periodic_cir.m  % 5 ms 网格搜多包 + pre-path SIR
-│   └── run_search_n_uwb_preamble_corr.m % N 包定长窗网格搜索 + 导出最差段
-├── 波形再生与对比
-│   ├── run_decode_and_regenerate_uwb.m            % 端到端驱动
-│   ├── generate_uwb_tx_from_decode.m              % PSDU → 标准 UWB 波形
-│   ├── apply_estimated_cir_to_uwb.m               % 用测量 CIR 替代脉冲成形
-│   ├── compare_uwb_original_and_generated.m       % 对齐/增益拟合/相减
-│   ├── plot_uwb_estimated_cir.m                   % CIR 可视化
-│   └── write_x410_iq_int16.m                       % 写 interleaved int16 IQ
-├── 抵消工作流
-│   ├── run_cancel_all_uwb_packets.m   % 全文件 UWB 帧再生与消除
-│   ├── run_cancel_uwb_segment.m       % 单段 UWB 帧抵消
-│   ├── run_analyze_uwb_cancellation_steps.m % 逐步再生信号消除分析
-│   ├── visualize_uwb_cancellation.m   % 单包抵消效果可视化
-│   └── visualize_uwb_cancellation_10ms.m % 10 ms 窗口抵消对比
-├── 干扰与可视化辅助
-│   ├── analyze_worst_uwb_raw_signal.m   % 最差段原始 IQ 可视化
-│   ├── analyze_x410_interference.m       % 时钟相关干扰 / 镜像 / 功率分析
-│   ├── run_view_uwb_mix_time.m     % 冲突窗时域视图
-│   ├── run_decode_uwb_in_mix.m      % 混合场景多包解调
-│   ├── run_decode_uwb_with_ic.m     % 带干扰抵消的多包解调
-│   └── cancel_uwb_with_regenerated.m    % 再生波形相减抵消
-└── 输出目录（运行生成，已 gitignore）
-    └── decoded_results/        % 全文件批解调 / 抵消结果（按 <capture>_<profile>/ 组织）
+GNU Radio dump
+├── read_uwb_packet.m
+├── cancel_capture_tone.m / run_cancel_capture_tone.m
+├── decode_scheduled_sc16_dump.m
+├── run_decode_scheduled_sc16_dump.m
+├── visualize_qm35_cir_interference.m
+└── analyze_qm35_early_energy_stats.m
+
+解调 / 再生 / 消除参考
+├── decode_uwb.m / decode_uwb_all.m
+├── run_decode_uwb.m / run_decode_uwb_all.m / run_decode_uwb_smoke_test.m
+├── generate_uwb_tx_from_decode.m / apply_estimated_cir_to_uwb.m
+├── cancel_uwb_with_regenerated.m / run_cancel_all_uwb_packets.m
+└── estimate_uwb_cir_slow_phase.m / *_full_packet_sfo.m
+
+CIR / 码型干扰（合成，服务同一判据）
+├── run_analyze_uwb_mixed_code9_cir.m
+├── run_analyze_uwb_mixed_preamble_cir.m
+├── run_analyze_uwb_preamble_code_interference.m
+└── run_analyze_uwb_radar_comm_interference.m
+
+testdata/resampler_65_48/    % 737.28 → 998.4 抽头
+decoded_results/             % 运行产物，gitignore
 ```
 
-数据文件（位于 `F:\UWB基带数据\`）：
-- `DW1000_*.dat`、`qm35_*.dat`、`qm35_dw1000_*.dat` 等，int16 交错 I/Q。
-- PHY profile（数据格式）通过 `options.phy_profile` 指定：`'DW1000'` 或 `'QM35'`。
+数据在 `F:\UWB基带数据\`：
+
+- 本分支主路径：`qm35_*scheduled_sc16_dump*/capture.iq` + `capture.jsonl`
+- SIC / 冒烟测试仍可用 `DW1000_*.dat`、`QM35_*.dat`、`qm35_dw1000_*.dat`
 
 ---
 
@@ -134,12 +122,9 @@
 - `apply_estimated_cir_to_uwb`：用测量 CIR 替代 Butterworth 成形，把未成形的 {-1,0,+1} 脉冲序列通过 CIR，避免重复成形。
 - `compare_uwb_original_and_generated`：直接使用已预处理的真实信号，仅进行 CFO、定时细化和单复数增益拟合，对比波形差异并保留信道/接收机失真特征。
 
-### 3.13 Pre-first-path SIR 分析（`run_search_uwb_periodic_cir`）
-- 在 5 ms 周期网格上逐包锁定 QM35，估计 CIR；
-- 取首径（delay≈0）附近 ±1 bin 的最大功率为 `P_signal`；
-- 取首径之前、留 2 bin 保护间隔之外的 pre-path bin 平均功率作为 DW1000 干扰 + 噪声的代理 `P_interf`；
-- `SIR_dB = 10 log10(P_signal / P_interf_mean)`，并给出 peak SIR、pre-path floor、每包 FCS 状态；
-- 输出汇总表、CSV、以及 CIR 放大 / 干扰地板 / SIR 趋势 / SIR-时间 四合一图。
+### 3.13 CIR 干扰检测（`analyzeCirInterference`）
+对诊断窗 CIR（默认 First Path 前后各 64 tap）提 First Path 前能量 / 残差 /
+占用率等特征，供 SIC 决策。单包过程图见 `visualize_qm35_cir_interference`。
 
 ---
 
@@ -158,34 +143,30 @@ options.sfd_mode = 'auto';                % 自动识别 SFD
 
 `sfd_mode` 可选：`auto` / `decawave` / `ieee` / `4z1` ~ `4z4`。
 
+scheduled dump 入口只改 `run_decode_scheduled_sc16_dump.m` 里的 `dumpDir`。
+
 ---
 
 ## 五、运行示例
 
 ```matlab
-% 1) 单包分步调试
-run_decode_uwb
+% 1) 解 GNU Radio scheduled dump（改 dumpDir）
+run_decode_scheduled_sc16_dump
 
-% 2) 函数式调用
+% 2) 单包 CIR 干扰判定图（改 dump_dir / packet_index）
+visualize_qm35_cir_interference
+
+% 3) 验证解码器环境
+run_decode_uwb_smoke_test
+
+% 4) 函数式单包解码（连续 .dat 参考）
 options.file_name = 'F:\UWB基带数据\qm35_1.dat';
 options.preamble_repetitions = 128;
 options.sfd_mode = 'auto';
 result = decode_uwb(options);
 
-% 3) 全文件批解调
-run_decode_uwb_all
-
-% 4) 混合场景：找第一个 QM35 + 相关诊断
-run_find_first_uwb_in_mix
-
-% 5) 5 ms 网格多包 + pre-path SIR
-run_search_uwb_periodic_cir
-
-% 6) N 包定长窗搜索 + 导出最差段
-run_search_n_uwb_preamble_corr
-
-% 7) 解码 → 再生 → 对比
-run_decode_and_regenerate_uwb
+% 5) SIC（连续混合 .dat 参考）
+run('sic_pipeline/run_qm35_dw1000_sic_pipeline.m')
 ```
 
 ---
@@ -197,8 +178,8 @@ run_decode_and_regenerate_uwb
 - `result.sfd`：选中 SFD 名、起止码片、相关系数、极性、搜索窗。
 - `result.phr`：SECDED 状态、PSDU 字节数。
 - `result.payload`：PSDU 字节、接收/计算 FCS、校验结果。
-- 批解调：`decoded_results/<capture>_<profile>/all_frames_cir.mat` + `frame_summary.csv`（如 `qm35_1_qm35/`）。
-- 干扰分析：`uwb_prepath_sir.csv`、最差段 `.dat` + 元数据 `.mat`。
+- scheduled dump：`decoded_results/<dump_tag>/scheduled_dump_matlab.mat` + CSV。
+- 批解调 / SIC：`decoded_results/<capture>_<profile>/`。
 
 ---
 

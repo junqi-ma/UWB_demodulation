@@ -112,6 +112,24 @@ if ~isempty(params.cir_post_samples)
     end
 end
 
+if ~isempty(params.cir_diag_pre_samples)
+    if ~isscalar(params.cir_diag_pre_samples) || ...
+            params.cir_diag_pre_samples < 0 || ...
+            params.cir_diag_pre_samples ~= fix(params.cir_diag_pre_samples)
+        error('mergeOptions:InvalidCirDiagPreSamples', ...
+            'cir_diag_pre_samples must be empty or a non-negative integer.');
+    end
+end
+
+if ~isempty(params.cir_diag_post_samples)
+    if ~isscalar(params.cir_diag_post_samples) || ...
+            params.cir_diag_post_samples < 1 || ...
+            params.cir_diag_post_samples ~= fix(params.cir_diag_post_samples)
+        error('mergeOptions:InvalidCirDiagPostSamples', ...
+            'cir_diag_post_samples must be empty or a positive integer.');
+    end
+end
+
 if ~isempty(params.cir_max_path_m)
     if ~isscalar(params.cir_max_path_m) || ~isnumeric(params.cir_max_path_m) || ...
             params.cir_max_path_m <= 0

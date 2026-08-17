@@ -1,14 +1,18 @@
 # X410 UWB 数据解调说明
 
-本项目用于解调 X410 采集的 DW1000/QM35825 UWB 基带数据，支持 Decawave、IEEE legacy/BPRF 和 IEEE 802.15.4z SFD 自动识别。
+本分支用于解调 GNU Radio scheduled-extractor 截窗，以及作为参考的连续 `.dat`。
+支持 Decawave、IEEE legacy/BPRF 和 IEEE 802.15.4z SFD 自动识别。
 
 ## 入口文件
 
-- `run_decode_uwb.m`：分步骤运行，保留各阶段变量，便于调试。
-- `decode_uwb.m`：函数式入口，返回完整 `result` 结构体。
-- `run_decode_uwb_all.m`：滑窗扫描整段 `.dat`，解调全部报文并保存 CIR。
-- `decode_uwb_all.m`：全文件解调函数入口。
-- `+uwbdecoder/`：各解调模块的具体实现。
+- GNU Radio dump：`run_decode_scheduled_sc16_dump.m`（改 `dumpDir`）。
+- 格式说明：[[GNURadio_scheduled_SC16_dump数据解读]]。
+- C++ 对照：[[CODEX_scheduled_dump_MATLAB对照手册]]。
+- CIR 干扰：[[QM35_CIR通信干扰检测与SIC决策方案]]，图入口 `visualize_qm35_cir_interference.m`。
+- `run_decode_uwb.m`：连续 `.dat` 分步调试。
+- `decode_uwb.m`：函数式入口，dump 解码也调用它。
+- `run_decode_uwb_all.m` / `decode_uwb_all.m`：整段 `.dat` 扫描，SIC 使用。
+- `+uwbdecoder/`：各解调模块；`analyzeCirInterference` 做 First Path 前干扰判定。
 
 ## 解调流程
 

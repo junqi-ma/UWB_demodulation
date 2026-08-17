@@ -14,9 +14,14 @@ codeLength = numel(code);
 rx = rx(:);
 
 [preSamples, postSamples] = resolveCirWindow(params, preamble, reference);
+[preDiag, postDiag] = resolveDiagWindow(params, preSamples, postSamples);
 % 相对预期首径位置的 tap 范围：前置保护窗 + 后向多径窗口。
-offsets = (-preSamples:postSamples-1).';
-delayNs = offsets / reference.fs * 1e9;
+% 诊断窗可以更宽，但 CMF 仍只用中心的 cir_pre/cir_post 抽头。
+offsets = (-preDiag:postDiag-1).';
+delayNsDiag = offsets / reference.fs * 1e9;
+cmfStart = preDiag - preSamples + 1;
+cmfEnd = cmfStart + preSamples + postSamples - 1;
+delayNs = delayNsDiag(cmfStart:cmfEnd);
 
 % 只使用已检测到、且由配置允许的 SYNC 数量。
 availableRepetitions = min(preamble.detected_repetitions, ...
@@ -102,8 +107,19 @@ individualSeconds = toc(stageTimer);
 
 % --- 5. 归一化与结果封装 ---
 stageTimer = tic;
+% 诊断窗可能宽于 CMF 窗。CMF 只使用中心抽头，并只对这一段做 L2 归一化，
+% 这样加宽诊断窗不会改变后续 CIR-CMF 的相对路径权重。
+valuesDiagRaw = values;
+individualDiag = individual;
+valuesRaw = valuesDiagRaw(cmfStart:cmfEnd);
+if isempty(individualDiag)
+    individual = individualDiag;
+else
+    individual = individualDiag(cmfStart:cmfEnd, :);
+end
+normalizationNorm = norm(valuesRaw) + eps;
 % 归一化只影响幅度标度，不改变后续 CMF 的相对路径权重。
-values = values / (norm(values) + eps);
+values = valuesRaw / normalizationNorm;
 timing = struct('setup_seconds', setupSeconds, ...
     'alignment_seconds', alignmentSeconds, ...
     'local_correlation_seconds', localCorrelationSeconds, ...
@@ -112,12 +128,21 @@ timing = struct('setup_seconds', setupSeconds, ...
     'total_seconds', toc(totalTimer));
 
 cir = struct('values', values, 'delay_ns', delayNs, ...
+    'values_raw', valuesRaw, ...
+    'normalization_norm', normalizationNorm, ...
     'individual_values', individual, 'repetition_count', validCount, ...
     'first_repetition', firstRepetition + 1, ...
     'last_repetition', lastRepetition + 1, ...
     'skipped_initial_repetitions', firstRepetition, ...
     'pre_samples', preSamples, 'post_samples', postSamples, ...
     'timing', timing);
+if preDiag > preSamples || postDiag > postSamples
+    cir.diag_values = valuesDiagRaw;
+    cir.diag_delay_ns = delayNsDiag;
+    cir.diag_individual_values = individualDiag;
+    cir.diag_pre_samples = preDiag;
+    cir.diag_post_samples = postDiag;
+end
 
 if params.cir_timing
     fprintf(['[CIR timing] setup=%6.2f ms, align=%6.2f ms, ', ...
@@ -151,4 +176,16 @@ end
 
 preSamples = max(0, round(preSamples));
 postSamples = max(1, round(postSamples));
+end
+
+function [preDiag, postDiag] = resolveDiagWindow(params, preSamples, postSamples)
+% 干扰诊断可以使用更宽的 First Path 前/后窗口，但不能窄于 CMF 窗。
+preDiag = preSamples;
+postDiag = postSamples;
+if isfield(params, 'cir_diag_pre_samples') && ~isempty(params.cir_diag_pre_samples)
+    preDiag = max(preSamples, round(params.cir_diag_pre_samples));
+end
+if isfield(params, 'cir_diag_post_samples') && ~isempty(params.cir_diag_post_samples)
+    postDiag = max(postSamples, round(params.cir_diag_post_samples));
+end
 end
