@@ -19,7 +19,7 @@ c = uwbdecoder.constants();
 
 %% 0. User configuration
 % Capture file to inspect.
-file_name = 'F:\UWB基带数据\dw1000_single_tone_1.dat';
+file_name = 'D:\bupt\project\UWB基带数据\qm35_dw1000_processed_1.dat';
 
 % RF center frequency (Hz) for absolute frequency display.
 center_frequency = 6489.6e6;
@@ -113,11 +113,11 @@ fig2 = figure('Name', 'UWB segment: spectrum', ...
 
 n_fft = min(actual_count, 262144);
 % Hann window reduces spectral leakage.
-win = 0.5 - 0.5 * cos(2*pi*(0:n_fft-1) / (n_fft-1));
+win = (0.5 - 0.5 * cos(2*pi*(0:n_fft-1) / (n_fft-1))).';
 fft_data = fftshift(fft(comp_data(1:n_fft) .* win, n_fft));
 spectrum_db = 20 * log10(abs(fft_data) + eps);
 spectrum_db = spectrum_db - max(spectrum_db);
-freq_rel_hz = (-floor(n_fft/2):ceil(n_fft/2)-1) * fs / n_fft;
+freq_rel_hz = ((-floor(n_fft/2):ceil(n_fft/2)-1) * fs / n_fft).';
 freq_abs_hz = center_frequency + freq_rel_hz;
 
 if spectrum_zoom_half_width > 0

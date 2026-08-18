@@ -19,7 +19,7 @@ addpath(project_dir);
 %% 0. User configuration
 % Keep phy_profile consistent with run_decode_uwb_all.m.
 phy_profile = 'QM35';  % 'DW1000' or 'QM35'
-input_file = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
+input_file = 'D:\bupt\project\UWB基带数据\qm35_dw1000_processed_1.dat';
 fitting_file = input_file;
 output_base_file = input_file;
 final_cancellation_mode = 'optimal_complex';
@@ -192,6 +192,9 @@ field_summary_file = fullfile(summary_directory, ...
 max_psdu_bytes = 128;
 require_fcs_pass = true;
 fixed_phr_payload_scale = 0.88;
+if sic_managed_run && isfield(sic_stage_config, 'require_fcs_pass')
+    require_fcs_pass = logical(sic_stage_config.require_fcs_pass);
+end
 
 % Reconstruction uses the PHY settings stored by the decoder in
 % results.params, so cancellation cannot silently disagree with the scan.
@@ -540,7 +543,7 @@ save(metadata_file, 'reports', 'success_count', 'frames', 'params', ...
     'enable_cir_slow_phase_compensation', ...
     'cir_slow_phase_options', ...
     'enable_full_packet_sfo_correction', ...
-    'full_packet_sfo_options', 'field_summary_file', ...
+    'full_packet_sfo_options', 'require_fcs_pass', 'field_summary_file', ...
     'field_summary_table', '-v7.3');
 
 output_info = dir(output_file);
@@ -639,7 +642,7 @@ tx_options = struct( ...
     'sfd_sequence', sfdSequence, ...
     'peak_amplitude', 1, ...
     'guard_samples', 0, ...
-    'require_fcs_pass', true);
+    'require_fcs_pass', require_fcs_pass);
 tx = generate_uwb_tx_from_decode(decoded, tx_options);
 channel = apply_estimated_cir_to_uwb(tx, decoded.cir);
 replica = channel.waveform_x410(:);

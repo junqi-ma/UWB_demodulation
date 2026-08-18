@@ -21,7 +21,7 @@ c = uwbdecoder.constants();
 
 %% 0. User configuration
 % Source capture and cancellation mode.
-input_file = 'F:\UWB基带数据\qm35_new_3.dat';
+input_file = 'D:\bupt\project\UWB基带数据\qm35_new_processed_3.dat';
 cancellation_mode = 'optimal_complex';
 
 % Full compensation toggles. Set all true for the complete implementation.

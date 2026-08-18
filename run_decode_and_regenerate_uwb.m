@@ -9,7 +9,7 @@ addpath(project_dir);
 
 %% -------------------- QM35 capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\QM35_1.dat';
+options.file_name = 'D:\bupt\project\UWB基带数据\qm35_new_processed_1.dat';
 options.sample_offset = 0;
 options.sample_num = 0.5e6;
 options.ant_num = 1;

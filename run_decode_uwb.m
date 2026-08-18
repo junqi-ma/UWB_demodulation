@@ -6,7 +6,7 @@ clc;
 
 %% Input capture
 options = struct();
-options.file_name = 'F:\UWB基带数据\DW1000_1.dat';
+options.file_name = 'D:\bupt\project\UWB基带数据\dw1000_new_processed_1.dat';
 options.sample_offset = 0;
 % Enough RX samples for a late-aligned 256-SYNC frame; soft chips are still
 % limited to a budgeted frame span (not the whole buffer).

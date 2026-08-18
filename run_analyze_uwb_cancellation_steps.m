@@ -16,7 +16,7 @@ phy_profile = 'qm35';
 switch lower(phy_profile)
     case 'dw1000'
         device_label = 'DW1000';
-        capture_file = 'F:\UWB基带数据\DW1000_2.dat';
+capture_file = 'D:\bupt\project\UWB基带数据\dw1000_new_processed_2.dat';
         profile_tag = 'dw1000';
         options = struct( ...
             'file_name', capture_file, ...
@@ -41,7 +41,7 @@ switch lower(phy_profile)
         gain_fit_last_sync_default = 256;
     case 'qm35'
         device_label = 'QM35';
-        capture_file = 'F:\UWB基带数据\qm35_1.dat';
+capture_file = 'D:\bupt\project\UWB基带数据\qm35_new_processed_1.dat';
         profile_tag = 'qm35';
         cfo_fit_last_sync_default = 128;
         gain_fit_last_sync_default = 128;

@@ -10,7 +10,7 @@ close all;
 clc;
 
 %% -------------------- Current QM35 configuration --------------------
-capture_file = 'F:\UWB基带数据\qm35_dw1000_new_3.dat';
+capture_file = 'D:\bupt\project\UWB基带数据\qm35_dw1000_processed_3.dat';
 fs_rx = 737.28e6;
 ant_num = 1;
 channel_index = 1;

@@ -7,7 +7,7 @@ clc;
 c = uwbdecoder.constants();
 
 %% Parameters
-fileName = 'F:\UWB基带数据\qm35_1.dat';
+fileName = 'D:\bupt\project\UWB基带数据\qm35_new_processed_1.dat';
 antNum = 1;           % Number of channels/
 fs = 737.28e6;        % Sample rate (Hz)
 sampleNum = 0.12e6;   % Samples to read from each channel

@@ -9,7 +9,7 @@ cd(project_dir);
 addpath(project_dir);
 
 options = struct();
-options.file_name = 'F:\UWB基带数据\DW1000_1.dat';
+options.file_name = 'D:\bupt\project\UWB基带数据\dw1000_new_processed_1.dat';
 options.sample_offset = 0;
 options.sample_num = 1.5e6;
 options.ant_num = 1;

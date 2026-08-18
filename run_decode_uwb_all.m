@@ -22,7 +22,7 @@ end
 
 %% -------------------- Input capture --------------------
 options = struct();
-options.file_name = 'F:\UWB基带数据\qm35_dw1000_new_1.dat';
+options.file_name = 'D:\bupt\project\UWB基带数据\qm35_new_processed_1.dat';
 %options.file_name = 'F:\USRP数据解调\decoded_results\qm35_dw1000_1\cancelled_optimal_complex.dat';
 if sic_managed_run
     options.file_name = sic_stage_config.input_file;
@@ -31,9 +31,9 @@ options.ant_num = 1;
 options.channel_index = 1;
 
 %% -------------------- X410 / DW1000 radio --------------------
-options.fs_rx = 737.28e6;
+options.fs_rx = 998.4e6;
 options.x410_center_frequency = 6500e6;
-options.dw1000_center_frequency = 6489.6e6;
+options.dw1000_center_frequency = 6500e6;
 options.data_rate = 6.81;
 pll_phase_compensation_repetitions = 10;
 if sic_managed_run && isfield(sic_stage_config, ...
@@ -101,7 +101,7 @@ else
 end
 
 %% -------------------- Interference cancellation --------------------
-options.enable_interference_cancellation = true;
+options.enable_interference_cancellation = false;
 options.interference_quiet_offset = 400000;
 options.interference_quiet_num = interference_quiet_num;
 options.interference_tone_bin = -169;
@@ -117,7 +117,7 @@ batch = struct();
 batch.energy_chunk_samples = 20e6;
 batch.energy_step_samples = 19e6;
 batch.energy_read_stride = 100;
-% Moving-average length and region controls use original RX sample units.
+% Moving-average length and region controls use original RX  sample units.
 batch.energy_smooth_rx_samples = 8192;
 % Estimate the quiet floor from the lowest-energy 30% so dense packet
 % traffic does not push the background estimate into the signal population.
