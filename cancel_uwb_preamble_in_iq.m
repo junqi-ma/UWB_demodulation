@@ -162,17 +162,21 @@ for k = 1:numel(names)
         opts.(names{k}) = defaults.(names{k});
     end
 end
-% Shorter visible spans clip the fit windows the same way the full-packet
-% canceller's defaults would.
-if visible < opts.cfo_fit_first_sync
+% Force off even when the caller copied dwProfile.cancel (full-packet
+% fillCancelOptions defaults these two flags to true).
+opts.enable_full_packet_sfo = false;
+opts.enable_cir_slow_phase = false;
+if opts.cfo_fit_first_sync > visible
     opts.cfo_fit_first_sync = 1;
 end
-if visible < opts.gain_fit_first_sync
+if opts.gain_fit_first_sync > visible
     opts.gain_fit_first_sync = 1;
 end
-opts.cfo_fit_last_sync = min(visible, opts.cfo_fit_last_sync);
-opts.gain_fit_last_sync = min(visible, opts.gain_fit_last_sync);
-opts.alignment_template_syncs = min(opts.alignment_template_syncs, visible);
+opts.cfo_fit_last_sync = visible;
+opts.gain_fit_last_sync = visible;
+if opts.alignment_template_syncs > visible
+    opts.alignment_template_syncs = visible;
+end
 end
 
 function tx = buildSyncOnlyTx(txOptions, visible)

@@ -21,6 +21,8 @@ function pipeline = scheduledDumpSicPipeline(cfg)
 %     max_packets       [] = all selected
 %     overwrite         replace existing products
 %     make_plots        run CIR comparison figures
+%     min_alignment_correlation   DW cancel gate (default 0.60). Does not
+%                                 change QM35 cancel or the library 0.70.
 %
 %   See also UWBSICPIPELINE, RUN_SCHEDULED_DUMP_SIC_PIPELINE,
 %   VISUALIZE_SCHEDULED_DUMP_SIC_CIR.
@@ -143,11 +145,17 @@ try
     if ~isempty(dwDecoded)
         record.dw = packDecodedCir(dwDecoded, struct());
         record.dw_profile = string(dwProfile.name);
+        startPrint = record.dw.start_sample;
+        if isfield(dwDecoded, 'preamble') && ...
+                isfield(dwDecoded.preamble, 'start_sample_uncropped')
+            startPrint = dwDecoded.preamble.start_sample_uncropped;
+        end
         fprintf('  DW1000: profile=%s FCS=%d start=%d class=%s path=%s\n', ...
-            dwProfile.name, record.dw.fcs_pass, ...
-            round(double(dwDecoded.preamble.start_sample_uncropped)), ...
+            dwProfile.name, record.dw.fcs_pass, round(double(startPrint)), ...
             record.dw_search_class, record.dw_search_path);
     elseif isfinite(dwSearch.overlap_start)
+        record.dw.decode_ok = true;
+        record.dw.fcs_pass = false;
         record.dw.start_sample = dwSearch.overlap_start;
         record.dw.detected_repetitions = dwSearch.overlap_reps;
         record.dw_profile = string(dwProfile.name);
@@ -163,27 +171,33 @@ try
     fullTried = ~isempty(dwDecoded) && record.dw.fcs_pass;
     if fullTried
         try
+            cancelOpts = dwProfile.cancel;
+            cancelOpts.min_alignment_correlation = ...
+                cfg.min_alignment_correlation;
             [xPreserved, dwCancel] = cancel_uwb_packet_in_iq( ...
-                xOrig, dwDecoded, dwProfile.tx, dwProfile.cancel);
+                xOrig, dwDecoded, dwProfile.tx, cancelOpts);
             record.dw_cancel = packCancelReport(dwCancel);
-            record.sic_applied = true;
-            record.dw_cancel_mode = "full";
-            fprintf('  DW1000 cancel full: %.2f dB\n', ...
-                dwCancel.frame_suppression_db);
+            record.sic_applied = logical(record.dw_cancel.success);
+            if record.sic_applied
+                record.dw_cancel_mode = "full";
+            end
+            fprintf('  DW1000 cancel full: %.2f dB success=%d\n', ...
+                dwCancel.frame_suppression_db, record.sic_applied);
         catch cancelErr
             record.dw_cancel.success = false;
             record.dw_cancel.message = string(cancelErr.message);
+            record.sic_applied = false;
             fprintf('  DW1000 full cancel skipped: %s\n', cancelErr.message);
             % 禁止在 FCS pass 时回落到 preamble-only（packet 47）
         end
     elseif cfg.enable_preamble_only_sic && ...
             isfinite(dwSearch.overlap_start) && ...
             dwSearch.overlap_reps >= cfg.min_visible_sync_for_preamble_sic && ...
-            ~isempty(fieldnames(dwProfile)) && isfield(dwProfile, 'params')
+            isstruct(dwProfile) && isfield(dwProfile, 'params')
         try
             [preambleCir, cirEst] = estimate_uwb_preamble_cir( ...
                 xAfterQm35, dwProfile.reference, dwProfile.params, ...
-                dwSearch.overlap_start);
+                dwSearch.overlap_start, dwSearch.overlap_preamble);
             txOpt = struct( ...
                 'code_index', dwProfile.params.code_index, ...
                 'visible_reps', dwSearch.overlap_reps, ...
@@ -194,19 +208,24 @@ try
             cancelOpts = dwProfile.cancel;
             cancelOpts.min_visible_sync_for_preamble_sic = ...
                 cfg.min_visible_sync_for_preamble_sic;
+            cancelOpts.min_alignment_correlation = ...
+                cfg.min_alignment_correlation;
             cancelOpts.cfo_fit_last_sync = dwSearch.overlap_reps;
             cancelOpts.gain_fit_last_sync = dwSearch.overlap_reps;
             [xPreserved, dwCancel] = cancel_uwb_preamble_in_iq( ...
                 xOrig, preambleCir, cirEst, txOpt, cancelOpts);
             record.dw_cancel = packCancelReport(dwCancel);
-            record.sic_applied = true;
-            record.dw_cancel_mode = "preamble";
-            fprintf('  DW1000 cancel preamble: %.2f dB vis=%d start=%d\n', ...
+            record.sic_applied = logical(record.dw_cancel.success);
+            if record.sic_applied
+                record.dw_cancel_mode = "preamble";
+            end
+            fprintf('  DW1000 cancel preamble: %.2f dB vis=%d start=%d success=%d\n', ...
                 dwCancel.frame_suppression_db, dwSearch.overlap_reps, ...
-                dwSearch.overlap_start);
+                dwSearch.overlap_start, record.sic_applied);
         catch cancelErr
             record.dw_cancel.success = false;
             record.dw_cancel.message = string(cancelErr.message);
+            record.sic_applied = false;
             fprintf('  DW1000 preamble cancel skipped: %s\n', cancelErr.message);
         end
     end
@@ -235,6 +254,7 @@ decoded = [];
 profile = struct();
 search = emptyDwSearch();
 searchOpts = searchOptsFromCfg(cfg);
+firstOverlapLocked = false;
 
 for k = 1:numel(profiles)
     try
@@ -244,12 +264,13 @@ for k = 1:numel(profiles)
         continue
     end
 
-    if ~isfinite(search.overlap_start) && isfinite(candSearch.overlap_start)
+    if ~firstOverlapLocked && isfinite(candSearch.overlap_start)
         search = candSearch;
         profile = profiles(k);
+        firstOverlapLocked = true;
     end
     if ~isfinite(candSearch.overlap_start)
-        if search.head_is_fragment == false && candSearch.head_is_fragment
+        if ~firstOverlapLocked && candSearch.head_is_fragment
             search.head_start = candSearch.head_start;
             search.head_is_fragment = true;
             search.head_reps = candSearch.head_reps;
@@ -273,10 +294,11 @@ for k = 1:numel(profiles)
         search = candSearch;
         return
     end
-    if isempty(decoded)
+    sameFrozenProfile = firstOverlapLocked && ...
+        isfield(profile, 'name') && isfield(profiles(k), 'name') && ...
+        strcmp(string(profile.name), string(profiles(k).name));
+    if sameFrozenProfile && isempty(decoded)
         decoded = candidate;
-        profile = profiles(k);
-        search = candSearch;
     end
 end
 end
@@ -317,7 +339,7 @@ opts.head_fragment_max_start = cfg.dw_head_fragment_max_start;
 opts.qm35_search_pre_s = cfg.dw_qm35_search_pre_s;
 opts.qm35_search_post_s = cfg.dw_qm35_search_post_s;
 opts.min_detect_reps = 32;
-opts.refine_max_abs_start_err_periods = 2;
+opts.refine_max_abs_start_err_periods = 50;
 end
 
 function packed = packDecodedCir(decoded, interferenceOptions)
@@ -368,7 +390,11 @@ for k = 1:numel(fields)
         report.(fields{k}) = raw.(fields{k});
     end
 end
-report.success = true;
+if isfield(raw, 'success')
+    report.success = logical(raw.success);
+else
+    report.success = true;
+end
 end
 
 function metrics = measureCirChange(before, after)
@@ -789,6 +815,10 @@ end
 if ~isfield(cfg, 'enable_preamble_only_sic') || ...
         isempty(cfg.enable_preamble_only_sic)
     cfg.enable_preamble_only_sic = true;
+end
+if ~isfield(cfg, 'min_alignment_correlation') || ...
+        isempty(cfg.min_alignment_correlation)
+    cfg.min_alignment_correlation = 0.60;
 end
 cfg.tag = tag;
 cfg.project_directory = projectDir;

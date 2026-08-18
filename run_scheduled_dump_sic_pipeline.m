@@ -4,11 +4,10 @@
 %
 % The DW1000 search skips window-head fragments (start < 2000) left over
 % from a previous packet, then searches the QM35 neighborhood (fallback:
-% the suffix) for the overlapping DW packet. Full-decode candidates still
-% use cancel_uwb_packet_in_iq (min_alignment_correlation stays 0.70, so
-% packet 47 remains rejected); FCS-failed or clipped candidates with
-% >= min_visible_sync_for_preamble_sic visible SYNCs are cancelled with the
-% SYNC-only cancel_uwb_preamble_in_iq. See
+% the suffix) for the overlapping DW packet. Full-decode and preamble-only
+% DW cancel both take cfg.min_alignment_correlation (dump default 0.60).
+% cancel_uwb_packet_in_iq / cancel_uwb_preamble_in_iq keep their own 0.70
+% defaults for other callers. QM35 cancel is unchanged. See
 % markdowns/dump窗DW1000_跳过残段与Preamble-only_SIC.md.
 clear;
 close all;
@@ -34,6 +33,12 @@ cfg.overwrite = true;
 cfg.make_plots = true;
 cfg.cir_interference_options = struct( ...
     'occupancy_background_margin_db', 3);
+% cfg.dw_head_fragment_max_start = 2000;
+% cfg.dw_qm35_search_pre_s = 80e-6;
+% cfg.dw_qm35_search_post_s = 40e-6;
+% cfg.min_visible_sync_for_preamble_sic = 64;
+% cfg.enable_preamble_only_sic = true;  % false: 只消 FCS 过的整包；搜索仍走新包装
+cfg.min_alignment_correlation = 0.60;   % dump DW cancel only; 0.70 still the library default
 
 %% -------------------- Run --------------------
 pipeline = scheduledDumpSicPipeline(cfg);

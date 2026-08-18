@@ -183,6 +183,7 @@ Fractional alignment correlation 0.691 is below 0.700
 
 ### 实现规格（2026-08-18）：见 [[dump窗DW1000_跳过残段与Preamble-only_SIC]]。
 
-dump SIC 跳过 `start<2000` 的窗头残段，在 QM35 邻域搜重叠 DW；
-整包 FCS 不过则 preamble-only 消除。不改 `detectRepeatedPreamble`
-全局最早优先，不降 0.70，不加长 dump 窗。
+dump SIC 跳过 `start<2000` 的窗头残段，在 `x(qm35-80μs:end)` 搜重叠 DW
+（`start>qm35+40μs` 仍接受）；整包 FCS 不过则 preamble-only。
+不改 `detectRepeatedPreamble` 全局最早优先，不降 0.70，不加长 dump 窗。
+禁止用 64 峰 `detected_repetitions` 当残尾游标。

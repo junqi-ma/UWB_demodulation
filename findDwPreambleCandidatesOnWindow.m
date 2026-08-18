@@ -1,38 +1,34 @@
 function search = findDwPreambleCandidatesOnWindow(rx, profile, qm35Start, opts)
 %FINDDWPREAMBLECANDIDATESONWINDOW Dump-SIC search: skip head fragment, find overlap DW.
-%   SEARCH = FINDDWPREAMBLECANDIDATESONWINDOW(RX, PROFILE, QM35START, OPTS)
+%   SEARCH = FINDDWPREAMBLECANDIDATESONWINDOW(RX, PROFILE, QM35START)
 %   RX is the post-QM35-cancel work-rate window. PROFILE is one
 %   refs.dw_profiles(k) (params / reference). QM35START is
-%   window.seeded_start_one (one-based).
+%   window.seeded_start_one (one-based). OPTS may be omitted; defaults
+%   are filled internally (tests call the 3-arg form).
 %
-%   Searches in this order:
-%     1. Unseeded earliest detection. If the absolute start is at or beyond
-%        HEAD_FRAGMENT_MAX_START it is a genuine packet (not a head tail).
-%     2. Otherwise the head lock is a leftover tail of a previous packet that
-%        began before the window. Skip it and search the QM35 neighborhood
-%        (x(lo:end), never clipped to x(lo:hi)); if that misses, search the
-%        suffix after the head tail.
-%   A seeded refine must not fall back to the window-head tail; such a refine
-%   is discarded. Does not modify detectRepeatedPreamble. Head tails are never
-%   returned as the overlap candidate.
+%   Does not modify detectRepeatedPreamble. Head tails are never returned
+%   as the overlap candidate.
 %
-%   See also SCHEDULEDDUMPPIPELINE, DETECTREPEATEDPREAMBLE.
+%   See also SCHEDULEDDUMPSICPIPELINE, DETECTREPEATEDPREAMBLE.
 
-opts = fillSearchOptions(opts);
+if nargin < 4
+    opts = struct();
+end
+opts = fillSearchOpts(opts);
 
 params = profile.params;
 ref = profile.reference;
 fs = opts.fs;
 periodNom = ref.samples_per_symbol;
 headFragMax = opts.head_fragment_max_start;
-
-search = emptySearch(qm35Start);
+search = emptySearchResult(qm35Start);
+rx = rx(:);
 
 try
     earliest = uwbdecoder.detectRepeatedPreamble(rx, ref, params, []);
 catch
     search.search_path = "none";
-    search.message = 'no preamble detected on window';
+    search.message = "earliest detect failed";
     return
 end
 period = finitePeriod(earliest.measured_period, periodNom);
@@ -40,11 +36,12 @@ period = finitePeriod(earliest.measured_period, periodNom);
 if earliest.start_sample >= headFragMax
     search.head_is_fragment = false;
     search.head_start = NaN;
-    search.search_path = "earliest";
-    if isfinite(double(earliest.start_sample))
-        search = acceptOverlap(search, ...
-            refineSeeded(rx, ref, params, earliest.start_sample, opts), ...
-            "earliest", rx, params);
+    try
+        refined = refineSeeded(rx, ref, params, earliest.start_sample, opts);
+        search = acceptOverlap(search, refined, rx, params, "earliest");
+    catch
+        search.search_path = "none";
+        search.message = "earliest refine failed";
     end
     return
 end
@@ -54,61 +51,63 @@ search.head_start = double(earliest.start_sample);
 search.head_reps = double(earliest.detected_repetitions);
 search.head_period = period;
 
-% QM35 neighborhood first. Search x(lo:end) so a late overlap packet keeps
-% enough SYNC repetitions to cross the detector's 32-peak commit gate; HI
-% only decides whether the returned absolute start counts as "in the
-% neighborhood" after the fact.
-if isfinite(double(qm35Start))
+trueHeadEnd = search.head_start + ...
+    min(params.preamble_repetitions, ...
+        floor((numel(rx) - search.head_start + 1) / period)) * period;
+
+qm35Ok = isfinite(qm35Start) && qm35Start >= 1 && qm35Start <= numel(rx);
+if qm35Ok
     lo = max(1, round(double(qm35Start) - opts.qm35_search_pre_s * fs));
     hi = min(numel(rx), round(double(qm35Start) + opts.qm35_search_post_s * fs));
     try
-        neigh = detectOnSuffix(rx, ref, params, lo, fs);
-        if isValidDetect(neigh, opts) && (neigh.start_sample <= hi)
+        neigh = detectOnSuffix(rx, ref, params, lo);
+        if isValidDetect(neigh, opts) && neigh.start_sample >= lo
             refined = refineSeeded(rx, ref, params, neigh.start_sample, opts);
-            if isValidRefine(refined, neigh.start_sample, opts)
-                search = acceptOverlap(search, refined, ...
-                    "qm35_neighborhood", rx, params);
+            if refined.start_sample >= lo
+                if refined.start_sample > hi
+                    pathName = "late_after_qm35";
+                else
+                    pathName = "qm35_neighborhood";
+                end
+                search = acceptOverlap(search, refined, rx, params, pathName);
                 return
             end
         end
     catch
-        % treat any neighborhood-search miss as "not found here"
+        % Neighborhood miss: fall through to the suffix search.
     end
+    suffixFrom = max([lo, headFragMax, round(trueHeadEnd)]);
+else
+    suffixFrom = max(headFragMax, round(trueHeadEnd));
 end
 
+suffixFrom = min(max(suffixFrom, headFragMax), numel(rx));
 try
-    tailEnd = earliest.start_sample + earliest.detected_repetitions * period;
-    from = max(headFragMax, round(tailEnd));
-    from = min(from, numel(rx));
-    suf = detectOnSuffix(rx, ref, params, from, fs);
-    if isValidDetect(suf, opts)
+    suf = detectOnSuffix(rx, ref, params, suffixFrom);
+    if isValidDetect(suf, opts) && suf.start_sample >= suffixFrom
         refined = refineSeeded(rx, ref, params, suf.start_sample, opts);
-        if isValidRefine(refined, suf.start_sample, opts)
-            search = acceptOverlap(search, refined, ...
-                "suffix_after_head", rx, params);
-            return
-        end
+        search = acceptOverlap(search, refined, rx, params, "suffix_after_head");
+        return
     end
 catch
-    % treat any suffix miss as "not found here"
 end
 
 search.search_path = "none";
-search.message = 'head fragment skipped; no overlap candidate';
+search.message = "head fragment skipped; no overlap candidate";
 end
 
 % -------------------------------------------------------------------------
-function opts = fillSearchOptions(opts)
+function opts = fillSearchOpts(opts)
+if nargin < 1 || isempty(opts)
+    opts = struct();
+end
 defaults = struct( ...
     'fs', 998.4e6, ...
     'head_fragment_max_start', 2000, ...
     'qm35_search_pre_s', 80e-6, ...
     'qm35_search_post_s', 40e-6, ...
     'min_detect_reps', 32, ...
-    'refine_max_abs_start_err_periods', 2);
-if nargin < 1 || ~isstruct(opts) || isempty(opts)
-    opts = struct();
-end
+    'refine_max_abs_start_err_periods', 50);
 names = fieldnames(defaults);
 for k = 1:numel(names)
     if ~isfield(opts, names{k}) || isempty(opts.(names{k}))
@@ -117,7 +116,7 @@ for k = 1:numel(names)
 end
 end
 
-function search = emptySearch(qm35Start)
+function search = emptySearchResult(qm35Start)
 search = struct( ...
     'head_start', NaN, ...
     'head_reps', 0, ...
@@ -133,25 +132,14 @@ search = struct( ...
     'message', "");
 end
 
-function search = acceptOverlap(search, preamble, path, rx, params)
-search.overlap_preamble = preamble;
-search.overlap_start = double(preamble.start_sample);
-search.overlap_detected_reps = double(preamble.detected_repetitions);
-search.overlap_period = finitePeriod(preamble.measured_period, 1016);
-search.overlap_reps = visibleReps(preamble, rx, params);
-search.search_path = path;
-search.message = char(string(path));
-end
-
-function preamble = detectOnSuffix(rx, ref, params, firstSample, fs)
+function preamble = detectOnSuffix(rx, ref, params, firstSample)
 if firstSample <= 1
     preamble = uwbdecoder.detectRepeatedPreamble(rx, ref, params, []);
     return
 end
 if firstSample >= numel(rx) - ref.samples_per_symbol
     error('findDwPreambleCandidatesOnWindow:SuffixTooShort', ...
-        'Search suffix starts at %d but window is %d.', ...
-        firstSample, numel(rx));
+        'Search suffix starts at %d but window is %d.', firstSample, numel(rx));
 end
 preamble = uwbdecoder.detectRepeatedPreamble( ...
     rx(firstSample:end), ref, params, []);
@@ -174,39 +162,55 @@ if isfield(preamble, 'roi_end')
 end
 end
 
+function ok = isValidDetect(preamble, opts)
+ok = isstruct(preamble) && isfield(preamble, 'start_sample') ...
+    && isfield(preamble, 'detected_repetitions') ...
+    && preamble.detected_repetitions >= opts.min_detect_reps ...
+    && isfinite(preamble.start_sample) ...
+    && preamble.start_sample >= opts.head_fragment_max_start;
+end
+
 function preamble = refineSeeded(rx, ref, params, seed, opts)
 preamble = uwbdecoder.detectRepeatedPreamble(rx, ref, params, seed);
 period = finitePeriod(preamble.measured_period, ref.samples_per_symbol);
 maxErr = opts.refine_max_abs_start_err_periods * period;
-if preamble.detected_repetitions < opts.min_detect_reps || ...
-        abs(double(preamble.start_sample) - double(seed)) > maxErr
+fellToHead = preamble.start_sample < opts.head_fragment_max_start;
+tooFar = abs(double(preamble.start_sample) - double(seed)) > maxErr;
+tooFew = preamble.detected_repetitions < opts.min_detect_reps;
+if fellToHead || tooFar || tooFew
     error('findDwPreambleCandidatesOnWindow:RefineFellBack', ...
         ['Seeded refine at %d fell back to start=%d reps=%d ', ...
-         '(likely earliest-head fallback).'], ...
+         '(head fallback or too few peaks).'], ...
         seed, preamble.start_sample, preamble.detected_repetitions);
 end
 end
 
-function ok = isValidDetect(preamble, opts)
-ok = preamble.detected_repetitions >= opts.min_detect_reps;
-end
-
-function ok = isValidRefine(preamble, seed, opts)
-period = finitePeriod(preamble.measured_period, 1016);
-ok = preamble.detected_repetitions >= opts.min_detect_reps && ...
-    abs(double(preamble.start_sample) - double(seed)) <= ...
-    opts.refine_max_abs_start_err_periods * period;
-end
-
-function n = visibleReps(preamble, rx, params)
-period = finitePeriod(preamble.measured_period, 1016);
+function n = visibleReps(preamble, rx, params, periodNom)
+period = finitePeriod(preamble.measured_period, periodNom);
 n = min(params.preamble_repetitions, ...
     floor((numel(rx) - double(preamble.start_sample) + 1) / period));
 n = max(0, n);
 end
 
-function p = finitePeriod(p, default)
-if isempty(p) || ~isfinite(p)
-    p = default;
+function search = acceptOverlap(search, refined, rx, params, pathName)
+fallback = uwbdecoder.constants().HRP_CHIPS_PER_SYMBOL;
+search.overlap_start = double(refined.start_sample);
+search.overlap_reps = visibleReps(refined, rx, params, fallback);
+search.overlap_detected_reps = double(refined.detected_repetitions);
+search.overlap_period = finitePeriod(refined.measured_period, fallback);
+search.overlap_preamble = refined;
+search.search_path = string(pathName);
+search.message = "";
+if ~(isfinite(search.overlap_start) && search.overlap_start >= 2000)
+    error('findDwPreambleCandidatesOnWindow:AcceptedHead', ...
+        'Refusing to accept overlap start %g.', search.overlap_start);
+end
+end
+
+function p = finitePeriod(measured, fallback)
+if isfinite(measured) && measured > 0
+    p = double(measured);
+else
+    p = double(fallback);
 end
 end

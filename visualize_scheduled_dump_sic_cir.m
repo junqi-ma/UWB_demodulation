@@ -132,7 +132,7 @@ if isfinite(record.qm35_before.first_path_delay_ns)
         'First Path', 'LineWidth', 1.0);
 end
 grid on;
-ylim([-60 5]);
+ylim([-50 5]);
 xlabel('CIR delay (ns)');
 ylabel('Normalized |CIR|^2 (dB)');
 legend('Before DW1000 cancellation', ...
@@ -147,7 +147,7 @@ nexttile;
 plot(delay, 10 * log10(max(abs(b - aAligned).^2, eps) / refPower), ...
     'k', 'LineWidth', 1.2);
 grid on;
-ylim([-60 5]);
+ylim([-50 5]);
 xlabel('CIR delay (ns)');
 ylabel('Normalized |before - aligned after|^2 (dB)');
 title(sprintf(['CIR difference | early residual %.1f -> %.1f dB | ', ...
@@ -197,12 +197,12 @@ fig = figure('Name', 'Dump SIC CIR heatmaps', ...
     'Color', 'w', 'Position', [40 60 1560 780]);
 tiledlayout(fig, 1, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
 ax1 = nexttile;
-imagesc(delay, rowIdx, beforeMap); axis xy; clim([-40 0]); colorbar;
+imagesc(delay, rowIdx, beforeMap); axis xy; clim([-50 0]); colorbar;
 yticks(rowIdx); yticklabels(string(packetIds));
 xlabel('CIR delay (ns)'); ylabel('packet id');
 title(sprintf('Before DW1000 cancellation (%d)', numel(records)));
 ax2 = nexttile;
-imagesc(delay, rowIdx, afterMap); axis xy; clim([-40 0]); colorbar;
+imagesc(delay, rowIdx, afterMap); axis xy; clim([-50 0]); colorbar;
 yticks(rowIdx); yticklabels(string(packetIds));
 xlabel('CIR delay (ns)'); ylabel('packet id');
 title(sprintf('After DW1000 cancellation (%d)', numel(records)));
@@ -230,7 +230,7 @@ ax1 = nexttile;
 plot(delay, beforeMap.', 'Color', [0.62 0.80 0.94], 'LineWidth', 0.45);
 hold on;
 plot(delay, median(beforeMap, 1, 'omitnan'), 'k', 'LineWidth', 2.0);
-grid on; ylim([-40 0]);
+grid on; ylim([-60 0]);
 xlabel('CIR delay (ns)'); ylabel('Normalized CIR power (dB)');
 title(sprintf('Before (%d packets)', numel(records)));
 legend('Per-packet CIR', 'Median', 'Location', 'southwest');
@@ -238,7 +238,7 @@ ax2 = nexttile;
 plot(delay, afterMap.', 'Color', [0.97 0.73 0.57], 'LineWidth', 0.45);
 hold on;
 plot(delay, median(afterMap, 1, 'omitnan'), 'k', 'LineWidth', 2.0);
-grid on; ylim([-40 0]);
+grid on; ylim([-60 0]);
 xlabel('CIR delay (ns)'); ylabel('Normalized CIR power (dB)');
 title(sprintf('After (%d packets)', numel(records)));
 legend('Per-packet CIR', 'Median', 'Location', 'southwest');
@@ -260,8 +260,8 @@ for k = 1:numel(records)
     beforeMap(k, :) = normalizedCirDb(records(k).qm35_before, delay);
     afterMap(k, :) = normalizedCirDb(records(k).qm35_after, delay);
 end
-beforeMap = max(beforeMap, -40);
-afterMap = max(afterMap, -40);
+beforeMap = max(beforeMap, -60);
+afterMap = max(afterMap, -60);
 end
 
 function valuesDb = normalizedCirDb(pack, referenceDelay)
