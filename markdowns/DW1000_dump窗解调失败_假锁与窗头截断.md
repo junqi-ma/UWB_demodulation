@@ -178,3 +178,11 @@ Fractional alignment correlation 0.691 is below 0.700
 不要用 `cir_coherence≥0.99` 或 occupancy 回过头来解释这 16 帧。它们在解 DW 这一步就已经锁错或被截断了。
 
 看图：`visualize_qm35_cir_interference.m` 里改 `packet_index`。底层是整窗原始 I/Q；红=假锁/残尾，绿=后段真包，紫=后包 SFD 出窗。
+
+---
+
+### 实现规格（2026-08-18）：见 [[dump窗DW1000_跳过残段与Preamble-only_SIC]]。
+
+dump SIC 跳过 `start<2000` 的窗头残段，在 QM35 邻域搜重叠 DW；
+整包 FCS 不过则 preamble-only 消除。不改 `detectRepeatedPreamble`
+全局最早优先，不降 0.70，不加长 dump 窗。

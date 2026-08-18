@@ -37,7 +37,7 @@ cfg = normalizeDumpSicConfig(cfg, projectDir);
 ensureDirectory(cfg.output_root);
 
 pipeline = struct();
-pipeline.version = 1;
+pipeline.version = 2;
 pipeline.status = 'running';
 pipeline.started_at = timestampNow();
 pipeline.config = cfg;
@@ -84,6 +84,12 @@ fprintf('QM35 cancelled         : %d\n', pipeline.summary.qm35_cancelled);
 fprintf('DW1000 decoded / FCS   : %d / %d\n', ...
     pipeline.summary.dw_decoded, pipeline.summary.dw_fcs);
 fprintf('DW1000 cancelled (SIC) : %d\n', pipeline.summary.dw_cancelled);
+fprintf('DW full cancelled      : %d\n', ...
+    pipeline.summary.dw_full_cancelled);
+fprintf('DW preamble cancelled  : %d\n', ...
+    pipeline.summary.dw_preamble_cancelled);
+fprintf('DW false-lock skipped  : %d\n', ...
+    pipeline.summary.dw_false_lock_skipped);
 fprintf('Median CIR coherence   : %.4f\n', ...
     pipeline.summary.median_cir_coherence);
 fprintf('Manifest               : %s\n', pipeline.paths.manifest_file);
@@ -125,31 +131,83 @@ try
         end
     end
 
-    [dwDecoded, dwProfile] = decodeDw1000OnWindow( ...
-        xAfterQm35, refs.dw_profiles);
+    [dwDecoded, dwProfile, dwSearch] = decodeDw1000OnWindow( ...
+        xAfterQm35, refs.dw_profiles, window.seeded_start_one, cfg);
+    record.dw_search_class = classifyDwSearch(dwDecoded, dwSearch, cfg);
+    record.dw_overlap_start = dwSearch.overlap_start;
+    record.dw_head_start = dwSearch.head_start;
+    record.dw_visible_reps = dwSearch.overlap_reps;
+    record.dw_cancel_mode = "none";
+    record.dw_search_path = string(dwSearch.search_path);
+
     if ~isempty(dwDecoded)
         record.dw = packDecodedCir(dwDecoded, struct());
         record.dw_profile = string(dwProfile.name);
-        fprintf('  DW1000: profile=%s FCS=%d start=%d\n', ...
+        fprintf('  DW1000: profile=%s FCS=%d start=%d class=%s path=%s\n', ...
             dwProfile.name, record.dw.fcs_pass, ...
-            round(double(dwDecoded.preamble.start_sample_uncropped)));
+            round(double(dwDecoded.preamble.start_sample_uncropped)), ...
+            record.dw_search_class, record.dw_search_path);
+    elseif isfinite(dwSearch.overlap_start)
+        record.dw.start_sample = dwSearch.overlap_start;
+        record.dw.detected_repetitions = dwSearch.overlap_reps;
+        record.dw_profile = string(dwProfile.name);
+        fprintf('  DW1000: decode failed; overlap=%d vis=%d class=%s path=%s\n', ...
+            dwSearch.overlap_start, dwSearch.overlap_reps, ...
+            record.dw_search_class, record.dw_search_path);
     else
-        fprintf('  DW1000: not decoded\n');
+        fprintf('  DW1000: no overlap candidate (head=%g class=%s)\n', ...
+            dwSearch.head_start, record.dw_search_class);
     end
 
     xPreserved = xOrig;
-    if ~isempty(dwDecoded) && record.dw.fcs_pass
+    fullTried = ~isempty(dwDecoded) && record.dw.fcs_pass;
+    if fullTried
         try
             [xPreserved, dwCancel] = cancel_uwb_packet_in_iq( ...
                 xOrig, dwDecoded, dwProfile.tx, dwProfile.cancel);
             record.dw_cancel = packCancelReport(dwCancel);
             record.sic_applied = true;
-            fprintf('  DW1000 cancel: %.2f dB (QM35 preserved)\n', ...
+            record.dw_cancel_mode = "full";
+            fprintf('  DW1000 cancel full: %.2f dB\n', ...
                 dwCancel.frame_suppression_db);
         catch cancelErr
             record.dw_cancel.success = false;
             record.dw_cancel.message = string(cancelErr.message);
-            fprintf('  DW1000 cancel skipped: %s\n', cancelErr.message);
+            fprintf('  DW1000 full cancel skipped: %s\n', cancelErr.message);
+            % 禁止在 FCS pass 时回落到 preamble-only（packet 47）
+        end
+    elseif cfg.enable_preamble_only_sic && ...
+            isfinite(dwSearch.overlap_start) && ...
+            dwSearch.overlap_reps >= cfg.min_visible_sync_for_preamble_sic && ...
+            ~isempty(fieldnames(dwProfile)) && isfield(dwProfile, 'params')
+        try
+            [preambleCir, cirEst] = estimate_uwb_preamble_cir( ...
+                xAfterQm35, dwProfile.reference, dwProfile.params, ...
+                dwSearch.overlap_start);
+            txOpt = struct( ...
+                'code_index', dwProfile.params.code_index, ...
+                'visible_reps', dwSearch.overlap_reps, ...
+                'fs_tx', 998.4e6, ...
+                'phy_mode', '802.15.4a', ...
+                'peak_amplitude', 1, ...
+                'guard_samples', 0);
+            cancelOpts = dwProfile.cancel;
+            cancelOpts.min_visible_sync_for_preamble_sic = ...
+                cfg.min_visible_sync_for_preamble_sic;
+            cancelOpts.cfo_fit_last_sync = dwSearch.overlap_reps;
+            cancelOpts.gain_fit_last_sync = dwSearch.overlap_reps;
+            [xPreserved, dwCancel] = cancel_uwb_preamble_in_iq( ...
+                xOrig, preambleCir, cirEst, txOpt, cancelOpts);
+            record.dw_cancel = packCancelReport(dwCancel);
+            record.sic_applied = true;
+            record.dw_cancel_mode = "preamble";
+            fprintf('  DW1000 cancel preamble: %.2f dB vis=%d start=%d\n', ...
+                dwCancel.frame_suppression_db, dwSearch.overlap_reps, ...
+                dwSearch.overlap_start);
+        catch cancelErr
+            record.dw_cancel.success = false;
+            record.dw_cancel.message = string(cancelErr.message);
+            fprintf('  DW1000 preamble cancel skipped: %s\n', cancelErr.message);
         end
     end
 
@@ -171,26 +229,95 @@ catch err
 end
 end
 
-function [decoded, profile] = decodeDw1000OnWindow(x, profiles)
+function [decoded, profile, search] = decodeDw1000OnWindow( ...
+        x, profiles, qm35Start, cfg)
 decoded = [];
 profile = struct();
+search = emptyDwSearch();
+searchOpts = searchOptsFromCfg(cfg);
+
 for k = 1:numel(profiles)
     try
-        candidate = decode_uwb(profiles(k).params, x, [], ...
-            profiles(k).reference, profiles(k).sfd, 'single', [], true);
-        if candidate.payload.fcs_pass
-            decoded = candidate;
-            profile = profiles(k);
-            return
-        end
-        if isempty(decoded)
-            decoded = candidate;
-            profile = profiles(k);
-        end
+        candSearch = findDwPreambleCandidatesOnWindow( ...
+            x, profiles(k), qm35Start, searchOpts);
     catch
         continue
     end
+
+    if ~isfinite(search.overlap_start) && isfinite(candSearch.overlap_start)
+        search = candSearch;
+        profile = profiles(k);
+    end
+    if ~isfinite(candSearch.overlap_start)
+        if search.head_is_fragment == false && candSearch.head_is_fragment
+            search.head_start = candSearch.head_start;
+            search.head_is_fragment = true;
+            search.head_reps = candSearch.head_reps;
+        end
+        continue
+    end
+
+    try
+        candidate = decode_uwb(profiles(k).params, x, [], ...
+            profiles(k).reference, profiles(k).sfd, 'single', ...
+            candSearch.overlap_start, true);
+    catch decodeErr
+        fprintf('  DW decode at %d failed: %s\n', ...
+            candSearch.overlap_start, decodeErr.message);
+        continue
+    end
+
+    if candidate.payload.fcs_pass
+        decoded = candidate;
+        profile = profiles(k);
+        search = candSearch;
+        return
+    end
+    if isempty(decoded)
+        decoded = candidate;
+        profile = profiles(k);
+        search = candSearch;
+    end
 end
+end
+
+function cls = classifyDwSearch(decoded, search, cfg)
+if ~isempty(decoded) && isfield(decoded, 'payload') && decoded.payload.fcs_pass
+    cls = "full_decode";
+elseif isfinite(search.overlap_start) && ...
+        search.overlap_reps >= cfg.min_visible_sync_for_preamble_sic
+    cls = "preamble_only";
+elseif search.head_is_fragment
+    cls = "false_lock_skipped";
+else
+    cls = "none";
+end
+end
+
+function search = emptyDwSearch()
+search = struct( ...
+    'head_start', NaN, ...
+    'head_reps', 0, ...
+    'head_is_fragment', false, ...
+    'head_period', NaN, ...
+    'overlap_start', NaN, ...
+    'overlap_reps', 0, ...
+    'overlap_detected_reps', 0, ...
+    'overlap_period', NaN, ...
+    'overlap_preamble', struct(), ...
+    'search_path', "", ...
+    'qm35_start', NaN, ...
+    'message', "");
+end
+
+function opts = searchOptsFromCfg(cfg)
+opts = struct();
+opts.fs = 998.4e6;
+opts.head_fragment_max_start = cfg.dw_head_fragment_max_start;
+opts.qm35_search_pre_s = cfg.dw_qm35_search_pre_s;
+opts.qm35_search_post_s = cfg.dw_qm35_search_post_s;
+opts.min_detect_reps = 32;
+opts.refine_max_abs_start_err_periods = 2;
 end
 
 function packed = packDecodedCir(decoded, interferenceOptions)
@@ -296,6 +423,12 @@ summary.qm35_cancelled = countTrue(records, 'qm35_cancel', 'success');
 summary.dw_decoded = countTrue(records, 'dw', 'decode_ok');
 summary.dw_fcs = countTrue(records, 'dw', 'fcs_pass');
 summary.dw_cancelled = countTrue(records, 'dw_cancel', 'success');
+summary.dw_full_cancelled = ...
+    nnz(string({records.dw_cancel_mode}) == "full");
+summary.dw_preamble_cancelled = ...
+    nnz(string({records.dw_cancel_mode}) == "preamble");
+summary.dw_false_lock_skipped = ...
+    nnz(string({records.dw_search_class}) == "false_lock_skipped");
 coherence = nan(numel(records), 1);
 for k = 1:numel(records)
     if isfield(records(k).cir_metrics, 'cir_coherence')
@@ -336,6 +469,12 @@ earlyAfter = nan(n, 1);
 occBefore = nan(n, 1);
 occAfter = nan(n, 1);
 errorMessage = strings(n, 1);
+dwSearchClass = strings(n, 1);
+dwSearchPath = strings(n, 1);
+dwOverlapStart = nan(n, 1);
+dwHeadStart = nan(n, 1);
+dwVisibleReps = zeros(n, 1);
+dwCancelMode = strings(n, 1);
 for k = 1:n
     r = records(k);
     packetId(k) = r.packet_id;
@@ -360,17 +499,26 @@ for k = 1:n
     occBefore(k) = r.cir_metrics.occupancy_before;
     occAfter(k) = r.cir_metrics.occupancy_after;
     errorMessage(k) = r.error_message;
+    dwSearchClass(k) = r.dw_search_class;
+    dwSearchPath(k) = r.dw_search_path;
+    dwOverlapStart(k) = r.dw_overlap_start;
+    dwHeadStart(k) = r.dw_head_start;
+    dwVisibleReps(k) = r.dw_visible_reps;
+    dwCancelMode(k) = r.dw_cancel_mode;
 end
 metrics = table(packetId, ok, sicApplied, qm35FcsBefore, qm35FcsAfter, ...
     stateBefore, stateAfter, dwFcs, dwProfile, qm35CancelDb, dwCancelDb, ...
     coherence, residual, earlyBefore, earlyAfter, occBefore, occAfter, ...
-    errorMessage, 'VariableNames', { ...
+    errorMessage, dwSearchClass, dwSearchPath, dwOverlapStart, ...
+    dwHeadStart, dwVisibleReps, dwCancelMode, 'VariableNames', { ...
     'packet_id', 'ok', 'sic_applied', 'qm35_fcs_before', 'qm35_fcs_after', ...
     'state_before', 'state_after', 'dw_fcs_pass', 'dw_profile', ...
     'qm35_cancel_db', 'dw_cancel_db', 'cir_coherence', ...
     'cir_normalized_residual', 'early_residual_before_db', ...
     'early_residual_after_db', 'occupancy_before', 'occupancy_after', ...
-    'error_message'});
+    'error_message', 'dw_search_class', 'dw_search_path', ...
+    'dw_overlap_start', 'dw_head_start', 'dw_visible_reps', ...
+    'dw_cancel_mode'});
 writetable(metrics, pipeline.paths.metrics_csv);
 save(pipeline.paths.metrics_mat, 'metrics', 'records', '-v7.3');
 end
@@ -622,6 +770,26 @@ if ~isfield(cfg, 'cir_interference_options') || ...
     cfg.cir_interference_options = struct( ...
         'occupancy_background_margin_db', 3);
 end
+if ~isfield(cfg, 'dw_head_fragment_max_start') || ...
+        isempty(cfg.dw_head_fragment_max_start)
+    cfg.dw_head_fragment_max_start = 2000;
+end
+if ~isfield(cfg, 'dw_qm35_search_pre_s') || ...
+        isempty(cfg.dw_qm35_search_pre_s)
+    cfg.dw_qm35_search_pre_s = 80e-6;
+end
+if ~isfield(cfg, 'dw_qm35_search_post_s') || ...
+        isempty(cfg.dw_qm35_search_post_s)
+    cfg.dw_qm35_search_post_s = 40e-6;
+end
+if ~isfield(cfg, 'min_visible_sync_for_preamble_sic') || ...
+        isempty(cfg.min_visible_sync_for_preamble_sic)
+    cfg.min_visible_sync_for_preamble_sic = 64;
+end
+if ~isfield(cfg, 'enable_preamble_only_sic') || ...
+        isempty(cfg.enable_preamble_only_sic)
+    cfg.enable_preamble_only_sic = true;
+end
 cfg.tag = tag;
 cfg.project_directory = projectDir;
 end
@@ -658,6 +826,12 @@ record = struct( ...
         'early_residual_after_db', NaN, ...
         'occupancy_before', NaN, ...
         'occupancy_after', NaN), ...
+    'dw_search_class', "none", ...
+    'dw_search_path', "", ...
+    'dw_overlap_start', NaN, ...
+    'dw_head_start', NaN, ...
+    'dw_visible_reps', 0, ...
+    'dw_cancel_mode', "none", ...
     'error_id', "", ...
     'error_message', "");
 end

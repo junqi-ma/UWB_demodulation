@@ -17,7 +17,7 @@
 
 本设计用 **First Path 定位观察窗 + 相干 CIR 第一峰作 0 dB 参考 + 逐 repetition 预径连跑命中数 N** 替换 `state` / `sic_recommended` / dump `selection='interfered'` 的分类逻辑。Occupancy 与 residual 继续在 **v1 的 `legacy_early` 窗**（`1:i_FP−6`）上计算并落盘，供对照和 `classifier='occupancy'` 回滚，但不再驱动默认决策。SIC **入口**与 **出口**拆开：N≥5 只负责“要不要尝试消除”。出口先导出相干预径峰 before/after/drop；**禁止**用 `measureCirChange` 现有的 CMF 窗 `cir_coherence ≥ 0.99` 当成功门，也禁止把 occupancy 或 N 当作清洗判据。未施加 SIC 的窗（`sic_applied=false`）两个成功标志必须为 false。
 
-不在本设计范围内：DW1000 解不出、FCS 失败、`Fractional alignment correlation 0.691 < 0.700`（packet 47）。那些会限制最终 `sic_applied` 数量，但不是选窗器该修的问题。68 窗 SIC 之后的 16 个 FCS 失败见 [[DW1000_dump窗解调失败_假锁与窗头截断]]。
+不在本设计范围内：DW1000 解不出、FCS 失败、`Fractional alignment correlation 0.691 < 0.700`（packet 47）。那些会限制最终 `sic_applied` 数量，但不是选窗器该修的问题。68 窗 SIC 之后的 16 个 FCS 失败见 [[DW1000_dump窗解调失败_假锁与窗头截断]]；该 16 窗现由 [[dump窗DW1000_跳过残段与Preamble-only_SIC]] 的 dump SIC 处理（不改簇公式）。
 
 ---
 

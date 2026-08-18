@@ -107,9 +107,13 @@ GNU Radio `UwbAutoScheduledExtractorSc16` / `UwbScheduledExtractorSc16` 按雷�
 | `run_cancel_capture_tone.m` | 去单音入口；覆盖 `capture.iq` |
 | `decode_scheduled_sc16_dump.m` | 按窗切开 head / QM35 body / tail，升采样后解码，并跑 CIR 干扰检测 |
 | `run_decode_scheduled_sc16_dump.m` | 实验入口；改 `dumpDir` 切换 mixed / clean / gain1 |
-| `cancel_uwb_packet_in_iq.m` | 在 998.4 MHz 窗内再生并减去一个已解码包（dump SIC 用） |
+| `cancel_uwb_packet_in_iq.m` | 在 998.4 MHz 窗内再生并减去一个已解码包（dump SIC 用，整包 0.70） |
+| `cancel_uwb_preamble_in_iq.m` | 只减可见 SYNC 的 SYNC-only 消除（dump SIC 用，残段/贴边包） |
+| `findDwPreambleCandidatesOnWindow.m` | dump 窗 DW 搜索：跳过窗头残段，在 QM35 邻域 / 后缀找重叠包 |
+| `estimate_uwb_preamble_cir.m` | 仅可见 SYNC 的 CIR 估计（不经过 validateCaptureLength / SFD / PHR） |
 | `scheduledDumpSicPipeline.m` | dump 窗上的 QM35→消→DW1000→消编排 |
 | `run_scheduled_dump_sic_pipeline.m` | 被干扰 dump 的 SIC 入口；对比消除前后 QM35 CIR |
+| `analyze_dump_dw1000_preamble_sic_smoke.m` | 4 窗冒烟：pkt 24 / 5 / `P_early` / 47 的硬断言 |
 | `visualize_scheduled_dump_sic_cir.m` | dump SIC 前后 CIR 叠图 / 热图 |
 
 升采样抽头：`testdata/resampler_65_48/taps_quality_minorder.txt`。
@@ -158,6 +162,8 @@ GNU Radio dump 的 SIC 在根目录：`run_scheduled_dump_sic_pipeline.m`。它�
 | `tests/testReadIqRawStrided.m` | 分块读 IQ |
 | `tests/testBprfAndSeededPreamble.m` | BPRF 核 / 种子前导 |
 | `tests/testAnalyzeCirInterference.m` | CIR 干扰检测器 |
+| `tests/testFindDwPreambleCandidatesOnWindow.m` | 残段跳过 + 重叠 DW 搜索 |
+| `tests/testCancelUwbPreambleInIq.m` | SYNC-only 消除与 0.70 对齐门 |
 
 ---
 
