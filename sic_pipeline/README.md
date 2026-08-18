@@ -49,13 +49,13 @@ SIC **共用仓库根目录** 的 decode / cancel 实现，与交互式脚本保
 当前版本字符串：
 
 ```text
-adaptive_fullrate_multipkt_v3_pll10_cir11_cfo2_full_packet_sfo_v1
+adaptive_fullrate_multipkt_v4_pll10_cir11_cfo2_full_packet_sfo_v1
 ```
 
 | 字段 | 值 | 含义 |
 |------|-----|------|
-| `detection_algorithm_version` | **3** | 与 `decode_uwb_all` 写入的 `results.detection_algorithm_version` 一致 |
-| 检测 | full-rate multi-packet | `correlation_decimation=1`，能量 onset 分层搜索，长区间多包 |
+| `detection_algorithm_version` | **4** | 与 `decode_uwb_all` 写入的 `results.detection_algorithm_version` 一致 |
+| 检测 | full-rate multi-packet | `correlation_decimation=1`；短区间能量 onset 分层搜索；长区间直接全区相关，失败区间不再输出 fallback 候选 |
 | 能量 | dB margin | `energy_threshold_margin_db_high ≥ 6` |
 | PLL | SYNC 1–10 | 需要已学习的 PLL 模板（缺模板会报错，不允许 silent skip） |
 | CIR slow | SYNC 11 起 | + 二级 CFO |

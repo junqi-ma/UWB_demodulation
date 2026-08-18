@@ -237,8 +237,8 @@ if strcmp(batch.detection_mode, 'fixed_interval')
     results.detection_algorithm_version = 1;
     results.detection_algorithm = 'fixed_interval_radar_v1';
 else
-    results.detection_algorithm_version = 3;
-    results.detection_algorithm = 'adaptive_fullrate_multipacket_v3';
+    results.detection_algorithm_version = 4;
+    results.detection_algorithm = 'adaptive_fullrate_multipacket_v4';
 end
 if packetCount == 0
     results.fcs_pass_count = 0;
@@ -785,12 +785,14 @@ function [candidates, candidateRegions, stats] = refineEnergyRegions( ...
 %   对每个能量区间，函数只在完整采样率下扫描第一段前导码，先得到相关峰候选，
 %   再沿前导码重复周期逐次验证候选。验证达到最小重复次数、阈值比和命中条件后
 %   立即接受；窄搜索失败时依次扩大到更宽的搜索范围。对明显长于典型单包长度的
-%   能量区间，还会继续扫描尾部，以发现同一区间内紧邻的多个数据包。
+%   能量区间，跳过以能量起点为中心的窄窗，直接扫描完整保护区，并继续扫描尾部
+%   以发现同一区间内紧邻的多个数据包。相关未确认的区间不再把能量起点当作
+%   fallback 候选送入完整解码。
 %
 %   输入的 energyRegions 是加过保护区的搜索区间，rawEnergyRegions 是未加保护区的
-%   原始区间，两者必须逐行对应。输出 candidates 为候选前导码起点，candidateRegions
-%   为每个候选对应的搜索区间；stats 汇总每个区间的扫描量、验证量、阈值比和多包检测
-%   情况。progress_cb 为可选的区间级进度回调。
+%   原始区间，两者必须逐行对应。输出 candidates 为确认后的前导码起点，
+%   candidateRegions 为每个候选对应的搜索区间；stats 汇总每个区间的扫描量、
+%   验证量、阈值比和多包检测情况。progress_cb 为可选的区间级进度回调。
 if nargin < 7, progress_cb = []; end
 regionCount = size(energyRegions, 1);
 if size(rawEnergyRegions, 1) ~= regionCount
@@ -837,11 +839,12 @@ packetExclusionSamples = max( ...
 suspiciousLongRegionMask = rawRegionLengths >= ...
     longRegionThresholdSamples;
 
-% 对每个能量区间执行三级自适应相关搜索；异常长区间额外扫描尾部以发现第二个包。
+% 对每个能量区间执行自适应相关搜索；异常长区间直接全区扫描并搜索尾部。
 for regionIdx = 1:regionCount
     [detection, diagnostics] = adaptiveCorrelationCandidate( ...
         params, template.preamble, batch, energyRegions(regionIdx, :), ...
-        rawEnergyRegions(regionIdx, 1), totalSamples);
+        rawEnergyRegions(regionIdx, 1), totalSamples, ...
+        suspiciousLongRegionMask(regionIdx));
     regionDetections = detection;
     if detection.detected && batch.correlation_multi_packet_search && ...
             suspiciousLongRegionMask(regionIdx)
@@ -870,7 +873,12 @@ for regionIdx = 1:regionCount
         end
     end
 
-    regionCandidates = [regionDetections.candidate].';
+    if isempty(regionDetections)
+        accepted = regionDetections;
+    else
+        accepted = regionDetections([regionDetections.detected]);
+    end
+    regionCandidates = [accepted.candidate].';
     packetCount = numel(regionCandidates);
     candidates = [candidates; regionCandidates]; %#ok<AGROW>
     candidateRegions = [candidateRegions; ...
@@ -925,17 +933,22 @@ end
 
 function [detection, diagnostics] = adaptiveCorrelationCandidate( ...
         params, preambleTemplate, batch, guardedRegion, rawStart, ...
-        totalSamples)
+        totalSamples, preferFullRegionSearch)
 %ADAPTIVECORRELATIONCANDIDATE 对单个能量区间执行三级自适应前导码搜索。
 %
 %   搜索范围以原始能量起点 rawStart 为中心，依次尝试较窄、较宽和完整保护区三种
 %   level。每一级只扫描相对于上一级新增的区间，避免重复读取和重复计算。对扫描
 %   到的相关峰，函数按照“最接近预期前导码偏移”的顺序调用
 %   validateCorrelationCandidate，并在第一个通过的候选处提前返回。
+%   preferFullRegionSearch 为真时跳过窄窗，直接扫描完整保护区，避免混叠长区间
+%   把搜索中心钉在先到/更强干扰的能量起点上。
 %
 %   detection 保存是否检测成功、候选位置、使用的搜索级别、重复次数和阈值比；
 %   diagnostics 保存测试候选数、扫描采样点数、扫描子区间数等性能统计。所有位置
 %   都是相对于整个输入文件的零基采样坐标。
+if nargin < 7 || isempty(preferFullRegionSearch)
+    preferFullRegionSearch = false;
+end
 templateLength = numel(preambleTemplate);
 repetitionPeriod = templateLength;
 maxDelay = max(0, totalSamples - templateLength);
@@ -962,8 +975,13 @@ diagnostics = struct( ...
     'scanned_delay_count', 0, ...
     'scan_interval_count', 0);
 previousBounds = zeros(0, 2);
+if preferFullRegionSearch
+    startLevel = 3;
+else
+    startLevel = 1;
+end
 
-for level = 1:3
+for level = startLevel:3
     currentBounds = levelBounds(level, :);
     newIntervals = newCorrelationSearchIntervals( ...
         currentBounds, previousBounds);
@@ -1252,11 +1270,22 @@ function [positions, values] = extractCorrelationCandidates( ...
 %EXTRACTCORRELATIONCANDIDATES 从相关能量曲线中提取峰值候选。
 %
 %   峰值必须同时高于稳健噪声阈值 threshold 和全局最大能量的相对门限
-%   relativeLevel。优先使用 findpeaks；当 Signal Processing Toolbox 不可用时，
-%   使用本文件中的 simpleFindPeaks 兼容实现。minDistance 会先被限制在当前曲线
-%   长度允许的范围内，防止 findpeaks 因最小峰距过大而报错。
+%   relativeLevel。若没有任何采样点严格高于该门限，直接返回空结果，避免
+%   findpeaks 在 MinPeakHeight 高于全部数据时发出警告。优先使用 findpeaks；
+%   当 Signal Processing Toolbox 不可用时，使用本文件中的 simpleFindPeaks
+%   兼容实现。minDistance 会先被限制在当前曲线长度允许的范围内，防止
+%   findpeaks 因最小峰距过大而报错。
 %   输出 positions 是文件坐标下的峰位置，values 是对应峰能量，二者逐项对应。
-level = max(threshold, relativeLevel*max(energy));
+positions = zeros(0, 1);
+values = zeros(0, 1);
+if isempty(energy)
+    return;
+end
+peakEnergy = max(energy);
+level = max(threshold, relativeLevel*peakEnergy);
+if ~(peakEnergy > level)
+    return;
+end
 % 将 MinPeakDistance 限制在安全范围内；当它大于能量曲线长度时 findpeaks 会报错。
 minDistance = max(1, min( ...
     round(minDistance), ...
