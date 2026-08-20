@@ -57,7 +57,6 @@ end
     opts.alignment_search_samples, opts.gain_fit_first_sync, ...
     opts.alignment_template_syncs);
 
-need = round(visible * periodRx);
 available = min(numel(replica), numel(rx) - startLocal + 1);
 if available < round(opts.min_visible_sync_for_preamble_sic * periodRx)
     error('cancel_uwb_preamble_in_iq:ShortWindow', ...
@@ -92,6 +91,8 @@ if abs(fittedCfoHz) > opts.max_abs_cfo_hz
         fittedCfoHz / 1e3);
 end
 replicaCfo = replica .* exp(1j * 2 * pi * fittedCfoHz * n / fs);
+pll = opts.pll_phase_compensation;
+replicaCfo = apply_uwb_pll_phase_compensation(replicaCfo, periodRx, pll);
 
 if alignCorr < opts.min_alignment_correlation
     error('cancel_uwb_preamble_in_iq:Alignment', ...
@@ -131,6 +132,11 @@ report.fractional_delay_samples = fracDelay;
 report.fitted_cfo_hz = fittedCfoHz;
 report.global_gain = globalGain;
 report.frame_suppression_db = suppressionDb;
+report.pll_compensation_applied = ...
+    isstruct(pll) && isfield(pll, 'enabled') && logical(pll.enabled);
+report.pll_resolution = pllField(pll, 'resolution', "disabled");
+report.pll_apply_repetitions = pllField(pll, 'apply_repetitions', 0);
+report.pll_peak_abs_phase_deg = pllField(pll, 'peak_abs_phase_deg', 0);
 report.cir_slow_phase_applied = false;
 report.full_packet_sfo_applied = false;
 report.cancel_mode = "preamble";
@@ -153,6 +159,7 @@ defaults = struct( ...
     'min_alignment_correlation', 0.70, ...
     'min_frame_suppression_db', 0.20, ...
     'max_abs_cfo_hz', 100e3, ...
+    'pll_phase_compensation', struct('enabled', false), ...
     'enable_cir_slow_phase', false, ...
     'enable_full_packet_sfo', false, ...
     'min_visible_sync_for_preamble_sic', 64);
@@ -176,6 +183,14 @@ opts.cfo_fit_last_sync = visible;
 opts.gain_fit_last_sync = visible;
 if opts.alignment_template_syncs > visible
     opts.alignment_template_syncs = visible;
+end
+end
+
+function value = pllField(pll, name, fallback)
+if isstruct(pll) && isfield(pll, name) && ~isempty(pll.(name))
+    value = pll.(name);
+else
+    value = fallback;
 end
 end
 

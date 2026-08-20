@@ -132,7 +132,7 @@ if isfinite(record.qm35_before.first_path_delay_ns)
         'First Path', 'LineWidth', 1.0);
 end
 grid on;
-ylim([-50 5]);
+ylim([-50 25]);
 xlabel('CIR delay (ns)');
 ylabel('Normalized |CIR|^2 (dB)');
 legend('Before DW1000 cancellation', ...
@@ -147,7 +147,7 @@ nexttile;
 plot(delay, 10 * log10(max(abs(b - aAligned).^2, eps) / refPower), ...
     'k', 'LineWidth', 1.2);
 grid on;
-ylim([-50 5]);
+ylim([-50 25]);
 xlabel('CIR delay (ns)');
 ylabel('Normalized |before - aligned after|^2 (dB)');
 title(sprintf(['CIR difference | early residual %.1f -> %.1f dB | ', ...
@@ -197,12 +197,12 @@ fig = figure('Name', 'Dump SIC CIR heatmaps', ...
     'Color', 'w', 'Position', [40 60 1560 780]);
 tiledlayout(fig, 1, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
 ax1 = nexttile;
-imagesc(delay, rowIdx, beforeMap); axis xy; clim([-50 0]); colorbar;
+imagesc(delay, rowIdx, beforeMap); axis xy; clim([-50 25]); colorbar;
 yticks(rowIdx); yticklabels(string(packetIds));
 xlabel('CIR delay (ns)'); ylabel('packet id');
 title(sprintf('Before DW1000 cancellation (%d)', numel(records)));
 ax2 = nexttile;
-imagesc(delay, rowIdx, afterMap); axis xy; clim([-50 0]); colorbar;
+imagesc(delay, rowIdx, afterMap); axis xy; clim([-50 25]); colorbar;
 yticks(rowIdx); yticklabels(string(packetIds));
 xlabel('CIR delay (ns)'); ylabel('packet id');
 title(sprintf('After DW1000 cancellation (%d)', numel(records)));
@@ -333,7 +333,7 @@ if isempty(idx)
 end
 region = power(idx);
 isPeak = false(size(region));
-if numel(region) == 1
+if isscalar(region)
     isPeak = true;
 else
     isPeak(1) = region(1) >= region(2);

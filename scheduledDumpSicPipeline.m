@@ -21,6 +21,8 @@ function pipeline = scheduledDumpSicPipeline(cfg)
 %     max_packets       [] = all selected
 %     overwrite         replace existing products
 %     make_plots        run CIR comparison figures
+%     use_parallel      process packet windows with PARFOR (default false)
+%     parallel_workers  [] uses the default pool; otherwise worker count
 %     min_alignment_correlation   DW cancel gate (default 0.60). Does not
 %                                 change QM35 cancel or the library 0.70.
 %
@@ -59,14 +61,24 @@ if isempty(packetIds)
     error('scheduledDumpSicPipeline:NoPackets', ...
         'No dump packets matched selection ''%s''.', cfg.selection);
 end
-fprintf('Windows: %d\n', numel(packetIds));
+nPackets = numel(packetIds);
+fprintf('Windows: %d\n', nPackets);
 
-records = repmat(emptyPacketRecord(), numel(packetIds), 1);
-for k = 1:numel(packetIds)
-    packetId = packetIds(k);
-    fprintf('\n[%d/%d] packet_id %d\n', k, numel(packetIds), packetId);
-    records(k) = processOneDumpWindow( ...
-        packetId, cfg, refs, taps);
+records = repmat(emptyPacketRecord(), nPackets, 1);
+if cfg.use_parallel && nPackets > 1
+    pool = prepareDumpParallelPool(cfg.parallel_workers);
+    fprintf('Parallel workers: %d\n', pool.NumWorkers);
+    parfor k = 1:nPackets
+        packetId = packetIds(k);
+        fprintf('\n[%d/%d] packet_id %d\n', k, nPackets, packetId);
+        records(k) = processOneDumpWindow(packetId, cfg, refs, taps);
+    end
+else
+    for k = 1:nPackets
+        packetId = packetIds(k);
+        fprintf('\n[%d/%d] packet_id %d\n', k, nPackets, packetId);
+        records(k) = processOneDumpWindow(packetId, cfg, refs, taps);
+    end
 end
 
 pipeline.packets = records;
@@ -626,6 +638,10 @@ window.schedule_index = double(fieldOr(meta, 'schedule_index', NaN));
 end
 
 function refs = buildPhyReferences()
+projectDir = fileparts(mfilename('fullpath'));
+pllRoot = fullfile(projectDir, 'decoded_results', ...
+    'pll_phase_drift_analysis');
+pllApplyRepetitions = 10;
 qm35Opt = struct();
 qm35Opt.fs_rx = 998.4e6;
 qm35Opt.data_rate = 6.81;
@@ -662,7 +678,10 @@ refs.qm35.cancel = struct( ...
     'fs_rx', 998.4e6, ...
     'cancellation_mode', 'optimal_complex', ...
     'cfo_fit_last_sync', 64, ...
-    'gain_fit_last_sync', 64);
+    'gain_fit_last_sync', 64, ...
+    'pll_phase_compensation', load_uwb_pll_phase_compensation( ...
+        true, fullfile(pllRoot, 'qm35_new_3', ...
+        'subsync_phase_template.csv'), pllApplyRepetitions, 64));
 
 dwSpecs = [
     struct('name', 'dw1000_code10_n256', ...
@@ -708,7 +727,11 @@ for k = 1:numel(dwSpecs)
         'fs_rx', 998.4e6, ...
         'cancellation_mode', 'optimal_complex', ...
         'cfo_fit_last_sync', dwSpecs(k).preamble_repetitions, ...
-        'gain_fit_last_sync', dwSpecs(k).preamble_repetitions);
+        'gain_fit_last_sync', dwSpecs(k).preamble_repetitions, ...
+        'pll_phase_compensation', load_uwb_pll_phase_compensation( ...
+            true, fullfile(pllRoot, 'dw1000_new_3', ...
+            'subsync_phase_template.csv'), pllApplyRepetitions, ...
+            dwSpecs(k).preamble_repetitions));
 end
 end
 
@@ -791,6 +814,21 @@ end
 if ~isfield(cfg, 'make_plots') || isempty(cfg.make_plots)
     cfg.make_plots = true;
 end
+if ~isfield(cfg, 'use_parallel') || isempty(cfg.use_parallel)
+    cfg.use_parallel = false;
+end
+if ~isfield(cfg, 'parallel_workers')
+    cfg.parallel_workers = [];
+end
+cfg.use_parallel = logical(cfg.use_parallel);
+if ~isscalar(cfg.use_parallel)
+    error('scheduledDumpSicPipeline:InvalidParallelFlag', ...
+        'use_parallel must be a logical scalar.');
+end
+if ~isempty(cfg.parallel_workers)
+    validateattributes(cfg.parallel_workers, {'numeric'}, ...
+        {'scalar', 'integer', 'positive'}, mfilename, 'parallel_workers');
+end
 if ~isfield(cfg, 'cir_interference_options') || ...
         isempty(cfg.cir_interference_options)
     cfg.cir_interference_options = struct( ...
@@ -822,6 +860,24 @@ if ~isfield(cfg, 'min_alignment_correlation') || ...
 end
 cfg.tag = tag;
 cfg.project_directory = projectDir;
+end
+
+function pool = prepareDumpParallelPool(workerCount)
+% Reuse an existing pool. Only create one when the caller requested PARFOR.
+pool = gcp('nocreate');
+if ~isempty(pool)
+    if ~isempty(workerCount) && pool.NumWorkers ~= workerCount
+        warning('scheduledDumpSicPipeline:ExistingPoolSize', ...
+            ['Existing pool has %d workers; requested %d. Reusing the ', ...
+            'existing pool.'], pool.NumWorkers, workerCount);
+    end
+    return
+end
+if isempty(workerCount)
+    pool = parpool('local');
+else
+    pool = parpool('local', workerCount);
+end
 end
 
 function paths = buildDumpSicPaths(cfg)
@@ -896,8 +952,14 @@ report = struct( ...
     'alignment_correlation', NaN, ...
     'frame_suppression_db', NaN, ...
     'fitted_cfo_hz', NaN, ...
+    'pll_compensation_applied', false, ...
+    'pll_resolution', "disabled", ...
+    'pll_apply_repetitions', 0, ...
+    'pll_peak_abs_phase_deg', 0, ...
     'cir_slow_phase_applied', false, ...
-    'full_packet_sfo_applied', false);
+    'cir_second_stage_cfo_applied', false, ...
+    'full_packet_sfo_applied', false, ...
+    'full_packet_sfo_ppm', NaN);
 end
 
 function v = fieldOr(s, name, fallback)

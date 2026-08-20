@@ -12,7 +12,7 @@ close all;
 clc;
 
 %% -------------------- User parameters --------------------
-packet_index = 51;
+packet_index = 1;
 dump_dir = 'F:\UWB基带数据\qm35_gain1_scheduled_sc16_dump_20260817';
 save_figure = true;
 
@@ -50,6 +50,8 @@ taps_file = fullfile(this_dir, 'testdata', 'resampler_65_48', ...
 
 output_png = fullfile(result_dir, sprintf( ...
     'qm35_cir_threshold_packet_%03d.png', packet_index));
+sic_comparison_png = fullfile(result_dir, sprintf( ...
+    'qm35_sic_signal_cir_packet_%03d.png', packet_index));
 
 %% -------------------- Load and plot --------------------
 iq = loadResampledPacket(packet_index, dump_dir, iq_file, jsonl_file, ...
@@ -109,7 +111,7 @@ plotRawIq(iq, dwAnn);
 
 stateColor = stateRgb(state);
 sgtitle(fig, sprintf( ...
-    ['packet %d    CIR %s    SIC %s    QM35 FCS %d    %s'], ...
+    'packet %d    CIR %s    SIC %s    QM35 FCS %d    %s', ...
     packet_index, upper(char(state)), ...
     yesNo(result.qm35_sic_recommended), result.qm35_fcs_pass, ...
     dwProblemTitle(dwAnn)), ...
@@ -125,6 +127,259 @@ if save_figure
     end
     exportgraphics(fig, output_png, 'Resolution', 160);
     fprintf('figure: %s\n', output_png);
+end
+
+%% -------------------- Original / post-SIC / CIR comparison ------------
+sicView = reconstructSelectedPacketSic( ...
+    packet_index, result_dir, iq);
+if sicView.ok
+    comparisonFig = plotSelectedPacketSicComparison( ...
+        packet_index, iq, sicView);
+    if save_figure
+        exportgraphics(comparisonFig, sic_comparison_png, 'Resolution', 160);
+        fprintf('SIC signal/CIR comparison: %s\n', sic_comparison_png);
+    end
+else
+    warning('visualize_qm35_cir_interference:SicComparisonUnavailable', ...
+        'SIC comparison unavailable for packet %d: %s', ...
+        packet_index, sicView.message);
+end
+
+function sic = reconstructSelectedPacketSic(packetIndex, resultDir, iq)
+sic = struct('ok', false, 'message', "", 'after_iq', [], ...
+    'before_pack', struct(), 'after_pack', struct(), ...
+    'cancel_report', struct(), 'cancel_mode', "none");
+if ~isstruct(iq) || ~isfield(iq, 'ok') || ~iq.ok
+    sic.message = "raw IQ unavailable";
+    return
+end
+manifestFile = fullfile(resultDir, ...
+    'sic_dw1000_removed_qm35_preserved', 'pipeline_manifest.mat');
+if ~isfile(manifestFile)
+    sic.message = "SIC pipeline manifest not found";
+    return
+end
+loaded = load(manifestFile, 'pipeline');
+records = loaded.pipeline.packets;
+row = find([records.packet_id] == double(packetIndex), 1);
+if isempty(row)
+    sic.message = "packet is not present in the SIC manifest";
+    return
+end
+record = records(row);
+sic.before_pack = record.qm35_before;
+sic.after_pack = record.qm35_after;
+sic.cancel_mode = string(record.dw_cancel_mode);
+if ~record.sic_applied
+    sic.message = "SIC was not applied to this packet";
+    return
+end
+
+try
+    [qmParams, qmReference, qmSfd, qmTx, qmCancel] = buildQm35SicReference();
+    xOriginal = iq.x998(:);
+    qmDecoded = decode_uwb(qmParams, xOriginal, [], ...
+        qmReference, qmSfd, 'single', iq.detected_start_one, true);
+    xAfterQm35 = xOriginal;
+    if qmDecoded.payload.fcs_pass
+        xAfterQm35 = cancel_uwb_packet_in_iq( ...
+            xOriginal, qmDecoded, qmTx, qmCancel);
+    end
+
+    dwProfile = buildDwSicProfile(record.dw_profile);
+    cancelOptions = dwProfile.cancel;
+    cancelOptions.min_alignment_correlation = 0.60;
+    switch sic.cancel_mode
+        case "full"
+            dwDecoded = decode_uwb(dwProfile.params, xAfterQm35, [], ...
+                dwProfile.reference, dwProfile.sfd, 'single', ...
+                record.dw_overlap_start, true);
+            [sic.after_iq, sic.cancel_report] = cancel_uwb_packet_in_iq( ...
+                xOriginal, dwDecoded, dwProfile.tx, cancelOptions);
+        case "preamble"
+            [preamble, cirEstimate] = estimate_uwb_preamble_cir( ...
+                xAfterQm35, dwProfile.reference, dwProfile.params, ...
+                record.dw_overlap_start);
+            txOptions = struct( ...
+                'code_index', dwProfile.params.code_index, ...
+                'visible_reps', record.dw_visible_reps, ...
+                'fs_tx', 998.4e6, 'phy_mode', '802.15.4a', ...
+                'peak_amplitude', 1, 'guard_samples', 0);
+            cancelOptions.cfo_fit_last_sync = record.dw_visible_reps;
+            cancelOptions.gain_fit_last_sync = record.dw_visible_reps;
+            [sic.after_iq, sic.cancel_report] = ...
+                cancel_uwb_preamble_in_iq(xOriginal, preamble, ...
+                cirEstimate, txOptions, cancelOptions);
+        otherwise
+            error('Unsupported SIC mode: %s', sic.cancel_mode);
+    end
+    sic.after_iq = sic.after_iq(:);
+    sic.before_pack = packSicViewQm35(qmDecoded);
+    qmAfter = decode_uwb(qmParams, sic.after_iq, [], ...
+        qmReference, qmSfd, 'single', iq.detected_start_one, true);
+    sic.after_pack = packSicViewQm35(qmAfter);
+    sic.ok = true;
+catch err
+    sic.message = string(err.message);
+end
+end
+
+function packed = packSicViewQm35(decoded)
+interference = uwbdecoder.analyzeCirInterference(decoded.cir, struct( ...
+    'occupancy_background_margin_db', 3));
+packed = struct('cir', decoded.cir, 'interference', interference, ...
+    'first_path_delay_ns', interference.first_path_delay_ns, ...
+    'fcs_pass', logical(decoded.payload.fcs_pass));
+end
+
+function fig = plotSelectedPacketSicComparison(packetIndex, iq, sic)
+xBefore = iq.x998(:);
+xAfter = sic.after_iq(:);
+n = min(numel(xBefore), numel(xAfter));
+xBefore = xBefore(1:n);
+xAfter = xAfter(1:n);
+fs = iq.fs;
+commonScale = max(abs(xBefore)) + eps;
+maxPoints = 120000;
+stride = max(1, ceil(n/maxPoints));
+span = (1:stride:n).';
+timeUs = (double(span)-1)/fs*1e6;
+
+fig = figure('Name', sprintf('Packet %d SIC signal and CIR', packetIndex), ...
+    'Color', 'w', 'Position', [30 30 1540 980]);
+tiledlayout(fig, 3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+nexttile;
+plot(timeUs, real(xBefore(span))/commonScale, ...
+    'Color', [0.15 0.45 0.85], 'LineWidth', 0.45);
+hold on;
+plot(timeUs, imag(xBefore(span))/commonScale, '--', ...
+    'Color', [0.85 0.25 0.18], 'LineWidth', 0.45);
+grid on; ylim([-1.05 1.05]); xlim([timeUs(1) timeUs(end)]);
+xlabel('Time from dump-window start (us)');
+ylabel('Amplitude / original peak');
+title('Original received signal before SIC');
+legend('I', 'Q', 'Location', 'northeast');
+
+nexttile;
+plot(timeUs, real(xAfter(span))/commonScale, ...
+    'Color', [0.15 0.45 0.85], 'LineWidth', 0.45);
+hold on;
+plot(timeUs, imag(xAfter(span))/commonScale, '--', ...
+    'Color', [0.85 0.25 0.18], 'LineWidth', 0.45);
+grid on; ylim([-1.05 1.05]); xlim([timeUs(1) timeUs(end)]);
+xlabel('Time from dump-window start (us)');
+ylabel('Amplitude / original peak');
+title(sprintf('Signal after DW1000 SIC (%s cancellation)', sic.cancel_mode));
+legend('I', 'Q', 'Location', 'northeast');
+
+nexttile;
+[beforeCir, beforeDelay] = packedCoherentCir(sic.before_pack);
+[afterCir, afterDelay] = packedCoherentCir(sic.after_pack);
+afterCir = interp1(afterDelay, afterCir, beforeDelay, 'linear', 0);
+referencePower = max(abs(beforeCir).^2) + eps;
+beforeDb = 10*log10(max(abs(beforeCir).^2, eps)/referencePower);
+afterDb = 10*log10(max(abs(afterCir).^2, eps)/referencePower);
+plot(beforeDelay, beforeDb, 'LineWidth', 1.35, ...
+    'Color', [0.15 0.45 0.85]);
+hold on;
+plot(beforeDelay, afterDb, '--', 'LineWidth', 1.35, ...
+    'Color', [0.85 0.30 0.12]);
+if isfinite(sic.before_pack.first_path_delay_ns)
+    xline(sic.before_pack.first_path_delay_ns, ':', ...
+        'Before First Path', 'Color', [0.15 0.45 0.85]);
+end
+if isfinite(sic.after_pack.first_path_delay_ns)
+    xline(sic.after_pack.first_path_delay_ns, ':', ...
+        'After First Path', 'Color', [0.85 0.30 0.12]);
+end
+grid on; ylim([-60 5]);
+xlabel('CIR delay (ns)');
+ylabel('Power / before-SIC global peak (dB)');
+title('QM35 CIR before and after SIC, common absolute reference');
+legend('Before SIC', 'After SIC', 'Location', 'best');
+
+sgtitle(sprintf(['packet %d | original and post-SIC signal | ', ...
+    'QM35 CIR comparison'], packetIndex));
+end
+
+function [values, delay] = packedCoherentCir(pack)
+if isfield(pack, 'interference') && ...
+        isfield(pack.interference, 'coherent_cir') && ...
+        ~isempty(pack.interference.coherent_cir)
+    values = pack.interference.coherent_cir(:);
+    delay = pack.interference.delay_ns(:);
+elseif isfield(pack, 'cir') && isfield(pack.cir, 'values')
+    values = pack.cir.values(:);
+    delay = pack.cir.delay_ns(:);
+else
+    error('Packed QM35 result has no CIR values.');
+end
+end
+
+function [params, reference, sfd, tx, cancel] = buildQm35SicReference()
+opt = struct('fs_rx', 998.4e6, 'data_rate', 6.81, ...
+    'preamble_repetitions', 64, 'code_index', 9, 'sfd_mode', '4z2', ...
+    'cir_skip_initial_repetitions', 10, 'cir_repetitions', 54, ...
+    'cir_store_individual_values', true, 'cir_diag_pre_samples', 64, ...
+    'cir_diag_post_samples', 64, 'max_psdu_bytes', 127, ...
+    'enable_frame_crop', true, 'show_plots', false);
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), opt);
+reference = uwbdecoder.buildUwbReference(params);
+sfd = buildSicSfdTemplates(params);
+tx = struct('fs_tx', 998.4e6, 'phy_mode', 'BPRF', ...
+    'ranging', false, 'preamble_repetitions', 64, 'code_index', 9, ...
+    'sfd_number', 2, 'sfd_sequence', [], 'peak_amplitude', 1, ...
+    'guard_samples', 0, 'require_fcs_pass', true);
+cancel = struct('fs_rx', 998.4e6, ...
+    'cancellation_mode', 'optimal_complex', ...
+    'cfo_fit_last_sync', 64, 'gain_fit_last_sync', 64, ...
+    'pll_phase_compensation', load_uwb_pll_phase_compensation( ...
+        true, fullfile(fileparts(mfilename('fullpath')), ...
+        'decoded_results', 'pll_phase_drift_analysis', 'qm35_new_3', ...
+        'subsync_phase_template.csv'), 10, 64));
+end
+
+function profile = buildDwSicProfile(profileName)
+switch string(profileName)
+    case "dw1000_code10_n256"
+        codeIndex = 10; repetitions = 256; cirRepetitions = 64;
+    case "dw1000_code11_n128"
+        codeIndex = 11; repetitions = 128; cirRepetitions = 118;
+    otherwise
+        error('Unknown DW1000 SIC profile: %s', string(profileName));
+end
+opt = struct('fs_rx', 998.4e6, 'data_rate', 6.81, ...
+    'preamble_repetitions', repetitions, 'code_index', codeIndex, ...
+    'sfd_mode', 'decawave', 'cir_skip_initial_repetitions', 10, ...
+    'cir_repetitions', cirRepetitions, ...
+    'cir_store_individual_values', true, 'max_psdu_bytes', 127, ...
+    'enable_frame_crop', true, 'show_plots', false);
+params = uwbdecoder.mergeOptions(uwbdecoder.defaultOptions(), opt);
+profile = struct();
+profile.params = params;
+profile.reference = uwbdecoder.buildUwbReference(params);
+profile.sfd = buildSicSfdTemplates(params);
+profile.tx = struct('fs_tx', 998.4e6, 'phy_mode', '802.15.4a', ...
+    'ranging', true, 'preamble_repetitions', repetitions, ...
+    'code_index', codeIndex, 'sfd_number', 0, ...
+    'sfd_sequence', [-1; -1; -1; -1; 1; -1; 0; 0], ...
+    'peak_amplitude', 1, 'guard_samples', 0, 'require_fcs_pass', true);
+profile.cancel = struct('fs_rx', 998.4e6, ...
+    'cancellation_mode', 'optimal_complex', ...
+    'cfo_fit_last_sync', repetitions, ...
+    'gain_fit_last_sync', repetitions, ...
+    'pll_phase_compensation', load_uwb_pll_phase_compensation( ...
+        true, fullfile(fileparts(mfilename('fullpath')), ...
+        'decoded_results', 'pll_phase_drift_analysis', 'dw1000_new_3', ...
+        'subsync_phase_template.csv'), 10, repetitions));
+end
+
+function templates = buildSicSfdTemplates(params)
+templates = struct('decawave', params.decawave_sfd(:), ...
+    'ieee', params.ieee_sfd(:), 'sfd4z_1', params.sfd4z_1(:), ...
+    'sfd4z_2', params.sfd4z_2(:), 'sfd4z_3', params.sfd4z_3(:), ...
+    'sfd4z_4', params.sfd4z_4(:));
 end
 
 function plotRawIq(iq, dwAnn)

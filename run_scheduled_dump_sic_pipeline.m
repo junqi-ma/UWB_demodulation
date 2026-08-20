@@ -31,6 +31,8 @@ cfg.packet_ids = [];            % nonempty overrides selection
 cfg.max_packets = [];           % [] = all selected windows
 cfg.overwrite = true;
 cfg.make_plots = true;
+cfg.use_parallel = true;        % true: process independent packet windows with parfor
+cfg.parallel_workers = [];      % []: use/create the default parallel pool
 cfg.cir_interference_options = struct( ...
     'occupancy_background_margin_db', 3);
 % cfg.dw_head_fragment_max_start = 2000;

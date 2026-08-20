@@ -77,6 +77,9 @@ if abs(fittedCfoHz) > opts.max_abs_cfo_hz
 end
 replicaCfo = replica .* exp(1j * 2 * pi * fittedCfoHz * n / fs);
 
+pll = opts.pll_phase_compensation;
+replicaCfo = apply_uwb_pll_phase_compensation(replicaCfo, periodRx, pll);
+
 cirSlow = emptyCirSlowDiagnostics();
 if opts.enable_cir_slow_phase
     [phaseByRep, cirSlow] = estimate_uwb_cir_slow_phase( ...
@@ -141,6 +144,11 @@ report.global_gain = globalGain;
 report.phr_gain = phrGain;
 report.payload_gain = payloadGain;
 report.frame_suppression_db = suppressionDb;
+report.pll_compensation_applied = ...
+    isstruct(pll) && isfield(pll, 'enabled') && logical(pll.enabled);
+report.pll_resolution = pllField(pll, 'resolution', "disabled");
+report.pll_apply_repetitions = pllField(pll, 'apply_repetitions', 0);
+report.pll_peak_abs_phase_deg = pllField(pll, 'peak_abs_phase_deg', 0);
 report.cir_slow_phase_applied = cirSlow.applied;
 report.cir_second_stage_cfo_applied = cirSlow.second_stage_cfo_applied;
 report.full_packet_sfo_applied = sfo.applied;
@@ -169,6 +177,7 @@ defaults = struct( ...
     'min_alignment_correlation', 0.70, ...
     'min_frame_suppression_db', 0.20, ...
     'max_abs_cfo_hz', 100e3, ...
+    'pll_phase_compensation', struct('enabled', false), ...
     'enable_cir_slow_phase', true, ...
     'cir_slow_phase_options', struct( ...
         'tap_half_width', 2, ...
@@ -204,6 +213,14 @@ if isempty(opts.cfo_fit_last_sync)
 end
 if isempty(opts.gain_fit_last_sync)
     opts.gain_fit_last_sync = opts.cfo_fit_last_sync;
+end
+end
+
+function value = pllField(pll, name, fallback)
+if isstruct(pll) && isfield(pll, name) && ~isempty(pll.(name))
+    value = pll.(name);
+else
+    value = fallback;
 end
 end
 
