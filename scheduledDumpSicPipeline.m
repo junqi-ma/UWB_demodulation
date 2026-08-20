@@ -605,11 +605,24 @@ iqScale = 1;
 if isfield(meta, 'iq_scale') && ~isempty(meta.iq_scale)
     iqScale = double(meta.iq_scale);
 end
-x737 = single(xScaled * iqScale);
-interp = 65;
-decim = 48;
-filterDelay = (numel(taps) - 1) / 2;
-x998 = upfirdn(x737, taps, interp, decim);
+xInput = single(xScaled * iqScale);
+inputFs = double(fieldOr(meta, 'sample_rate', 737.28e6));
+targetFs = 998.4e6;
+if abs(inputFs - targetFs) <= targetFs * 1e-9
+    interp = 1;
+    decim = 1;
+    filterDelay = 0;
+    x998 = xInput;
+elseif abs(inputFs - 737.28e6) <= 737.28e6 * 1e-9
+    interp = 65;
+    decim = 48;
+    filterDelay = (numel(taps) - 1) / 2;
+    x998 = upfirdn(xInput, taps, interp, decim);
+else
+    error('scheduledDumpSicPipeline:UnsupportedSampleRate', ...
+        ['Unsupported dump sample rate %.6f MHz. Expected 737.28 or ', ...
+        '998.4 MHz.'], inputFs / 1e6);
+end
 windowStart = double(fieldOr(meta, 'window_start_sample', ...
     fieldOr(meta, 'start_sample', 0)));
 windowStartOut = round((windowStart * interp + filterDelay) / decim);
@@ -622,6 +635,14 @@ if isfile(cfg.cpp_truth_csv)
         detectedOut = double(truth.qm35_detected_start(row));
         seededStartOne = round(detectedOut - windowStartOut + 1);
     end
+end
+if ~(isfinite(seededStartOne) && seededStartOne >= 1 && ...
+        seededStartOne <= numel(x998)) && ...
+        isfield(meta, 'detected_start_sample') && ...
+        ~isempty(meta.detected_start_sample)
+    detectedInput = double(meta.detected_start_sample);
+    seededStartOne = round( ...
+        (detectedInput - windowStart) * interp / decim) + 1;
 end
 if ~(isfinite(seededStartOne) && seededStartOne >= 1 && ...
         seededStartOne <= numel(x998))
