@@ -9,9 +9,17 @@ function [rx, preamble] = compensateCarrierOffset(rx, preamble, reference, param
 
 directTiming = isfield(preamble, 'direct_sfd_timing') && ...
     preamble.direct_sfd_timing;
+% After NS-SFD refine, start_sample is on the sampled_code chip grid.
+% preamble_waveform is delayed by the pulse-shaping group delay, so a
+% correlation at that origin lands in the chip gaps. Seeded detection
+% without SFD refine is already waveform-aligned; do not shift it.
+shapingDelay = 0;
+if directTiming && sfdRefinedToCodeGrid(preamble)
+    shapingDelay = pulseShapingDelaySamples(reference);
+end
 if directTiming
     [stablePeaks, stableValues, skipCount] = directCfoAnchors( ...
-        rx, preamble, reference, params);
+        rx, preamble, reference, params, shapingDelay);
 else
     usablePeaks = preamble.peaks(1:min(preamble.detected_repetitions, ...
         params.preamble_repetitions));
@@ -41,6 +49,7 @@ end
 known = repmat(reference.preamble_waveform, phaseRepetitions, 1);
 firstRepetition = max(0, params.preamble_repetitions - phaseRepetitions);
 phaseStart = round(preamble.start_sample + firstRepetition*preamble.measured_period);
+phaseStart = phaseStart - shapingDelay;
 phaseIndices = phaseStart + (0:length(known)-1);
 if phaseIndices(1) < 1 || phaseIndices(end) > numel(rx)
     error('compensateCarrierOffset:PhaseWindowOutOfBounds', ...
@@ -51,6 +60,7 @@ rx = rx * exp(-1j*angle(gain));
 preamble.frequency_offset_hz = frequencyOffset;
 preamble.frequency_offset_skipped_repetitions = skipCount;
 preamble.frequency_offset_anchor_count = fitCount;
+preamble.frequency_offset_shaping_delay_samples = shapingDelay;
 
 if isfield(params, 'verbose') && params.verbose
     fprintf('Estimated frequency offset: %.3f kHz.\n', frequencyOffset/1e3);
@@ -58,10 +68,11 @@ end
 
 % -------------------------------------------------------------------------
 function [peaks, values, skipCount] = directCfoAnchors( ...
-        rx, preamble, reference, params)
+        rx, preamble, reference, params, shapingDelay)
 %DIRECTCFOANCHORS Correlate a small set of widely spaced known SYNCs.
-%   SFD timing has already fixed the preamble origin, so there is no need
-%   to perform a local timing search for every repeated symbol.
+%   SFD timing has already fixed the code-grid origin. The shaped SYNC
+%   waveform is placed shapingDelay samples earlier so its pulse peaks
+%   land on that grid instead of in the chip gaps.
 
 available = min(params.preamble_repetitions, ...
     preamble.detected_repetitions);
@@ -74,7 +85,7 @@ end
 repetitions = unique(round(linspace( ...
     skipCount, available - 1, anchorCount))).';
 starts = round(preamble.start_sample + ...
-    repetitions*preamble.measured_period);
+    repetitions*preamble.measured_period) - shapingDelay;
 sampleOffsets = (0:numel(reference.preamble_waveform)-1).';
 indices = sampleOffsets + starts.';
 valid = all(indices >= 1 & indices <= numel(rx), 1);
@@ -102,4 +113,47 @@ if any(idx < 1) || any(idx > numel(preamble.matched))
         'Preamble peak indices fall outside the matched-filter buffer.');
 end
 values = preamble.matched(idx);
+end
+
+% -------------------------------------------------------------------------
+function tf = sfdRefinedToCodeGrid(preamble)
+tf = isfield(preamble, 'sfd_waveform_correlation') && ...
+    isfinite(preamble.sfd_waveform_correlation) && ...
+    preamble.sfd_waveform_correlation >= 0.10;
+end
+
+function delay = pulseShapingDelaySamples(reference)
+%PULSESHAPINGDELAYSAMPLES Group delay of preamble_waveform vs sampled_code.
+%   First-chip peak of the shaped SYNC relative to the first spreading
+%   impulse. This is a property of the PHY reference, not of a capture.
+
+delay = 0;
+if ~isstruct(reference) || ~isfield(reference, 'sampled_code') || ...
+        ~isfield(reference, 'preamble_waveform')
+    return
+end
+code = reference.sampled_code(:);
+wave = reference.preamble_waveform(:);
+if isempty(code) || isempty(wave)
+    return
+end
+impulse = find(abs(code) > 0, 1);
+if isempty(impulse)
+    return
+end
+nextRel = find(abs(code(impulse+1:end)) > 0, 1);
+if isempty(nextRel)
+    last = min(numel(wave), impulse + 16);
+else
+    last = min(numel(wave), impulse + nextRel - 1);
+end
+if last < impulse
+    return
+end
+segment = abs(wave(impulse:last));
+if ~any(segment)
+    return
+end
+[~, rel] = max(segment);
+delay = rel - 1;
 end
