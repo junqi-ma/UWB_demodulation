@@ -12,7 +12,7 @@ end
 addpath(this_dir);
 
 %% -------------------- User parameters --------------------
-dump_dir = 'F:\UWB基带数据\8月20日数据\qm35_sensing_1';
+dump_dir = 'F:\UWB基带数据\8月20日数据\qm35_dw1000_sensing_1';
 [~, dump_name] = fileparts(char(strtrim(string(dump_dir))));
 manifest_file = fullfile(this_dir, 'decoded_results', dump_name, ...
     'sic_dw1000_removed_qm35_preserved', 'pipeline_manifest.mat');

@@ -12,8 +12,8 @@ close all;
 clc;
 
 %% -------------------- User parameters --------------------
-packet_index = 1;
-dump_dir = 'F:\UWB基带数据\qm35_gain1_scheduled_sc16_dump_20260817';
+packet_index = 3;
+dump_dir = 'F:\UWB基带数据\8月20日数据\qm35_dw1000_sensing_1';
 save_figure = true;
 
 %% -------------------- Paths --------------------

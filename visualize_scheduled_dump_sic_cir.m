@@ -23,7 +23,7 @@ addpath(this_dir);
 if sic_managed
     manifest_file = sic_dump_manifest_file;
 else
-    dump_dir = 'F:\UWB基带数据\qm35_gain1_scheduled_sc16_dump_20260817';
+    dump_dir = 'F:\UWB基带数据\8月20日数据\qm35_sensing_1';
     [~, dump_name] = fileparts(char(strtrim(string(dump_dir))));
     switch dump_name
         case 'qm35_scheduled_sc16_dump'

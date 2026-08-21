@@ -21,7 +21,7 @@ cd(thisDir);
 addpath(thisDir);
 
 %% -------------------- User parameters --------------------
-dumpDir = 'F:\UWB基带数据\8月20日数据\qm35_sensing_1';
+dumpDir = 'F:\UWB基带数据\8月20日数据\qm35_dw1000_sensing_1';
 % dumpDir = 'F:\UWB基带数据\qm35_scheduled_sc16_dump';
 
 cfg = struct();

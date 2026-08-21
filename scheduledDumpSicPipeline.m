@@ -88,6 +88,7 @@ pipeline.completed_at = timestampNow();
 pipeline.timing = struct('total_elapsed', toc(pipelineTimer));
 
 writeDumpSicTables(pipeline);
+writeDumpCirOnly(pipeline);
 save(pipeline.paths.manifest_file, 'pipeline', '-v7.3');
 
 fprintf('\n========== Scheduled-dump SIC complete ==========\n');
@@ -107,6 +108,7 @@ fprintf('DW false-lock skipped  : %d\n', ...
 fprintf('Median CIR coherence   : %.4f\n', ...
     pipeline.summary.median_cir_coherence);
 fprintf('Manifest               : %s\n', pipeline.paths.manifest_file);
+fprintf('CIR-only MAT           : %s\n', pipeline.paths.cir_only_mat);
 
 if cfg.make_plots
     sic_dump_manifest_file = pipeline.paths.manifest_file; %#ok<NASGU>
@@ -561,6 +563,49 @@ writetable(metrics, pipeline.paths.metrics_csv);
 save(pipeline.paths.metrics_mat, 'metrics', 'records', '-v7.3');
 end
 
+function writeDumpCirOnly(pipeline)
+% Save the minimum data needed for slow-time complex-CIR analysis.
+records = pipeline.packets(:);
+nFrames = numel(records);
+packet_ids = reshape([records.packet_id], [], 1);
+
+firstValid = find(arrayfun(@(r) ...
+    isstruct(r.qm35_before.cir) && ...
+    isfield(r.qm35_before.cir, 'values') && ...
+    ~isempty(r.qm35_before.cir.values) && ...
+    isstruct(r.qm35_after.cir) && ...
+    isfield(r.qm35_after.cir, 'values') && ...
+    ~isempty(r.qm35_after.cir.values), records), 1);
+
+if isempty(firstValid)
+    cir_delay_ns = zeros(1, 0);
+    cir_before_sic = complex(nan(nFrames, 0));
+    cir_after_sic = complex(nan(nFrames, 0));
+else
+    cir_delay_ns = records(firstValid).qm35_before.cir.delay_ns(:).';
+    nTaps = numel(cir_delay_ns);
+    cir_before_sic = complex(nan(nFrames, nTaps));
+    cir_after_sic = complex(nan(nFrames, nTaps));
+    for k = 1:nFrames
+        beforeCir = records(k).qm35_before.cir;
+        afterCir = records(k).qm35_after.cir;
+        if isstruct(beforeCir) && isfield(beforeCir, 'values') && ...
+                ~isempty(beforeCir.values)
+            cir_before_sic(k, :) = interp1(beforeCir.delay_ns(:), ...
+                beforeCir.values(:), cir_delay_ns, 'linear', 0);
+        end
+        if isstruct(afterCir) && isfield(afterCir, 'values') && ...
+                ~isempty(afterCir.values)
+            cir_after_sic(k, :) = interp1(afterCir.delay_ns(:), ...
+                afterCir.values(:), cir_delay_ns, 'linear', 0);
+        end
+    end
+end
+
+save(pipeline.paths.cir_only_mat, 'cir_before_sic', 'cir_after_sic', ...
+    'cir_delay_ns', 'packet_ids', '-v7');
+end
+
 function packetIds = selectDumpPackets(cfg)
 if ~isempty(cfg.packet_ids)
     packetIds = cfg.packet_ids(:).';
@@ -908,6 +953,8 @@ paths.metrics_csv = fullfile(cfg.output_root, ...
     'qm35_cir_before_after_dw1000_metrics.csv');
 paths.metrics_mat = fullfile(cfg.output_root, ...
     'qm35_cir_before_after_dw1000_metrics.mat');
+paths.cir_only_mat = fullfile(cfg.output_root, ...
+    'qm35_cir_before_after_sic.mat');
 paths.validation_dir = fullfile(cfg.output_root, 'validation');
 end
 
