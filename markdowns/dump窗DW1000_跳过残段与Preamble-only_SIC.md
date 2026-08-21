@@ -49,7 +49,7 @@ resampled window xOrig  (589056 @ 998.4 MHz)
   → 再 decode QM35，打 before/after CIR
 ```
 
-`decodeDw1000OnWindow`（L174–194）对 `dw1000_code10_n256` 再 `dw1000_code11_n128` 各调一次空种子 `decode_uwb`。FCS 过立即返回；否则留下第一个没抛错的候选。
+`decodeDw1000OnWindow`（L174–194）对 `dw1000_code10_n256` 再 `dw1000_code11_n256` 各调一次空种子 `decode_uwb`。FCS 过立即返回；否则留下第一个没抛错的候选。
 
 `detectAdaptivePreamble`（[`+uwbdecoder/detectRepeatedPreamble.m`](F:\USRP数据解调\+uwbdecoder\detectRepeatedPreamble.m) L148–151）：
 

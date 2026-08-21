@@ -28,7 +28,7 @@ cfg = struct();
 cfg.dump_dir = dumpDir;
 cfg.selection = 'interfered';   % 'interfered' | 'sic_recommended' | 'all'
 cfg.packet_ids = [];            % nonempty overrides selection
-cfg.max_packets = [];           % [] = all selected windows
+cfg.max_packets = 200;           % [] = all selected windows
 cfg.overwrite = true;
 cfg.make_plots = true;
 cfg.use_parallel = true;        % true: process independent packet windows with parfor

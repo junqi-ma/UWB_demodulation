@@ -39,6 +39,8 @@ end
 
 result_dir = fullfile(this_dir, 'decoded_results', tag);
 mat_file = fullfile(result_dir, 'scheduled_dump_matlab.mat');
+sic_manifest_file = fullfile(result_dir, ...
+    'sic_dw1000_removed_qm35_preserved', 'pipeline_manifest.mat');
 iq_file = fullfile(dump_dir, 'capture.iq');
 jsonl_file = fullfile(dump_dir, 'capture.jsonl');
 cpp_csv = fullfile(result_dir, 'scheduled_dump_cpp.csv');
@@ -56,7 +58,7 @@ sic_comparison_png = fullfile(result_dir, sprintf( ...
 %% -------------------- Load and plot --------------------
 iq = loadResampledPacket(packet_index, dump_dir, iq_file, jsonl_file, ...
     cpp_csv, taps_file);
-result = loadOrDecodePacket(packet_index, mat_file, dump_dir, ...
+result = loadOrDecodePacket(packet_index, mat_file, sic_manifest_file, dump_dir, ...
     iq_file, jsonl_file, cpp_csv, taps_file, iq);
 d = result.qm35_cir_interference;
 opt = detectorOptions(d);
@@ -344,8 +346,8 @@ function profile = buildDwSicProfile(profileName)
 switch string(profileName)
     case "dw1000_code10_n256"
         codeIndex = 10; repetitions = 256; cirRepetitions = 64;
-    case "dw1000_code11_n128"
-        codeIndex = 11; repetitions = 128; cirRepetitions = 118;
+    case {"dw1000_code11_n256", "dw1000_code11_n128"}
+        codeIndex = 11; repetitions = 256; cirRepetitions = 118;
     otherwise
         error('Unknown DW1000 SIC profile: %s', string(profileName));
 end
@@ -810,8 +812,8 @@ if ~isstruct(iq) || ~isfield(iq, 'ok') || ~iq.ok
     return
 end
 winUs = numel(iq.x998) / iq.fs * 1e6;
-fprintf(['IQ packet_id=%d  window=%.1f us  C++ start=%d (%.1f us)  ', ...
-    'predicted=%d  det-pred=%+.0f  C++ FCS=%d\n'], iq.packet_id, winUs, ...
+fprintf(['IQ packet_id=%d  window=%.1f us  start=%d (%.1f us)  ', ...
+    'predicted=%d  det-pred=%+.0f  stored FCS=%g\n'], iq.packet_id, winUs, ...
     iq.detected_start_one, sampleToUs(iq.detected_start_one, iq.fs), ...
     iq.predicted_start_one, iq.det_minus_pred, iq.fcs_pass);
 if nargin >= 2 && isstruct(dwAnn) && dwAnn.has_sic
@@ -847,31 +849,41 @@ if ~isfile(iqFile) || ~isfile(jsonlFile)
     iq.message = sprintf('缺少 dump IQ：%s', dumpDir);
     return
 end
-if ~isfile(tapsFile)
-    iq.message = sprintf('缺少 resampler taps：%s', tapsFile);
-    return
-end
-
 [xScaled, meta] = read_uwb_packet(iqFile, jsonlFile, packetIndex);
 iqScale = 1;
 if isfield(meta, 'iq_scale') && ~isempty(meta.iq_scale)
     iqScale = double(meta.iq_scale);
 end
-x737 = single(xScaled * iqScale);
+xInput = single(xScaled * iqScale);
 
-fid = fopen(tapsFile, 'rb');
-if fid < 0
-    iq.message = sprintf('无法打开 taps：%s', tapsFile);
+fs = 998.4e6;
+inputFs = double(getFieldOr(meta, 'sample_rate', 737.28e6));
+if abs(inputFs - fs) <= fs * 1e-9
+    interp = 1;
+    decim = 1;
+    filterDelay = 0;
+    x998 = xInput;
+elseif abs(inputFs - 737.28e6) <= 737.28e6 * 1e-9
+    if ~isfile(tapsFile)
+        iq.message = sprintf('缺少 resampler taps：%s', tapsFile);
+        return
+    end
+    fid = fopen(tapsFile, 'rb');
+    if fid < 0
+        iq.message = sprintf('无法打开 taps：%s', tapsFile);
+        return
+    end
+    taps = fread(fid, Inf, 'single=>single');
+    fclose(fid);
+    interp = 65;
+    decim = 48;
+    filterDelay = (numel(taps) - 1) / 2;
+    x998 = upfirdn(xInput, taps, interp, decim);
+else
+    iq.message = sprintf(['不支持 %.6f MHz dump；期望采样率为 ', ...
+        '737.28 或 998.4 MHz。'], inputFs / 1e6);
     return
 end
-taps = fread(fid, Inf, 'single=>single');
-fclose(fid);
-
-interp = 65;
-decim = 48;
-fs = 998.4e6;
-filterDelay = (numel(taps) - 1) / 2;
-x998 = upfirdn(x737, taps, interp, decim);
 windowStart = double(getFieldOr(meta, 'window_start_sample', ...
     getFieldOr(meta, 'start_sample', 0)));
 windowStartOut = round((windowStart * interp + filterDelay) / decim);
@@ -879,7 +891,7 @@ windowStartOut = round((windowStart * interp + filterDelay) / decim);
 detectedStartOne = NaN;
 predictedStartOne = NaN;
 scheduleIndex = NaN;
-fcsPass = 0;
+fcsPass = NaN;
 detMinusPred = NaN;
 if isfile(cppCsv)
     truth = readtable(cppCsv);
@@ -912,6 +924,32 @@ if isfile(cppCsv)
         end
     end
 end
+% 新版 dump 可以不带 scheduled_dump_cpp.csv；此时直接使用 JSONL 中
+% 与 capture.iq 同源的全局检测/预测位置，并换算到当前窗口的 1-based
+% 998.4 MHz 索引。C++ CSV 若存在且有效，仍具有更高优先级。
+if ~(isfinite(detectedStartOne) && detectedStartOne >= 1 && ...
+        detectedStartOne <= numel(x998)) && ...
+        isfield(meta, 'detected_start_sample') && ...
+        ~isempty(meta.detected_start_sample)
+    detectedInput = double(meta.detected_start_sample);
+    detectedStartOne = round( ...
+        (detectedInput - windowStart) * interp / decim) + 1;
+end
+if ~(isfinite(predictedStartOne) && predictedStartOne >= 1 && ...
+        predictedStartOne <= numel(x998)) && ...
+        isfield(meta, 'predicted_start_sample') && ...
+        ~isempty(meta.predicted_start_sample)
+    predictedInput = double(meta.predicted_start_sample);
+    predictedStartOne = round( ...
+        (predictedInput - windowStart) * interp / decim) + 1;
+end
+if ~isfinite(scheduleIndex)
+    scheduleIndex = double(getFieldOr(meta, 'schedule_index', NaN));
+end
+if ~isfinite(detMinusPred) && isfinite(detectedStartOne) && ...
+        isfinite(predictedStartOne)
+    detMinusPred = detectedStartOne - predictedStartOne;
+end
 if ~(isfinite(detectedStartOne) && detectedStartOne >= 1 && ...
         detectedStartOne <= numel(x998))
     detectedStartOne = 1;
@@ -943,7 +981,7 @@ iq = struct( ...
     'detected_start_one', NaN, ...
     'predicted_start_one', NaN, ...
     'det_minus_pred', NaN, ...
-    'fcs_pass', 0);
+    'fcs_pass', NaN);
 end
 
 function value = tableNum(tbl, row, name)
@@ -966,7 +1004,8 @@ if isempty(text)
 end
 end
 
-function result = loadOrDecodePacket(packetIndex, matFile, dumpDir, ...
+function result = loadOrDecodePacket(packetIndex, matFile, ...
+        sicManifestFile, dumpDir, ...
         iqFile, jsonlFile, cppCsv, tapsFile, iq)
 results = loadSavedResults(matFile);
 if ~isempty(results)
@@ -978,10 +1017,61 @@ if ~isempty(results)
         return
     end
 end
+result = loadSicManifestResult(sicManifestFile, packetIndex);
+if ~isempty(result) && hasPlottableDiagnostics(result)
+    fprintf('Using SIC manifest CIR diagnostics for packet %d\n', packetIndex);
+    return
+end
 fprintf(['Stored diagnostics for packet %d are missing; ', ...
     'decoding this packet only...\n'], packetIndex);
 result = decodeOneScheduledPacket(packetIndex, dumpDir, iqFile, ...
     jsonlFile, cppCsv, tapsFile, iq);
+end
+
+function result = loadSicManifestResult(manifestFile, packetIndex)
+% 将当前 scheduled-dump SIC manifest 的 QM35-before 记录转换为本脚本
+% 使用的旧版单包结果字段，避免为了画图再次解调整个 packet。
+result = [];
+if ~isfile(manifestFile)
+    return
+end
+loaded = load(manifestFile, 'pipeline');
+if ~isfield(loaded, 'pipeline') || ...
+        ~isfield(loaded.pipeline, 'packets')
+    return
+end
+records = loaded.pipeline.packets;
+row = find([records.packet_id] == double(packetIndex), 1);
+if isempty(row) || ~isfield(records(row), 'qm35_before')
+    return
+end
+pack = records(row).qm35_before;
+if ~isstruct(pack) || ~isfield(pack, 'interference') || ...
+        isempty(pack.interference)
+    return
+end
+d = pack.interference;
+result = struct();
+result.packet_id = double(packetIndex);
+result.qm35_fcs_pass = logical(getFieldOr(pack, 'fcs_pass', false));
+result.qm35_cir_interference_valid = logical(getFieldOr(d, 'valid', false));
+result.qm35_first_path_delay_ns = getFieldOr( ...
+    pack, 'first_path_delay_ns', getFieldOr(d, 'first_path_delay_ns', NaN));
+result.qm35_early_tap_count = getFieldOr(d, 'early_tap_count', 0);
+result.qm35_early_residual_ratio_db = getFieldOr( ...
+    pack, 'early_residual_ratio_db', ...
+    getFieldOr(d, 'early_residual_ratio_db', NaN));
+result.qm35_early_peak_ratio_db = getFieldOr( ...
+    pack, 'early_peak_ratio_db', getFieldOr(d, 'early_peak_ratio_db', NaN));
+result.qm35_interference_occupancy = getFieldOr( ...
+    pack, 'interference_occupancy', ...
+    getFieldOr(d, 'interference_occupancy', NaN));
+result.qm35_interference_state = string(getFieldOr( ...
+    pack, 'interference_state', getFieldOr(d, 'state', "invalid")));
+result.qm35_interference_confidence = getFieldOr(d, 'confidence', NaN);
+result.qm35_sic_recommended = logical(getFieldOr( ...
+    pack, 'sic_recommended', getFieldOr(d, 'sic_recommended', false)));
+result.qm35_cir_interference = d;
 end
 
 function results = loadSavedResults(matFile)
