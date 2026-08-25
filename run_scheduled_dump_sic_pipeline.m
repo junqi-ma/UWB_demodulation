@@ -21,14 +21,14 @@ cd(thisDir);
 addpath(thisDir);
 
 %% -------------------- User parameters --------------------
-dumpDir = 'F:\UWB基带数据\8月20日数据\qm35_dw1000_sensing_1';
+dumpDir = 'F:\UWB基带数据\8月20日数据\qm35_sensing_3';
 % dumpDir = 'F:\UWB基带数据\qm35_scheduled_sc16_dump';
 
 cfg = struct();
 cfg.dump_dir = dumpDir;
 cfg.selection = 'interfered';   % 'interfered' | 'sic_recommended' | 'all'
 cfg.packet_ids = [];            % nonempty overrides selection
-cfg.max_packets = 200;           % [] = all selected windows
+cfg.max_packets = [];           % [] = all selected windows
 cfg.overwrite = true;
 cfg.make_plots = true;
 cfg.use_parallel = true;        % true: process independent packet windows with parfor
@@ -40,7 +40,7 @@ cfg.cir_interference_options = struct( ...
 % cfg.dw_qm35_search_post_s = 40e-6;
 % cfg.min_visible_sync_for_preamble_sic = 64;
 % cfg.enable_preamble_only_sic = true;  % false: 只消 FCS 过的整包；搜索仍走新包装
-cfg.min_alignment_correlation = 0.60;   % dump DW cancel only; 0.70 still the library default
+cfg.min_alignment_correlation = 0.10;   % dump DW cancel only; 0.70 still the library default
 
 %% -------------------- Run --------------------
 pipeline = scheduledDumpSicPipeline(cfg);

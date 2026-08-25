@@ -130,6 +130,7 @@ GNU Radio `UwbAutoScheduledExtractorSc16` / `UwbScheduledExtractorSc16` 按雷�
 | `run_analyze_uwb_mixed_code9_cir.m` | 合成 code-9 包 + code-10 干扰，跑接收机前端并打分 CIR |
 | `run_analyze_uwb_preamble_code_interference.m` | 不同 preamble code 互相关泄漏矩阵 |
 | `run_analyze_uwb_radar_comm_interference.m` | 雷达呼吸感知 vs 通信干扰的链路预算 |
+| `run_analyze_qm35_sync_polarity_dw1000_dump.m` | 读取实测交替极性 dump，重建无编码对照并统计 DW1000 的 coherent / noncoherent CIR 抑制 |
 
 合成脚本不读 dump，但服务同一套 CIR 干扰 / SIC 判据，所以留在本分支。
 
